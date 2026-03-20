@@ -1,0 +1,17 @@
+packages:
+  "lucide-react": "Standard icons"
+  "date-fns": "Date formatting for maintenance logs"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes safely"
+  "react-hook-form": "Form state management"
+  "@hookform/resolvers": "Zod integration for react-hook-form"
+  "zod": "Schema validation for forms"
+  "@radix-ui/react-dialog": "Accessible dialogs for forms"
+  "@radix-ui/react-tabs": "Accessible tabs for car detail views"
+  "@radix-ui/react-toast": "Toast notifications for success/error states"
+  "@radix-ui/react-accordion": "For grouping inspection items"
+
+notes:
+  - Designing with a high-contrast, brutalist/utilitarian aesthetic specifically optimized for e-ink displays (Kindle).
+  - Uses large tap targets (min 48px), thick borders, and distinct patterns instead of subtle shadows/gradients.
+  - Car IDs from URLs are parsed to numbers before being passed to hooks.

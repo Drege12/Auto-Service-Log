@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Dealer Car Tracker"
+version = "1.0.0"
+id = "artifacts/dealer-tracker"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20152
+
+[services.development]
+run = "pnpm --filter @workspace/dealer-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dealer-tracker", "run", "build" ]
+publicDir = "artifacts/dealer-tracker/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20152"
+BASE_PATH = "/"

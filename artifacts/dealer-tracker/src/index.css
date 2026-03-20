@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* KINDLE-FRIENDLY HIGH CONTRAST PALETTE */
+  /* Using space-separated HSL values as requested */
+  
+  /* Base - Pure White / Pure Black */
+  --color-background: 0 0% 100%;
+  --color-foreground: 0 0% 0%;
+  
+  /* Primary - Solid Black for maximum contrast on e-ink */
+  --color-primary: 0 0% 0%;
+  --color-primary-foreground: 0 0% 100%;
+  
+  /* Secondary - High contrast gray */
+  --color-secondary: 0 0% 90%;
+  --color-secondary-foreground: 0 0% 0%;
+  
+  /* Muted - For disabled states or secondary text, kept dark enough for e-ink */
+  --color-muted: 0 0% 95%;
+  --color-muted-foreground: 0 0% 30%;
+  
+  /* Borders - Thick and visible */
+  --color-border: 0 0% 0%;
+  --color-input: 0 0% 0%;
+  --color-ring: 0 0% 0%;
+  
+  /* Status Colors - Adjusted for e-ink (darker shades, clear distinctions) */
+  --color-success: 142 71% 25%;
+  --color-success-foreground: 0 0% 100%;
+  
+  --color-destructive: 0 72% 35%;
+  --color-destructive-foreground: 0 0% 100%;
+  
+  --color-warning: 38 92% 40%;
+  --color-warning-foreground: 0 0% 0%;
+
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 0 0% 0%;
+  
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 0 0% 0%;
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 90%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 30%;
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --ring: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --destructive: 0 72% 35%;
+  --destructive-foreground: 0 0% 100%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased font-sans text-lg selection:bg-primary selection:text-primary-foreground;
+  }
+
+  /* Kindle specific: ensure text selection is visible but not overwhelming */
+  ::-moz-selection {
+    background: #000;
+    color: #fff;
+  }
+  ::selection {
+    background: #000;
+    color: #fff;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Brutalist shadows for e-ink (no gradients/blur) */
+  .shadow-brutal {
+    box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+  }
+  .shadow-brutal-sm {
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+  }
+  .shadow-brutal-lg {
+    box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+  }
+  
+  /* Hover states that don't rely on subtle color changes */
+  .hover-brutal:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+  }
+  .active-brutal:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+  }
+
+  /* Kindle-friendly tap targets */
+  .tap-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+}

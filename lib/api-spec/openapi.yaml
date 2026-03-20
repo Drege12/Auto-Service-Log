@@ -1,22 +1,28 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Dealer Car Tracker API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: cars
+    description: Car management
+  - name: inspections
+    description: Inspection checklists
+  - name: maintenance
+    description: Maintenance log
+  - name: todos
+    description: Work needed log
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,328 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /cars:
+    get:
+      operationId: listCars
+      tags: [cars]
+      summary: List all cars
+      responses:
+        "200":
+          description: List of cars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Car"
+    post:
+      operationId: createCar
+      tags: [cars]
+      summary: Add a new car
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCar"
+      responses:
+        "201":
+          description: Car created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+
+  /cars/{carId}:
+    get:
+      operationId: getCar
+      tags: [cars]
+      summary: Get a car by ID
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Car details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "404":
+          description: Car not found
+    put:
+      operationId: updateCar
+      tags: [cars]
+      summary: Update a car
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCar"
+      responses:
+        "200":
+          description: Car updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+    delete:
+      operationId: deleteCar
+      tags: [cars]
+      summary: Delete a car
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Car deleted
+
+  /cars/{carId}/inspection:
+    get:
+      operationId: getInspection
+      tags: [inspections]
+      summary: Get inspection checklist for a car
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inspection items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InspectionItem"
+    post:
+      operationId: upsertInspection
+      tags: [inspections]
+      summary: Save inspection checklist for a car
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/UpsertInspectionItem"
+      responses:
+        "200":
+          description: Inspection saved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InspectionItem"
+
+  /cars/{carId}/maintenance:
+    get:
+      operationId: listMaintenance
+      tags: [maintenance]
+      summary: Get maintenance log for a car
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Maintenance entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MaintenanceEntry"
+    post:
+      operationId: createMaintenance
+      tags: [maintenance]
+      summary: Add a maintenance entry
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaintenanceEntry"
+      responses:
+        "201":
+          description: Maintenance entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceEntry"
+
+  /cars/{carId}/maintenance/{entryId}:
+    put:
+      operationId: updateMaintenance
+      tags: [maintenance]
+      summary: Update a maintenance entry
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaintenanceEntry"
+      responses:
+        "200":
+          description: Entry updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceEntry"
+    delete:
+      operationId: deleteMaintenance
+      tags: [maintenance]
+      summary: Delete a maintenance entry
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /cars/{carId}/todos:
+    get:
+      operationId: listTodos
+      tags: [todos]
+      summary: Get work-needed list for a car
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Todo entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TodoEntry"
+    post:
+      operationId: createTodo
+      tags: [todos]
+      summary: Add a work-needed item
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTodoEntry"
+      responses:
+        "201":
+          description: Todo created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodoEntry"
+
+  /cars/{carId}/todos/{todoId}:
+    put:
+      operationId: updateTodo
+      tags: [todos]
+      summary: Update a work-needed item
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: todoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTodoEntry"
+      responses:
+        "200":
+          description: Todo updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodoEntry"
+    delete:
+      operationId: deleteTodo
+      tags: [todos]
+      summary: Delete a work-needed item
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: todoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +362,190 @@ components:
       required:
         - status
 
+    Car:
+      type: object
+      properties:
+        id:
+          type: integer
+        stockNumber:
+          type: string
+        year:
+          type: integer
+        make:
+          type: string
+        model:
+          type: string
+        vin:
+          type: string
+        color:
+          type: string
+        mileage:
+          type: integer
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - stockNumber
+        - year
+        - make
+        - model
+        - createdAt
+
+    CreateCar:
+      type: object
+      properties:
+        stockNumber:
+          type: string
+        year:
+          type: integer
+        make:
+          type: string
+        model:
+          type: string
+        vin:
+          type: string
+        color:
+          type: string
+        mileage:
+          type: integer
+        notes:
+          type: string
+      required:
+        - stockNumber
+        - year
+        - make
+        - model
+
+    InspectionItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        carId:
+          type: integer
+        category:
+          type: string
+        item:
+          type: string
+        status:
+          type: string
+          enum: [pass, fail, na, pending]
+        notes:
+          type: string
+      required:
+        - id
+        - carId
+        - category
+        - item
+        - status
+
+    UpsertInspectionItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        category:
+          type: string
+        item:
+          type: string
+        status:
+          type: string
+          enum: [pass, fail, na, pending]
+        notes:
+          type: string
+      required:
+        - category
+        - item
+        - status
+
+    MaintenanceEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        carId:
+          type: integer
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        technician:
+          type: string
+        cost:
+          type: number
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - carId
+        - date
+        - description
+        - createdAt
+
+    CreateMaintenanceEntry:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        technician:
+          type: string
+        cost:
+          type: number
+        notes:
+          type: string
+      required:
+        - date
+        - description
+
+    TodoEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        carId:
+          type: integer
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+        completed:
+          type: boolean
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - carId
+        - description
+        - priority
+        - completed
+        - createdAt
+
+    CreateTodoEntry:
+      type: object
+      properties:
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+        completed:
+          type: boolean
+        notes:
+          type: string
+      required:
+        - description
+        - priority
