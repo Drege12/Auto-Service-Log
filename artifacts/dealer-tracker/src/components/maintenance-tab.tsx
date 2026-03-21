@@ -1,31 +1,22 @@
 import { useState } from "react";
-import { 
-  useListMaintenance, 
-  useCreateMaintenance, 
-  useUpdateMaintenance, 
-  useDeleteMaintenance,
-  MaintenanceEntry
-} from "@workspace/api-client-react";
+import { useListMaintenance, useCreateMaintenance, useUpdateMaintenance, useDeleteMaintenance, MaintenanceEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { formatDate } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Edit2, Trash2, Calendar, User, DollarSign } from "lucide-react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 
-const formSchema = z.object({
-  date: z.string().min(1, "Date is required"),
-  description: z.string().min(1, "Description is required"),
-  technician: z.string().optional(),
-  cost: z.coerce.number().optional(),
-  notes: z.string().optional(),
+type FormState = { date: string; description: string; technician: string; cost: string; notes: string };
+type FormErrors = Partial<Record<keyof FormState, string>>;
+
+const emptyForm = (): FormState => ({
+  date: new Date().toISOString().split("T")[0],
+  description: "",
+  technician: "",
+  cost: "",
+  notes: "",
 });
-
-type FormValues = z.infer<typeof formSchema>;
 
 export function MaintenanceTab({ carId }: { carId: number }) {
   const queryClient = useQueryClient();
@@ -36,180 +27,188 @@ export function MaintenanceTab({ carId }: { carId: number }) {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<MaintenanceEntry | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm());
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitError, setSubmitError] = useState("");
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      date: new Date().toISOString().split('T')[0],
-      description: "",
-      technician: "",
-      cost: undefined,
-      notes: ""
-    }
-  });
+  const setField = (field: keyof FormState, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
+  };
+
+  const validate = (): boolean => {
+    const e: FormErrors = {};
+    if (!form.date) e.date = "Date is required";
+    if (!form.description.trim()) e.description = "Description is required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
   const openNewDialog = () => {
     setEditingEntry(null);
-    form.reset({
-      date: new Date().toISOString().split('T')[0],
-      description: "",
-      technician: "",
-      cost: undefined,
-      notes: ""
-    });
+    setForm(emptyForm());
+    setErrors({});
+    setSubmitError("");
     setDialogOpen(true);
   };
 
   const openEditDialog = (entry: MaintenanceEntry) => {
     setEditingEntry(entry);
-    form.reset({
+    setForm({
       date: entry.date,
       description: entry.description,
       technician: entry.technician || "",
-      cost: entry.cost || undefined,
-      notes: entry.notes || ""
+      cost: entry.cost != null ? String(entry.cost) : "",
+      notes: entry.notes || "",
     });
+    setErrors({});
+    setSubmitError("");
     setDialogOpen(true);
   };
 
-  const onSubmit = (values: FormValues) => {
+  const handleSubmit = () => {
+    setSubmitError("");
+    if (!validate()) return;
+
+    const data = {
+      date: form.date,
+      description: form.description.trim(),
+      technician: form.technician.trim() || undefined,
+      cost: form.cost ? Number(form.cost) : undefined,
+      notes: form.notes.trim() || undefined,
+    };
+
+    const invalidateKey = [`/api/cars/${carId}/maintenance`];
+
     if (editingEntry) {
-      updateEntry({ carId, entryId: editingEntry.id, data: values }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/maintenance`] });
-          setDialogOpen(false);
-        }
+      updateEntry({ carId, entryId: editingEntry.id, data }, {
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: invalidateKey }); setDialogOpen(false); },
+        onError: () => setSubmitError("Failed to save. Please try again."),
       });
     } else {
-      createEntry({ carId, data: values }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/maintenance`] });
-          setDialogOpen(false);
-        }
+      createEntry({ carId, data }, {
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: invalidateKey }); setDialogOpen(false); },
+        onError: () => setSubmitError("Failed to save. Please try again."),
       });
     }
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this log entry?")) {
-      deleteEntry({ carId, entryId: id }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/maintenance`] });
-        }
-      });
-    }
+    if (!confirm("Delete this log entry?")) return;
+    deleteEntry({ carId, entryId: id }, {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/maintenance`] }),
+    });
   };
 
   if (isLoading) return <div className="p-12 text-center text-2xl font-bold">Loading logs...</div>;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-black uppercase">Service History</h2>
         <Button size="lg" onClick={openNewDialog}>
-          <Plus className="w-6 h-6 mr-2" />
-          ADD ENTRY
+          <Plus className="w-6 h-6 mr-2" /> ADD ENTRY
         </Button>
       </div>
 
       <div className="space-y-6">
         {entries?.length === 0 ? (
-          <div className="p-12 border-4 border-dashed border-muted-foreground/30 rounded-2xl text-center">
-            <h3 className="text-2xl font-bold text-muted-foreground">No maintenance records yet.</h3>
-            <p className="mt-2 text-lg text-muted-foreground">Click Add Entry to start tracking work.</p>
+          <div className="p-12 border-4 border-dashed border-gray-400 rounded-2xl text-center">
+            <h3 className="text-2xl font-bold text-gray-500">No maintenance records yet.</h3>
+            <p className="mt-2 text-lg text-gray-500">Click Add Entry to start tracking work.</p>
           </div>
-        ) : (
-          entries?.map(entry => (
-            <div key={entry.id} className="p-6 border-4 border-black rounded-xl bg-card shadow-brutal transition-transform hover:-translate-y-1">
-              <div className="flex flex-col lg:flex-row justify-between gap-6">
-                <div className="space-y-4 flex-1">
-                  <div>
-                    <div className="flex items-center gap-2 text-muted-foreground font-bold mb-1">
-                      <Calendar className="w-5 h-5" />
-                      {formatDate(entry.date)}
+        ) : entries?.map(entry => (
+          <div key={entry.id} className="p-6 border-4 border-black rounded-xl bg-white shadow-brutal">
+            <div className="flex flex-col lg:flex-row justify-between gap-6">
+              <div className="space-y-3 flex-1">
+                <div className="flex items-center gap-2 text-gray-600 font-bold">
+                  <Calendar className="w-5 h-5" />
+                  {entry.date}
+                </div>
+                <h3 className="text-2xl font-black uppercase">{entry.description}</h3>
+                <div className="flex flex-wrap gap-4">
+                  {entry.technician && (
+                    <div className="flex items-center gap-2 font-medium bg-gray-100 px-3 py-1 border-2 border-black rounded-md">
+                      <User className="w-4 h-4" /> Tech: {entry.technician}
                     </div>
-                    <h3 className="text-2xl font-black uppercase">{entry.description}</h3>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-6">
-                    {entry.technician && (
-                      <div className="flex items-center gap-2 font-medium bg-secondary px-3 py-1 border-2 border-black rounded-md">
-                        <User className="w-4 h-4" />
-                        Tech: {entry.technician}
-                      </div>
-                    )}
-                    {entry.cost !== undefined && entry.cost !== null && (
-                      <div className="flex items-center gap-2 font-medium bg-secondary px-3 py-1 border-2 border-black rounded-md">
-                        <DollarSign className="w-4 h-4" />
-                        Cost: ${entry.cost.toFixed(2)}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {entry.notes && (
-                    <div className="mt-4 p-4 bg-secondary border-l-4 border-black font-medium">
-                      {entry.notes}
+                  )}
+                  {entry.cost != null && (
+                    <div className="flex items-center gap-2 font-medium bg-gray-100 px-3 py-1 border-2 border-black rounded-md">
+                      <DollarSign className="w-4 h-4" /> ${Number(entry.cost).toFixed(2)}
                     </div>
                   )}
                 </div>
-                
-                <div className="flex lg:flex-col gap-3">
-                  <Button variant="outline" onClick={() => openEditDialog(entry)} className="flex-1 lg:flex-none">
-                    <Edit2 className="w-5 h-5 lg:mr-2" />
-                    <span className="hidden lg:inline">EDIT</span>
-                  </Button>
-                  <Button variant="destructive" onClick={() => handleDelete(entry.id)} className="flex-1 lg:flex-none">
-                    <Trash2 className="w-5 h-5 lg:mr-2" />
-                    <span className="hidden lg:inline">DELETE</span>
-                  </Button>
-                </div>
+                {entry.notes && (
+                  <div className="mt-2 p-3 bg-gray-100 border-l-4 border-black font-medium">{entry.notes}</div>
+                )}
+              </div>
+              <div className="flex lg:flex-col gap-3">
+                <Button variant="outline" onClick={() => openEditDialog(entry)} className="flex-1 lg:flex-none">
+                  <Edit2 className="w-5 h-5 lg:mr-2" /><span className="hidden lg:inline">EDIT</span>
+                </Button>
+                <Button variant="destructive" onClick={() => handleDelete(entry.id)} className="flex-1 lg:flex-none">
+                  <Trash2 className="w-5 h-5 lg:mr-2" /><span className="hidden lg:inline">DELETE</span>
+                </Button>
               </div>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingEntry ? "EDIT LOG ENTRY" : "NEW LOG ENTRY"}</DialogTitle>
+            <DialogTitle className="text-2xl font-black uppercase">{editingEntry ? "Edit Log Entry" : "New Log Entry"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-            <div className="space-y-2">
-              <label className="text-lg font-bold uppercase">Date *</label>
-              <Input type="date" {...form.register("date")} />
-              {form.formState.errors.date && <p className="text-destructive font-bold">{form.formState.errors.date.message}</p>}
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-lg font-bold uppercase">Work Performed *</label>
-              <Input placeholder="e.g. Oil Change, Brake Pad Replacement" {...form.register("description")} />
-              {form.formState.errors.description && <p className="text-destructive font-bold">{form.formState.errors.description.message}</p>}
+
+          {submitError && (
+            <div className="bg-red-100 border-2 border-red-600 text-red-700 font-bold p-4 rounded-lg">{submitError}</div>
+          )}
+
+          <div className="space-y-5 mt-2">
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Date *</label>
+              <Input
+                type="date"
+                value={form.date}
+                onChange={e => setField("date", e.target.value)}
+              />
+              {errors.date && <p className="text-red-600 font-bold">{errors.date}</p>}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Technician</label>
-                <Input placeholder="Name" {...form.register("technician")} />
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Work Performed *</label>
+              <Input
+                value={form.description}
+                onChange={e => setField("description", e.target.value)}
+                placeholder="e.g. Oil Change, Brake Pad Replacement"
+              />
+              {errors.description && <p className="text-red-600 font-bold">{errors.description}</p>}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Technician</label>
+                <Input value={form.technician} onChange={e => setField("technician", e.target.value)} placeholder="Name" />
               </div>
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Cost ($)</label>
-                <Input type="number" step="0.01" placeholder="0.00" {...form.register("cost")} />
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Cost ($)</label>
+                <Input value={form.cost} onChange={e => setField("cost", e.target.value)} placeholder="0.00" inputMode="decimal" />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-lg font-bold uppercase">Notes</label>
-              <Textarea placeholder="Any additional details..." {...form.register("notes")} />
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Notes</label>
+              <Textarea value={form.notes} onChange={e => setField("notes", e.target.value)} placeholder="Any additional details..." />
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" size="lg" onClick={() => setDialogOpen(false)}>CANCEL</Button>
-              <Button type="submit" size="lg" disabled={isCreating || isUpdating}>
-                {isCreating || isUpdating ? "SAVING..." : "SAVE ENTRY"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" size="lg" onClick={() => setDialogOpen(false)}>CANCEL</Button>
+            <Button type="button" size="lg" disabled={isCreating || isUpdating} onClick={handleSubmit}>
+              {isCreating || isUpdating ? "SAVING..." : "SAVE ENTRY"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
