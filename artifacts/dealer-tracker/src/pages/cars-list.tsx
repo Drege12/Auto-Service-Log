@@ -48,8 +48,25 @@ export default function CarsList() {
         queryClient.invalidateQueries({ queryKey: [`/api/cars`] });
         setDialogOpen(false);
         form.reset();
+      },
+      onError: (err) => {
+        console.error("Failed to create car:", err);
+        alert("Failed to add vehicle. Please check all required fields and try again.");
       }
     });
+  };
+
+  const openAddDialog = () => {
+    form.reset({
+      stockNumber: "",
+      year: new Date().getFullYear(),
+      make: "",
+      model: "",
+      vin: "",
+      color: "",
+      mileage: undefined,
+    });
+    setDialogOpen(true);
   };
 
   return (
@@ -59,7 +76,7 @@ export default function CarsList() {
           <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tight">Active Vehicles</h1>
           <p className="text-xl text-muted-foreground mt-2 font-medium">Select a vehicle to log work or inspect.</p>
         </div>
-        <Button size="lg" onClick={() => setDialogOpen(true)} className="w-full sm:w-auto text-xl py-8">
+        <Button size="lg" onClick={openAddDialog} className="w-full sm:w-auto text-xl py-8">
           <Plus className="w-8 h-8 mr-2" />
           ADD VEHICLE
         </Button>
@@ -73,7 +90,7 @@ export default function CarsList() {
           <Car className="w-24 h-24 mx-auto mb-6 opacity-50" />
           <h2 className="text-3xl font-black uppercase mb-4">Shop is Empty</h2>
           <p className="text-xl text-muted-foreground mb-8">Add a vehicle to start tracking inspections and maintenance.</p>
-          <Button size="lg" onClick={() => setDialogOpen(true)}>ADD FIRST VEHICLE</Button>
+          <Button size="lg" onClick={openAddDialog}>ADD FIRST VEHICLE</Button>
         </div>
       )}
 
