@@ -6,67 +6,83 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Car, Plus, Key, Hash, Gauge } from "lucide-react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Car, Plus, Key, Gauge } from "lucide-react";
 
-const formSchema = z.object({
-  stockNumber: z.string().min(1, "Stock number is required"),
-  year: z.coerce.number().min(1900, "Invalid year").max(2100, "Invalid year"),
-  make: z.string().min(1, "Make is required"),
-  model: z.string().min(1, "Model is required"),
-  vin: z.string().optional(),
-  color: z.string().optional(),
-  mileage: z.coerce.number().optional(),
-});
+const emptyForm = {
+  stockNumber: "",
+  year: String(new Date().getFullYear()),
+  make: "",
+  model: "",
+  vin: "",
+  color: "",
+  mileage: "",
+};
 
-type FormValues = z.infer<typeof formSchema>;
+type FormState = typeof emptyForm;
+type FormErrors = Partial<Record<keyof FormState, string>>;
 
 export default function CarsList() {
   const queryClient = useQueryClient();
   const { data: cars, isLoading, isError } = useListCars();
   const { mutate: createCar, isPending } = useCreateCar();
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      stockNumber: "",
-      year: new Date().getFullYear(),
-      make: "",
-      model: "",
-      vin: "",
-      color: "",
-      mileage: undefined,
-    }
-  });
-
-  const onSubmit = (values: FormValues) => {
-    createCar({ data: values }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [`/api/cars`] });
-        setDialogOpen(false);
-        form.reset();
-      },
-      onError: (err) => {
-        console.error("Failed to create car:", err);
-        alert("Failed to add vehicle. Please check all required fields and try again.");
-      }
-    });
-  };
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitError, setSubmitError] = useState("");
 
   const openAddDialog = () => {
-    form.reset({
-      stockNumber: "",
-      year: new Date().getFullYear(),
-      make: "",
-      model: "",
-      vin: "",
-      color: "",
-      mileage: undefined,
-    });
+    setForm(emptyForm);
+    setErrors({});
+    setSubmitError("");
     setDialogOpen(true);
+  };
+
+  const setField = (field: keyof FormState, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
+    if (!form.stockNumber.trim()) newErrors.stockNumber = "Stock number is required";
+    if (!form.make.trim()) newErrors.make = "Make is required";
+    if (!form.model.trim()) newErrors.model = "Model is required";
+    const yr = Number(form.year);
+    if (!form.year || isNaN(yr) || yr < 1900 || yr > 2100) {
+      newErrors.year = "Enter a valid year (e.g. 2022)";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    setSubmitError("");
+    if (!validate()) return;
+
+    const yr = Number(form.year);
+    const mi = form.mileage ? Number(form.mileage) : undefined;
+
+    createCar({
+      data: {
+        stockNumber: form.stockNumber.trim(),
+        year: yr,
+        make: form.make.trim(),
+        model: form.model.trim(),
+        vin: form.vin.trim() || undefined,
+        color: form.color.trim() || undefined,
+        mileage: mi,
+      }
+    }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+        setDialogOpen(false);
+      },
+      onError: () => {
+        setSubmitError("Failed to save. Please try again.");
+      }
+    });
   };
 
   return (
@@ -83,13 +99,13 @@ export default function CarsList() {
       </div>
 
       {isLoading && <div className="text-center py-20 text-2xl font-bold">Loading vehicles...</div>}
-      {isError && <div className="text-center py-20 text-2xl font-bold text-destructive">Failed to load vehicles.</div>}
+      {isError && <div className="text-center py-20 text-2xl font-bold text-red-600">Failed to load vehicles.</div>}
 
       {!isLoading && !isError && cars?.length === 0 && (
-        <div className="text-center py-20 border-4 border-dashed border-black rounded-3xl bg-secondary">
+        <div className="text-center py-20 border-4 border-dashed border-black rounded-3xl bg-gray-100">
           <Car className="w-24 h-24 mx-auto mb-6 opacity-50" />
           <h2 className="text-3xl font-black uppercase mb-4">Shop is Empty</h2>
-          <p className="text-xl text-muted-foreground mb-8">Add a vehicle to start tracking inspections and maintenance.</p>
+          <p className="text-xl text-gray-600 mb-8">Add a vehicle to start tracking inspections and maintenance.</p>
           <Button size="lg" onClick={openAddDialog}>ADD FIRST VEHICLE</Button>
         </div>
       )}
@@ -97,31 +113,26 @@ export default function CarsList() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {cars?.map((car) => (
           <Link key={car.id} href={`/cars/${car.id}`} className="group outline-none">
-            <div className="h-full border-4 border-black bg-card rounded-2xl p-6 shadow-brutal transition-all duration-200 group-hover:-translate-y-2 group-hover:shadow-brutal-lg group-focus-visible:ring-8 ring-black ring-offset-4">
+            <div className="h-full border-4 border-black bg-white rounded-2xl p-6 shadow-brutal">
               <div className="flex justify-between items-start mb-6">
-                <div className="bg-black text-white font-mono font-bold px-3 py-1 rounded text-lg shadow-brutal-sm">
+                <div className="bg-black text-white font-mono font-bold px-3 py-1 rounded text-lg">
                   #{car.stockNumber}
                 </div>
                 {car.color && (
-                  <div className="flex items-center gap-2 text-muted-foreground font-bold">
-                    <div className="w-6 h-6 rounded-full border-2 border-black" style={{ backgroundColor: car.color.toLowerCase() }} />
-                    {car.color}
-                  </div>
+                  <div className="text-gray-600 font-bold">{car.color}</div>
                 )}
               </div>
-              
               <h2 className="text-3xl font-black uppercase leading-tight mb-6">
-                {car.year} {car.make} <br/>
-                <span className="text-muted-foreground">{car.model}</span>
+                {car.year} {car.make} <br />
+                <span className="text-gray-500">{car.model}</span>
               </h2>
-
-              <div className="space-y-3 font-mono font-bold bg-secondary p-4 rounded-xl border-2 border-black">
+              <div className="space-y-3 font-mono font-bold bg-gray-100 p-4 rounded-xl border-2 border-black">
                 <div className="flex items-center gap-3">
-                  <Key className="w-5 h-5 text-muted-foreground" />
+                  <Key className="w-5 h-5 text-gray-500" />
                   <span className="truncate">{car.vin || 'NO VIN RECORDED'}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Gauge className="w-5 h-5 text-muted-foreground" />
+                  <Gauge className="w-5 h-5 text-gray-500" />
                   <span>{car.mileage ? `${car.mileage.toLocaleString()} mi` : 'UNKNOWN MILEAGE'}</span>
                 </div>
               </div>
@@ -131,59 +142,111 @@ export default function CarsList() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>ADD NEW VEHICLE</DialogTitle>
+            <DialogTitle className="text-2xl font-black uppercase">Add New Vehicle</DialogTitle>
           </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Stock Number *</label>
-                <Input {...form.register("stockNumber")} placeholder="e.g. 1045A" />
-                {form.formState.errors.stockNumber && <p className="text-destructive font-bold">{form.formState.errors.stockNumber.message}</p>}
+
+          {submitError && (
+            <div className="bg-red-100 border-2 border-red-600 text-red-700 font-bold p-4 rounded-lg">
+              {submitError}
+            </div>
+          )}
+
+          <div className="space-y-5 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Stock Number *</label>
+                <Input
+                  value={form.stockNumber}
+                  onChange={e => setField("stockNumber", e.target.value)}
+                  placeholder="e.g. 1045A"
+                />
+                {errors.stockNumber && <p className="text-red-600 font-bold text-base">{errors.stockNumber}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">VIN</label>
-                <Input {...form.register("vin")} placeholder="17-character VIN" className="font-mono" />
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">VIN</label>
+                <Input
+                  value={form.vin}
+                  onChange={e => setField("vin", e.target.value)}
+                  placeholder="17-character VIN"
+                  className="font-mono"
+                />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Year *</label>
-                <Input type="number" {...form.register("year")} />
-                {form.formState.errors.year && <p className="text-destructive font-bold">{form.formState.errors.year.message}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Year *</label>
+                <Input
+                  value={form.year}
+                  onChange={e => setField("year", e.target.value)}
+                  placeholder="e.g. 2022"
+                  inputMode="numeric"
+                />
+                {errors.year && <p className="text-red-600 font-bold text-base">{errors.year}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Make *</label>
-                <Input {...form.register("make")} placeholder="e.g. Ford" />
-                {form.formState.errors.make && <p className="text-destructive font-bold">{form.formState.errors.make.message}</p>}
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Make *</label>
+                <Input
+                  value={form.make}
+                  onChange={e => setField("make", e.target.value)}
+                  placeholder="e.g. Ford"
+                />
+                {errors.make && <p className="text-red-600 font-bold text-base">{errors.make}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Model *</label>
-                <Input {...form.register("model")} placeholder="e.g. F-150" />
-                {form.formState.errors.model && <p className="text-destructive font-bold">{form.formState.errors.model.message}</p>}
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Model *</label>
+                <Input
+                  value={form.model}
+                  onChange={e => setField("model", e.target.value)}
+                  placeholder="e.g. F-150"
+                />
+                {errors.model && <p className="text-red-600 font-bold text-base">{errors.model}</p>}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Mileage</label>
-                <Input type="number" {...form.register("mileage")} placeholder="e.g. 45000" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Mileage</label>
+                <Input
+                  value={form.mileage}
+                  onChange={e => setField("mileage", e.target.value)}
+                  placeholder="e.g. 45000"
+                  inputMode="numeric"
+                />
               </div>
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Color</label>
-                <Input {...form.register("color")} placeholder="e.g. Red" />
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Color</label>
+                <Input
+                  value={form.color}
+                  onChange={e => setField("color", e.target.value)}
+                  placeholder="e.g. Red"
+                />
               </div>
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" size="lg" onClick={() => setDialogOpen(false)}>CANCEL</Button>
-              <Button type="submit" size="lg" disabled={isPending}>
-                {isPending ? "ADDING..." : "ADD VEHICLE"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <DialogFooter className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="text-lg"
+              onClick={() => setDialogOpen(false)}
+            >
+              CANCEL
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              className="text-lg"
+              disabled={isPending}
+              onClick={handleSubmit}
+            >
+              {isPending ? "ADDING..." : "ADD VEHICLE"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>
