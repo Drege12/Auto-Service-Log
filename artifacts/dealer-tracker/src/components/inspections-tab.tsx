@@ -10,7 +10,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { INSPECTION_CATEGORIES, buildDefaultInspection } from "@/lib/inspection-template";
-import { Save, AlertCircle, CheckCircle2, HelpCircle, Clock } from "lucide-react";
+import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 export function InspectionsTab({ carId }: { carId: number }) {
@@ -141,6 +141,7 @@ export function InspectionsTab({ carId }: { carId: number }) {
     if (isActive) {
       if (targetStatus === "pass") activeClass = "bg-green-600 text-white border-green-600";
       else if (targetStatus === "fail") activeClass = "bg-red-600 text-white border-red-600";
+      else if (targetStatus === "advisory") activeClass = "bg-orange-500 text-white border-orange-500";
       else if (targetStatus === "pending") activeClass = "bg-yellow-400 text-black border-yellow-400";
       else activeClass = "bg-blue-500 text-white border-blue-500";
     }
@@ -203,6 +204,8 @@ export function InspectionsTab({ carId }: { carId: number }) {
                       className={`flex flex-col xl:flex-row gap-4 p-6 border-2 rounded-xl transition-colors ${
                         isFail
                           ? "border-red-600 bg-red-50"
+                          : item.status === "advisory"
+                          ? "border-orange-500 bg-orange-50"
                           : item.status === "pass"
                           ? "border-green-600 bg-green-50"
                           : "border-black bg-white"
@@ -224,6 +227,13 @@ export function InspectionsTab({ carId }: { carId: number }) {
                             onClick={() => handleStatusChange(index, UpsertInspectionItemStatus.fail)}
                             icon={AlertCircle}
                             label="FAIL"
+                          />
+                          <StatusButton
+                            currentStatus={item.status || "pending"}
+                            targetStatus={UpsertInspectionItemStatus.advisory}
+                            onClick={() => handleStatusChange(index, UpsertInspectionItemStatus.advisory)}
+                            icon={AlertTriangle}
+                            label="ADVISORY"
                           />
                           <StatusButton
                             currentStatus={item.status || "pending"}
