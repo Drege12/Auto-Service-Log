@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { 
-  useGetInspection, 
+import {
+  useGetInspection,
   useUpsertInspection,
   useCreateTodo,
   UpsertInspectionItemStatus,
-  InspectionItem
+  InspectionItem,
+  CreateTodoEntryPriority,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -22,19 +23,16 @@ export function InspectionsTab({ carId }: { carId: number }) {
   const [isDirty, setIsDirty] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
 
-  // Track which item names were already "fail" when we last loaded/saved,
-  // so we only add new failures to the todo list, not pre-existing ones.
-  const previouslyFailedRef = useRef<Set<string>>(new Set());
+  // Tracks the last-saved server state so we can detect newly-failed items per save.
+  // Updated both on initial load and after each successful save.
+  const serverStateRef = useRef<Partial<InspectionItem>[]>([]);
 
   useEffect(() => {
     if (inspectionItems) {
       const items = inspectionItems.length === 0 ? buildDefaultInspection() : inspectionItems;
       setLocalItems(items);
+      serverStateRef.current = items;
       setIsDirty(false);
-      // Record which items are already failed so we don't duplicate todos on next save
-      previouslyFailedRef.current = new Set(
-        items.filter(i => i.status === "fail").map(i => i.item as string)
-      );
     }
   }, [inspectionItems]);
 
@@ -63,59 +61,75 @@ export function InspectionsTab({ carId }: { carId: number }) {
       category: item.category || "Unknown",
       item: item.item || "Unknown",
       status: item.status as UpsertInspectionItemStatus,
-      notes: item.notes || ""
+      notes: item.notes || "",
     }));
 
-    // Find items that just became "fail" (weren't failed before this session)
-    const newlyFailed = localItems.filter(item =>
-      item.status === "fail" &&
-      item.item &&
-      !previouslyFailedRef.current.has(item.item as string)
-    );
+    // Find items that changed TO "fail" compared to the last server state.
+    // This means: currently fail AND (server didn't have it, OR server had it as non-fail).
+    const newlyFailed = localItems.filter(item => {
+      if (item.status !== "fail" || !item.item) return false;
+      const serverItem = serverStateRef.current.find(
+        s => s.item === item.item && s.category === item.category
+      );
+      // Only create a todo if it wasn't already "fail" on the server
+      return serverItem?.status !== "fail";
+    });
 
     upsertInspection({ carId, data: payload }, {
       onSuccess: () => {
+        // Update our baseline to the newly-saved state so future saves compare correctly
+        serverStateRef.current = localItems.map(item => ({ ...item }));
         setIsDirty(false);
 
-        // Update our baseline of what's failed
-        previouslyFailedRef.current = new Set(
-          localItems.filter(i => i.status === "fail").map(i => i.item as string)
-        );
-
-        // Create a todo for each newly-failed item
         if (newlyFailed.length > 0) {
+          let completed = 0;
           newlyFailed.forEach(item => {
+            // Description: "Diagnose: [notes]" or "Diagnose: [item name]" if no notes
+            const notesText = (item.notes || "").trim();
+            const description = notesText
+              ? `Diagnose: ${notesText}`
+              : `Diagnose: ${item.category} - ${item.item}`;
+
             createTodo({
               carId,
               data: {
-                description: `${item.category}: ${item.item}`,
-                priority: "high",
-                notes: item.notes || undefined,
+                description,
+                priority: CreateTodoEntryPriority.high,
+                notes: `${item.category}: ${item.item}`,
                 completed: false,
-              }
+              },
             }, {
               onSuccess: () => {
+                completed++;
                 queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/todos`] });
-              }
+                if (completed === newlyFailed.length) {
+                  setSavedMessage(
+                    `Saved. ${newlyFailed.length} failed item${newlyFailed.length > 1 ? "s" : ""} added to Needs Done.`
+                  );
+                  setTimeout(() => setSavedMessage(""), 5000);
+                }
+              },
+              onError: () => {
+                setSavedMessage("Inspection saved, but failed to create some to-do items.");
+                setTimeout(() => setSavedMessage(""), 5000);
+              },
             });
           });
-          setSavedMessage(`Saved. ${newlyFailed.length} failed item${newlyFailed.length > 1 ? "s" : ""} added to the to-do list.`);
         } else {
           setSavedMessage("Saved.");
+          setTimeout(() => setSavedMessage(""), 3000);
         }
-
-        setTimeout(() => setSavedMessage(""), 4000);
-      }
+      },
     });
   };
 
-  const StatusButton = ({ 
-    currentStatus, 
-    targetStatus, 
-    onClick, 
-    icon: Icon, 
-    label 
-  }: { 
+  const StatusButton = ({
+    currentStatus,
+    targetStatus,
+    onClick,
+    icon: Icon,
+    label,
+  }: {
     currentStatus: string;
     targetStatus: UpsertInspectionItemStatus;
     onClick: () => void;
@@ -123,8 +137,7 @@ export function InspectionsTab({ carId }: { carId: number }) {
     label: string;
   }) => {
     const isActive = currentStatus === targetStatus;
-
-    let activeClass = "bg-gray-200 border-gray-400 text-gray-700";
+    let activeClass = "bg-white border-black text-black";
     if (isActive) {
       if (targetStatus === "pass") activeClass = "bg-black text-white border-black";
       else if (targetStatus === "fail") activeClass = "bg-red-600 text-white border-red-600";
@@ -150,7 +163,7 @@ export function InspectionsTab({ carId }: { carId: number }) {
         <div>
           <h2 className="text-2xl font-black uppercase">Standard Inspection</h2>
           <p className="text-gray-600 font-medium mt-1">
-            Tap to set status. Failed items auto-add to the to-do list on save.
+            Failed items are added to Needs Done on save.
           </p>
         </div>
         <Button
@@ -224,12 +237,17 @@ export function InspectionsTab({ carId }: { carId: number }) {
                           />
                         </div>
                       </div>
-                      <div className="xl:w-1/3 flex items-end">
+                      <div className="xl:w-1/3 flex flex-col justify-end gap-1">
+                        {isFail && (
+                          <p className="text-sm font-bold text-red-600 uppercase">
+                            Notes → Diagnose description
+                          </p>
+                        )}
                         <Input
-                          placeholder="Add notes..."
+                          placeholder={isFail ? "What was found? (added to Needs Done)" : "Add notes..."}
                           value={item.notes || ""}
                           onChange={e => handleNotesChange(index, e.target.value)}
-                          className="w-full"
+                          className={`w-full ${isFail ? "border-red-600 border-2" : ""}`}
                         />
                       </div>
                     </div>
