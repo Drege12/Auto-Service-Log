@@ -509,6 +509,84 @@ export const useDeleteCar = <
   return useMutation(getDeleteCarMutationOptions(options));
 };
 
+export const getMarkCarAsSoldUrl = (carId: number) => {
+  return `/api/cars/${carId}/sold`;
+};
+
+export const markCarAsSold = async (
+  carId: number,
+  data: { sold: boolean },
+  options?: RequestInit,
+): Promise<Car> => {
+  return customFetch<Car>(getMarkCarAsSoldUrl(carId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+};
+
+export const getMarkCarAsSoldMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markCarAsSold>>,
+    TError,
+    { carId: number; data: { sold: boolean } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markCarAsSold>>,
+  TError,
+  { carId: number; data: { sold: boolean } },
+  TContext
+> => {
+  const mutationKey = ["markCarAsSold"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markCarAsSold>>,
+    { carId: number; data: { sold: boolean } }
+  > = (props) => {
+    const { carId, data } = props ?? {};
+    return markCarAsSold(carId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkCarAsSoldMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markCarAsSold>>
+>;
+
+export const useMarkCarAsSold = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markCarAsSold>>,
+    TError,
+    { carId: number; data: { sold: boolean } },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markCarAsSold>>,
+  TError,
+  { carId: number; data: { sold: boolean } },
+  TContext
+> => {
+  return useMutation(getMarkCarAsSoldMutationOptions(options));
+};
+
 /**
  * @summary Get inspection checklist for a car
  */

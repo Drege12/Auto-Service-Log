@@ -61,6 +61,29 @@ router.put("/cars/:carId", async (req, res) => {
   }
 });
 
+router.patch("/cars/:carId/sold", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const { sold } = req.body;
+    if (typeof sold !== "boolean") {
+      res.status(400).json({ error: "sold must be a boolean" });
+      return;
+    }
+    const [car] = await db
+      .update(carsTable)
+      .set({ sold: sold ? 1 : 0 })
+      .where(eq(carsTable.id, carId))
+      .returning();
+    if (!car) {
+      res.status(404).json({ error: "Car not found" });
+      return;
+    }
+    res.json(car);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update car" });
+  }
+});
+
 router.delete("/cars/:carId", async (req, res) => {
   try {
     const carId = parseInt(req.params.carId, 10);

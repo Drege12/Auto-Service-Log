@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useGetCar, useUpdateCar, useDeleteCar } from "@workspace/api-client-react";
+import { useGetCar, useUpdateCar, useDeleteCar, useMarkCarAsSold } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { InspectionsTab } from "@/components/inspections-tab";
 import { MaintenanceTab } from "@/components/maintenance-tab";
 import { TodosTab } from "@/components/todos-tab";
-import { ArrowLeft, Edit2, Trash2, Key, Gauge } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +36,7 @@ export default function CarDetail() {
   const { data: car, isLoading, isError } = useGetCar(carId);
   const { mutate: updateCar, isPending: isUpdating } = useUpdateCar();
   const { mutate: deleteCar } = useDeleteCar();
+  const { mutate: markAsSold, isPending: isMarkingAsSold } = useMarkCarAsSold();
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -74,6 +75,22 @@ export default function CarDetail() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: [`/api/cars`] });
           setLocation("/");
+        }
+      });
+    }
+  };
+
+  const handleToggleSold = () => {
+    const isSold = Boolean(car?.sold);
+    const confirmMsg = isSold
+      ? `Mark ${car?.year} ${car?.make} ${car?.model} as active again?`
+      : `Mark ${car?.year} ${car?.make} ${car?.model} as sold? It will move to the Sold Vehicles list.`;
+    if (confirm(confirmMsg)) {
+      markAsSold({ carId, data: { sold: !isSold } }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: [`/api/cars`] });
+          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });
+          if (!isSold) setLocation("/");
         }
       });
     }
@@ -121,6 +138,16 @@ export default function CarDetail() {
           <div className="flex md:flex-col gap-4 min-w-[140px]">
             <Button variant="outline" size="lg" className="flex-1" onClick={openEditDialog}>
               <Edit2 className="w-5 h-5 mr-2" /> EDIT
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              className={`flex-1 border-4 font-black ${car.sold ? "bg-green-600 border-green-600 text-white" : "bg-gray-500 border-gray-500 text-white"}`}
+              disabled={isMarkingAsSold}
+              onClick={handleToggleSold}
+            >
+              <Tag className="w-5 h-5 mr-2" />
+              {car.sold ? "UNSELL" : "MARK SOLD"}
             </Button>
             <Button variant="destructive" size="lg" className="flex-1 border-destructive text-white" onClick={handleDelete}>
               <Trash2 className="w-5 h-5 mr-2" /> DELETE

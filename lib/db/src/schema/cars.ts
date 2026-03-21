@@ -12,6 +12,7 @@ export const carsTable = pgTable("cars", {
   color: text("color"),
   mileage: integer("mileage"),
   notes: text("notes"),
+  sold: integer("sold").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
