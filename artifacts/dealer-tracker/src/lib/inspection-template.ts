@@ -1,6 +1,7 @@
 import { UpsertInspectionItemStatus } from "@workspace/api-client-react";
 
 export const INSPECTION_CATEGORIES = [
+  "OBDII",
   "Engine",
   "Transmission",
   "Brakes",
@@ -12,6 +13,11 @@ export const INSPECTION_CATEGORIES = [
 ];
 
 export const INSPECTION_TEMPLATE = [
+  // OBDII
+  { category: "OBDII", item: "Scan for codes" },
+  { category: "OBDII", item: "Check engine light" },
+  { category: "OBDII", item: "Pending codes" },
+  { category: "OBDII", item: "Readiness monitors" },
   // Engine
   { category: "Engine", item: "Oil level" },
   { category: "Engine", item: "Coolant level" },

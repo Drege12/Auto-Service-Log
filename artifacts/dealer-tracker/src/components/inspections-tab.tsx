@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { INSPECTION_CATEGORIES, buildDefaultInspection } from "@/lib/inspection-template";
 import { Save, AlertCircle, CheckCircle2, HelpCircle, Clock } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export function InspectionsTab({ carId }: { carId: number }) {
   const queryClient = useQueryClient();
@@ -247,10 +247,11 @@ export function InspectionsTab({ carId }: { carId: number }) {
                             Notes → Diagnose description
                           </p>
                         )}
-                        <Input
+                        <Textarea
                           placeholder={isFail ? "What was found? (added to Needs Done)" : "Add notes..."}
                           value={item.notes || ""}
                           onChange={e => handleNotesChange(index, e.target.value)}
+                          rows={3}
                           className={`w-full ${isFail ? "border-red-600 border-2" : ""}`}
                         />
                       </div>
