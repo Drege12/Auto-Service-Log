@@ -226,6 +226,18 @@ export function InspectionsTab({ carId }: { carId: number }) {
           const isOpen = openSections.has(category);
           const hasFail = categoryItems.some(x => x.item.status === "fail");
           const hasAdvisory = categoryItems.some(x => x.item.status === "advisory");
+          const isDiesel = category === "Diesel Systems";
+
+          const markAllNa = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            const newItems = [...localItems];
+            categoryItems.forEach(({ index }) => {
+              newItems[index] = { ...newItems[index], status: UpsertInspectionItemStatus.na };
+            });
+            setLocalItems(newItems);
+            setIsDirty(true);
+            setSavedMessage("");
+          };
 
           return (
             <div key={category} className={`border-4 rounded-xl overflow-hidden ${
@@ -248,10 +260,21 @@ export function InspectionsTab({ carId }: { carId: number }) {
                   <span className="text-2xl">{category}</span>
                   <CategorySummary items={categoryItems.map(x => x.item)} />
                 </div>
-                {isOpen
-                  ? <ChevronDown className="w-8 h-8 flex-shrink-0" />
-                  : <ChevronRight className="w-8 h-8 flex-shrink-0" />
-                }
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  {isDiesel && (
+                    <span
+                      role="button"
+                      onClick={markAllNa}
+                      className="bg-blue-500 text-white text-sm font-black px-3 py-2 rounded-lg uppercase hover:bg-blue-600"
+                    >
+                      Not a Diesel
+                    </span>
+                  )}
+                  {isOpen
+                    ? <ChevronDown className="w-8 h-8" />
+                    : <ChevronRight className="w-8 h-8" />
+                  }
+                </div>
               </button>
 
               {isOpen && (
