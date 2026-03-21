@@ -260,7 +260,7 @@ export function InspectionsTab({ carId }: { carId: number }) {
                   <span className="text-2xl">{category}</span>
                   <CategorySummary items={categoryItems.map(x => x.item)} />
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="flex items-start gap-3 flex-shrink-0">
                   {isDiesel && (
                     <span
                       role="button"
