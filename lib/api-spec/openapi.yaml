@@ -383,6 +383,8 @@ components:
           type: integer
         notes:
           type: string
+        sold:
+          type: integer
         createdAt:
           type: string
           format: date-time
@@ -392,6 +394,7 @@ components:
         - year
         - make
         - model
+        - sold
         - createdAt
 
     CreateCar:
