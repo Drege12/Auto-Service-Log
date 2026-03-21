@@ -139,10 +139,10 @@ export function InspectionsTab({ carId }: { carId: number }) {
     const isActive = currentStatus === targetStatus;
     let activeClass = "bg-white border-black text-black";
     if (isActive) {
-      if (targetStatus === "pass") activeClass = "bg-black text-white border-black";
+      if (targetStatus === "pass") activeClass = "bg-green-600 text-white border-green-600";
       else if (targetStatus === "fail") activeClass = "bg-red-600 text-white border-red-600";
       else if (targetStatus === "pending") activeClass = "bg-yellow-400 text-black border-yellow-400";
-      else activeClass = "bg-gray-400 text-white border-gray-400";
+      else activeClass = "bg-blue-500 text-white border-blue-500";
     }
 
     return (
@@ -201,7 +201,11 @@ export function InspectionsTab({ carId }: { carId: number }) {
                     <div
                       key={index}
                       className={`flex flex-col xl:flex-row gap-4 p-6 border-2 rounded-xl transition-colors ${
-                        isFail ? "border-red-600 bg-red-50" : "border-black bg-white"
+                        isFail
+                          ? "border-red-600 bg-red-50"
+                          : item.status === "pass"
+                          ? "border-green-600 bg-green-50"
+                          : "border-black bg-white"
                       }`}
                     >
                       <div className="flex-1">
