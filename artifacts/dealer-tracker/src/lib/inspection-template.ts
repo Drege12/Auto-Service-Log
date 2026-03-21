@@ -11,7 +11,8 @@ export const INSPECTION_CATEGORIES = [
   "Exterior",
   "Interior",
   "Electrical",
-  "Fluids"
+  "Fluids",
+  "Engine Performance"
 ];
 
 export const INSPECTION_TEMPLATE = [
@@ -108,6 +109,31 @@ export const INSPECTION_TEMPLATE = [
   { category: "Fluids", item: "Power steering fluid" },
   { category: "Fluids", item: "Windshield washer fluid" },
   { category: "Fluids", item: "Differential fluid" },
+  // Engine Performance
+  { category: "Engine Performance", item: "Engine tune / calibration" },
+  { category: "Engine Performance", item: "Spark plugs & ignition system" },
+  { category: "Engine Performance", item: "Throttle body & response" },
+  { category: "Engine Performance", item: "Mass air flow (MAF) sensor" },
+  { category: "Engine Performance", item: "Fuel injectors" },
+  { category: "Engine Performance", item: "Fuel pressure & pump" },
+  { category: "Engine Performance", item: "Oxygen sensors (upstream/downstream)" },
+  { category: "Engine Performance", item: "EGR valve / system (if equipped)" },
+  { category: "Engine Performance", item: "Variable valve timing / VVT (if equipped)" },
+  { category: "Engine Performance", item: "Variable intake manifold (if equipped)" },
+  { category: "Engine Performance", item: "Turbocharger(s) (if equipped)" },
+  { category: "Engine Performance", item: "Intercooler / charge air cooler (if equipped)" },
+  { category: "Engine Performance", item: "Boost pipes & couplers (if equipped)" },
+  { category: "Engine Performance", item: "Wastegate (if equipped)" },
+  { category: "Engine Performance", item: "Blow-off / bypass valve (if equipped)" },
+  { category: "Engine Performance", item: "Boost control solenoid (if equipped)" },
+  { category: "Engine Performance", item: "Supercharger (if equipped)" },
+  { category: "Engine Performance", item: "Supercharger belt & drive (if equipped)" },
+  { category: "Engine Performance", item: "Nitrous system (if equipped)" },
+  { category: "Engine Performance", item: "Nitrous solenoids (if equipped)" },
+  { category: "Engine Performance", item: "Nitrous lines & fittings (if equipped)" },
+  { category: "Engine Performance", item: "Nitrous bottle pressure (if equipped)" },
+  { category: "Engine Performance", item: "Performance exhaust / headers (if equipped)" },
+  { category: "Engine Performance", item: "Cold air / short ram intake (if equipped)" },
 ];
 
 export function buildDefaultInspection() {
