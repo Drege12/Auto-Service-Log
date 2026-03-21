@@ -246,7 +246,7 @@ export function InspectionsTab({ carId }: { carId: number }) {
               <button
                 type="button"
                 onClick={() => toggleSection(category)}
-                className={`w-full flex items-center justify-between gap-4 p-5 text-left font-black uppercase text-xl ${
+                className={`w-full flex flex-col gap-3 p-5 text-left font-black uppercase text-xl ${
                   hasFail
                     ? "bg-red-50"
                     : hasAdvisory
@@ -256,24 +256,24 @@ export function InspectionsTab({ carId }: { carId: number }) {
                     : "bg-white"
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-4">
                   <span className="text-2xl">{category}</span>
-                  <CategorySummary items={categoryItems.map(x => x.item)} />
+                  {isOpen
+                    ? <ChevronDown className="w-8 h-8 flex-shrink-0" />
+                    : <ChevronRight className="w-8 h-8 flex-shrink-0" />
+                  }
                 </div>
-                <div className="flex items-start gap-3 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-3">
+                  <CategorySummary items={categoryItems.map(x => x.item)} />
                   {isDiesel && (
                     <span
                       role="button"
                       onClick={markAllNa}
-                      className="bg-blue-500 text-white text-sm font-black px-3 py-2 rounded-lg uppercase hover:bg-blue-600"
+                      className="bg-blue-500 text-white text-sm font-black px-3 py-2 rounded-lg uppercase"
                     >
                       Not a Diesel
                     </span>
                   )}
-                  {isOpen
-                    ? <ChevronDown className="w-8 h-8" />
-                    : <ChevronRight className="w-8 h-8" />
-                  }
                 </div>
               </button>
 
