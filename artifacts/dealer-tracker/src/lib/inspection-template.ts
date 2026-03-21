@@ -65,6 +65,7 @@ export const INSPECTION_TEMPLATE = [
   { category: "Electrical", item: "Alternator output" },
   { category: "Electrical", item: "Fuses" },
   { category: "Electrical", item: "Horn" },
+  { category: "Electrical", item: "Misc. electrical (shorts, bad grounds)" },
   // Fluids
   { category: "Fluids", item: "Power steering fluid" },
   { category: "Fluids", item: "Windshield washer fluid" },
