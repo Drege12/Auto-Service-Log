@@ -226,7 +226,11 @@ export function InspectionsTab({ carId }: { carId: number }) {
           const isOpen = openSections.has(category);
           const hasFail = categoryItems.some(x => x.item.status === "fail");
           const hasAdvisory = categoryItems.some(x => x.item.status === "advisory");
-          const isDiesel = category === "Diesel Systems";
+          const naButtonLabel: Record<string, string> = {
+            "Diesel Systems": "Not a Diesel",
+            "Hybrid & Electric": "Not a Hybrid/EV",
+          };
+          const naLabel = naButtonLabel[category];
 
           const markAllNa = (e: React.MouseEvent) => {
             e.stopPropagation();
@@ -265,13 +269,13 @@ export function InspectionsTab({ carId }: { carId: number }) {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <CategorySummary items={categoryItems.map(x => x.item)} />
-                  {isDiesel && (
+                  {naLabel && (
                     <span
                       role="button"
                       onClick={markAllNa}
                       className="bg-blue-500 text-white text-sm font-black px-3 py-2 rounded-lg uppercase"
                     >
-                      Not a Diesel
+                      {naLabel}
                     </span>
                   )}
                 </div>
