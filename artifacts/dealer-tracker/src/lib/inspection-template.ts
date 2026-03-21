@@ -13,7 +13,8 @@ export const INSPECTION_CATEGORIES = [
   "Electrical",
   "Fluids",
   "Engine Performance",
-  "Diesel Systems"
+  "Diesel Systems",
+  "Hybrid & Electric"
 ];
 
 export const INSPECTION_TEMPLATE = [
@@ -160,6 +161,27 @@ export const INSPECTION_TEMPLATE = [
   { category: "Diesel Systems", item: "DEF quality sensor (if equipped)" },
   { category: "Diesel Systems", item: "DEF fluid heater (if equipped)" },
   { category: "Diesel Systems", item: "Exhaust brake / Jake brake (if equipped)" },
+  // Hybrid & Electric
+  { category: "Hybrid & Electric", item: "High voltage (HV) battery pack" },
+  { category: "Hybrid & Electric", item: "HV battery state of health" },
+  { category: "Hybrid & Electric", item: "HV battery cooling system" },
+  { category: "Hybrid & Electric", item: "Battery management module (BMS)" },
+  { category: "Hybrid & Electric", item: "HV cables & connectors" },
+  { category: "Hybrid & Electric", item: "HV safety interlock / service disconnect" },
+  { category: "Hybrid & Electric", item: "Electric motor(s)" },
+  { category: "Hybrid & Electric", item: "Power electronics / inverter" },
+  { category: "Hybrid & Electric", item: "DC-DC converter" },
+  { category: "Hybrid & Electric", item: "On-board charger (OBC)" },
+  { category: "Hybrid & Electric", item: "Charging port & connector" },
+  { category: "Hybrid & Electric", item: "Charge indicator lights" },
+  { category: "Hybrid & Electric", item: "Regenerative braking system" },
+  { category: "Hybrid & Electric", item: "Hybrid transaxle / eCVT (if equipped)" },
+  { category: "Hybrid & Electric", item: "Electric power steering pump (if equipped)" },
+  { category: "Hybrid & Electric", item: "Electric A/C compressor" },
+  { category: "Hybrid & Electric", item: "12V auxiliary battery" },
+  { category: "Hybrid & Electric", item: "HV component coolant system" },
+  { category: "Hybrid & Electric", item: "Thermal management system" },
+  { category: "Hybrid & Electric", item: "Range / state of charge display" },
 ];
 
 export function buildDefaultInspection() {
