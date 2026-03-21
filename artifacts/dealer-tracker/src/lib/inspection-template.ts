@@ -12,7 +12,8 @@ export const INSPECTION_CATEGORIES = [
   "Interior",
   "Electrical",
   "Fluids",
-  "Engine Performance"
+  "Engine Performance",
+  "Diesel Systems"
 ];
 
 export const INSPECTION_TEMPLATE = [
@@ -136,6 +137,29 @@ export const INSPECTION_TEMPLATE = [
   { category: "Engine Performance", item: "Nitrous bottle pressure (if equipped)" },
   { category: "Engine Performance", item: "Performance exhaust / headers (if equipped)" },
   { category: "Engine Performance", item: "Cold air / short ram intake (if equipped)" },
+  // Diesel Systems
+  { category: "Diesel Systems", item: "Glow plugs" },
+  { category: "Diesel Systems", item: "Glow plug controller / relay" },
+  { category: "Diesel Systems", item: "Diesel fuel injectors" },
+  { category: "Diesel Systems", item: "Injection pump (CP3/CP4/mechanical)" },
+  { category: "Diesel Systems", item: "High-pressure fuel lines" },
+  { category: "Diesel Systems", item: "Fuel return lines" },
+  { category: "Diesel Systems", item: "Fuel water separator" },
+  { category: "Diesel Systems", item: "Diesel fuel filter" },
+  { category: "Diesel Systems", item: "Lift pump (if equipped)" },
+  { category: "Diesel Systems", item: "Turbocharger" },
+  { category: "Diesel Systems", item: "Intercooler / charge air cooler" },
+  { category: "Diesel Systems", item: "EGR cooler (diesel)" },
+  { category: "Diesel Systems", item: "EGR valve (diesel)" },
+  { category: "Diesel Systems", item: "Diesel particulate filter (DPF)" },
+  { category: "Diesel Systems", item: "DPF regeneration system" },
+  { category: "Diesel Systems", item: "NOx sensors (upstream/downstream)" },
+  { category: "Diesel Systems", item: "SCR catalyst (if equipped)" },
+  { category: "Diesel Systems", item: "DEF tank & fluid level (if equipped)" },
+  { category: "Diesel Systems", item: "DEF pump & injector (if equipped)" },
+  { category: "Diesel Systems", item: "DEF quality sensor (if equipped)" },
+  { category: "Diesel Systems", item: "DEF fluid heater (if equipped)" },
+  { category: "Diesel Systems", item: "Exhaust brake / Jake brake (if equipped)" },
 ];
 
 export function buildDefaultInspection() {
