@@ -243,6 +243,17 @@ export function InspectionsTab({ carId }: { carId: number }) {
             setSavedMessage("");
           };
 
+          const resetToPending = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            const newItems = [...localItems];
+            categoryItems.forEach(({ index }) => {
+              newItems[index] = { ...newItems[index], status: UpsertInspectionItemStatus.pending };
+            });
+            setLocalItems(newItems);
+            setIsDirty(true);
+            setSavedMessage("");
+          };
+
           return (
             <div key={category} className={`border-4 rounded-xl overflow-hidden ${
               hasFail ? "border-red-600" : hasAdvisory ? "border-orange-500" : "border-black"
@@ -278,6 +289,13 @@ export function InspectionsTab({ carId }: { carId: number }) {
                       {naLabel}
                     </span>
                   )}
+                  <span
+                    role="button"
+                    onClick={resetToPending}
+                    className="bg-gray-200 text-black text-sm font-black px-3 py-2 rounded-lg uppercase"
+                  >
+                    Reset
+                  </span>
                 </div>
               </button>
 
