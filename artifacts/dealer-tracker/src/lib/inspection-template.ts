@@ -37,6 +37,7 @@ export const INSPECTION_TEMPLATE = [
   { category: "Tires", item: "Rear right tread" },
   { category: "Tires", item: "Spare tire" },
   { category: "Tires", item: "Tire pressure" },
+  { category: "Tires", item: "Roadside kit (jack, rod, lug wrench)" },
   // Exterior
   { category: "Exterior", item: "Paint condition" },
   { category: "Exterior", item: "Windshield" },
