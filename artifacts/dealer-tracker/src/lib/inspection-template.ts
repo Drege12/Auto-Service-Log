@@ -27,6 +27,8 @@ export const INSPECTION_TEMPLATE = [
   { category: "Engine", item: "Air filter" },
   { category: "Engine", item: "Belts and hoses" },
   { category: "Engine", item: "Engine mounts" },
+  { category: "Engine", item: "Spark plugs" },
+  { category: "Engine", item: "Fuel delivery (injection or carburetor)" },
   { category: "Engine", item: "Valve cover/gaskets" },
   // Transmission
   { category: "Transmission", item: "Fluid level" },
