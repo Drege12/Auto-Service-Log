@@ -58,6 +58,7 @@ export type UpsertInspectionItemStatus =
 export const UpsertInspectionItemStatus = {
   pass: "pass",
   fail: "fail",
+  advisory: "advisory",
   na: "na",
   pending: "pending",
 } as const;

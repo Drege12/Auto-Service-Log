@@ -88,7 +88,7 @@ router.post("/cars/:carId/inspection", async (req, res) => {
       id: z.number().optional(),
       category: z.string(),
       item: z.string(),
-      status: z.enum(["pass", "fail", "na", "pending"]),
+      status: z.enum(["pass", "fail", "advisory", "na", "pending"]),
       notes: z.string().optional().nullable(),
     }));
     const parsed = itemsSchema.safeParse(req.body);

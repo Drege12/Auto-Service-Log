@@ -432,7 +432,7 @@ components:
           type: string
         status:
           type: string
-          enum: [pass, fail, na, pending]
+          enum: [pass, fail, advisory, na, pending]
         notes:
           type: string
       required:
@@ -453,7 +453,7 @@ components:
           type: string
         status:
           type: string
-          enum: [pass, fail, na, pending]
+          enum: [pass, fail, advisory, na, pending]
         notes:
           type: string
       required:
