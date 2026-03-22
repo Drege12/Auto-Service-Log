@@ -10,6 +10,7 @@ interface CostsTabProps {
   repairNotes?: string;
   partsCost?: string;
   laborHours?: string;
+  laborRate?: string;
   actualRepairNotes?: string;
   actualPartsCost?: string;
   actualLaborHours?: string;
@@ -32,7 +33,7 @@ function StatCard({ label, value, dark }: { label: string; value: string; dark?:
 
 export function CostsTab({
   carId,
-  repairNotes, partsCost, laborHours,
+  repairNotes, partsCost, laborHours, laborRate,
   actualRepairNotes, actualPartsCost, actualLaborHours,
 }: CostsTabProps) {
   const queryClient = useQueryClient();
@@ -41,6 +42,7 @@ export function CostsTab({
   const [projNotes, setProjNotes] = useState(repairNotes ?? "");
   const [projParts, setProjParts] = useState(partsCost ?? "");
   const [projHours, setProjHours] = useState(laborHours ?? "");
+  const [rate, setRate] = useState(laborRate ?? "");
 
   const [actNotes, setActNotes] = useState(actualRepairNotes ?? "");
   const [actParts, setActParts] = useState(actualPartsCost ?? "");
@@ -53,18 +55,20 @@ export function CostsTab({
     setProjNotes(repairNotes ?? "");
     setProjParts(partsCost ?? "");
     setProjHours(laborHours ?? "");
+    setRate(laborRate ?? "");
     setActNotes(actualRepairNotes ?? "");
     setActParts(actualPartsCost ?? "");
     setActHours(actualLaborHours ?? "");
-  }, [repairNotes, partsCost, laborHours, actualRepairNotes, actualPartsCost, actualLaborHours]);
+  }, [repairNotes, partsCost, laborHours, laborRate, actualRepairNotes, actualPartsCost, actualLaborHours]);
 
   const projPartsNum = toNum(projParts);
   const projHoursNum = toNum(projHours);
+  const rateNum = toNum(rate) ?? 100;
   const actPartsNum = toNum(actParts);
   const actHoursNum = toNum(actHours);
 
-  const projTotal = (projPartsNum ?? 0) + (projHoursNum ?? 0) * 100;
-  const actTotal = (actPartsNum ?? 0) + (actHoursNum ?? 0) * 100;
+  const projTotal = (projPartsNum ?? 0) + (projHoursNum ?? 0) * rateNum;
+  const actTotal = (actPartsNum ?? 0) + (actHoursNum ?? 0) * rateNum;
   const hasProjData = projPartsNum != null || projHoursNum != null;
   const hasActData = actPartsNum != null || actHoursNum != null;
   const hasBoth = hasProjData && hasActData;
@@ -78,6 +82,7 @@ export function CostsTab({
   const handleSave = () => {
     setError("");
     const e =
+      validateNum("Labor rate", rate) ||
       validateNum("Projected parts cost", projParts) ||
       validateNum("Projected labor hours", projHours) ||
       validateNum("Actual parts cost", actParts) ||
@@ -88,6 +93,7 @@ export function CostsTab({
       repairNotes: projNotes.trim() || null,
       partsCost: projPartsNum,
       laborHours: projHoursNum,
+      laborRate: toNum(rate),
       actualRepairNotes: actNotes.trim() || null,
       actualPartsCost: actPartsNum,
       actualLaborHours: actHoursNum,
@@ -125,6 +131,33 @@ export function CostsTab({
           )}
         </div>
       )}
+
+      <div className="border-4 border-black rounded-xl overflow-hidden">
+        <div className="bg-gray-100 border-b-4 border-black px-6 py-4 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2 font-black uppercase text-base">
+            <DollarSign className="w-4 h-4" /> Labor Rate ($/hr)
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-500">$</span>
+            <Input
+              value={rate}
+              onChange={e => setRate(e.target.value)}
+              placeholder="e.g. 125"
+              inputMode="decimal"
+              className="bg-white text-black font-mono w-32"
+            />
+            <span className="text-sm text-gray-500 font-medium">/ hr</span>
+          </div>
+          {rate.trim() && toNum(rate) != null && (
+            <span className="text-sm text-gray-500 font-medium">
+              Using <span className="font-black text-black">${toNum(rate)!.toFixed(2)}/hr</span> for both totals
+            </span>
+          )}
+          {!rate.trim() && (
+            <span className="text-sm text-gray-400 font-medium italic">Defaults to $100/hr if left blank</span>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Projected */}
