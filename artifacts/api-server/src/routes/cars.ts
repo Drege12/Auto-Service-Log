@@ -53,7 +53,17 @@ router.put("/cars/:carId", async (req, res) => {
       res.status(400).json({ error: "Invalid car data", details: parsed.error.flatten() });
       return;
     }
-    const [car] = await db.update(carsTable).set(parsed.data).where(eq(carsTable.id, carId)).returning();
+    // If originalMileage has never been set (no log entries yet), lock it in
+    // to the mileage value being saved so the Mileage tab always has a baseline.
+    const [existing] = await db.select({ originalMileage: carsTable.originalMileage })
+      .from(carsTable).where(eq(carsTable.id, carId));
+    const extraFields = existing?.originalMileage === null && parsed.data.mileage != null
+      ? { originalMileage: parsed.data.mileage }
+      : {};
+    const [car] = await db.update(carsTable)
+      .set({ ...parsed.data, ...extraFields })
+      .where(eq(carsTable.id, carId))
+      .returning();
     if (!car) {
       res.status(404).json({ error: "Car not found" });
       return;
