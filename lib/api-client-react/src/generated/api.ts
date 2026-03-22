@@ -1503,3 +1503,26 @@ export const useDeleteMileageEntry = <TError = ErrorType<unknown>, TContext = un
   const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMileageEntry>>, { carId: number; entryId: number }> = ({ carId, entryId }) => deleteMileageEntry(carId, entryId, requestOptions);
   return useMutation({ mutationKey: ['deleteMileageEntry'], mutationFn, ...mutationOptions });
 };
+
+export const getUpdateCarCostsUrl = (carId: number) => `/api/cars/${carId}/costs`;
+
+export const updateCarCosts = async (
+  carId: number,
+  data: { repairNotes?: string | null; partsCost?: number | null; laborHours?: number | null },
+  options?: RequestInit,
+): Promise<Car> => {
+  return customFetch<Car>(getUpdateCarCostsUrl(carId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(data),
+  });
+};
+
+export const useUpdateCarCosts = <TError = ErrorType<unknown>, TContext = unknown>(
+  options?: { mutation?: UseMutationOptions<Awaited<ReturnType<typeof updateCarCosts>>, TError, { carId: number; data: Parameters<typeof updateCarCosts>[1] }, TContext>; request?: SecondParameter<typeof customFetch> }
+): UseMutationResult<Awaited<ReturnType<typeof updateCarCosts>>, TError, { carId: number; data: Parameters<typeof updateCarCosts>[1] }, TContext> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCarCosts>>, { carId: number; data: Parameters<typeof updateCarCosts>[1] }> = ({ carId, data }) => updateCarCosts(carId, data, requestOptions);
+  return useMutation({ mutationKey: ['updateCarCosts'], mutationFn, ...mutationOptions });
+};
