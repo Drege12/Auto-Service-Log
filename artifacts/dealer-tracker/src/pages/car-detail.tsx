@@ -12,27 +12,22 @@ import { MaintenanceTab } from "@/components/maintenance-tab";
 import { MileageTab } from "@/components/mileage-tab";
 import { TodosTab } from "@/components/todos-tab";
 import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag } from "lucide-react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 
-const formSchema = z.object({
-  stockNumber: z.string().min(1, "Stock number is required"),
-  year: z.coerce.number().min(1900, "Invalid year").max(2100, "Invalid year"),
-  make: z.string().min(1, "Make is required"),
-  model: z.string().min(1, "Model is required"),
-  vin: z.string().optional(),
-  color: z.string().optional(),
-  mileage: z.coerce.number().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+const emptyEditForm = {
+  stockNumber: "",
+  year: "",
+  make: "",
+  model: "",
+  vin: "",
+  color: "",
+  mileage: "",
+};
 
 export default function CarDetail() {
   const [, params] = useRoute("/cars/:id");
   const [, setLocation] = useLocation();
   const carId = params?.id ? parseInt(params.id, 10) : 0;
-  
+
   const queryClient = useQueryClient();
   const { data: car, isLoading, isError } = useGetCar(carId);
   const { mutate: updateCar, isPending: isUpdating } = useUpdateCar();
@@ -40,33 +35,46 @@ export default function CarDetail() {
   const { mutate: markAsSold, isPending: isMarkingAsSold } = useMarkCarAsSold();
 
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-  });
+  const [editForm, setEditForm] = useState(emptyEditForm);
+  const [editError, setEditError] = useState("");
 
   const openEditDialog = () => {
     if (car) {
-      form.reset({
+      setEditForm({
         stockNumber: car.stockNumber,
-        year: car.year,
+        year: String(car.year),
         make: car.make,
         model: car.model,
         vin: car.vin || "",
         color: car.color || "",
-        mileage: car.mileage || undefined,
+        mileage: car.mileage != null ? String(car.mileage) : "",
       });
+      setEditError("");
       setDialogOpen(true);
     }
   };
 
-  const onSubmit = (values: FormValues) => {
-    updateCar({ carId, data: values }, {
+  const handleEditSave = () => {
+    if (!editForm.stockNumber.trim()) { setEditError("Stock number is required."); return; }
+    if (!editForm.year.trim() || isNaN(Number(editForm.year))) { setEditError("A valid year is required."); return; }
+    if (!editForm.make.trim()) { setEditError("Make is required."); return; }
+    if (!editForm.model.trim()) { setEditError("Model is required."); return; }
+    setEditError("");
+    const data = {
+      stockNumber: editForm.stockNumber.trim(),
+      year: parseInt(editForm.year, 10),
+      make: editForm.make.trim(),
+      model: editForm.model.trim(),
+      vin: editForm.vin.trim() || undefined,
+      color: editForm.color.trim() || undefined,
+      mileage: editForm.mileage.trim() ? parseInt(editForm.mileage.trim(), 10) : undefined,
+    };
+    updateCar({ carId, data }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });
         queryClient.invalidateQueries({ queryKey: [`/api/cars`] });
         setDialogOpen(false);
-      }
+      },
     });
   };
 
@@ -118,7 +126,7 @@ export default function CarDetail() {
                 {car.year} {car.make} {car.model}
               </h1>
             </div>
-            
+
             <div className="flex flex-wrap gap-6 mt-4 font-mono text-xl font-bold">
               <div className="flex items-center gap-2">
                 <Key className="w-6 h-6 text-muted-foreground" />
@@ -168,7 +176,7 @@ export default function CarDetail() {
           <TabsTrigger value="todos" className="w-full sm:w-auto">NEEDS DONE</TabsTrigger>
           <TabsTrigger value="mileage" className="w-full sm:w-auto">MILEAGE</TabsTrigger>
         </TabsList>
-        
+
         <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
           <TabsContent value="inspection" className="mt-0">
             <InspectionsTab carId={carId} />
@@ -191,52 +199,84 @@ export default function CarDetail() {
           <DialogHeader>
             <DialogTitle>EDIT VEHICLE DETAILS</DialogTitle>
           </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+          <div className="space-y-6 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-lg font-bold uppercase">Stock Number *</label>
-                <Input {...form.register("stockNumber")} />
-                {form.formState.errors.stockNumber && <p className="text-destructive font-bold">{form.formState.errors.stockNumber.message}</p>}
+                <Input
+                  className="bg-white text-black"
+                  value={editForm.stockNumber}
+                  onChange={e => setEditForm(f => ({ ...f, stockNumber: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-lg font-bold uppercase">VIN</label>
-                <Input {...form.register("vin")} className="font-mono" />
+                <Input
+                  className="font-mono bg-white text-black"
+                  value={editForm.vin}
+                  onChange={e => setEditForm(f => ({ ...f, vin: e.target.value }))}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="text-lg font-bold uppercase">Year *</label>
-                <Input type="number" {...form.register("year")} />
+                <Input
+                  inputMode="numeric"
+                  className="bg-white text-black"
+                  value={editForm.year}
+                  onChange={e => setEditForm(f => ({ ...f, year: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-lg font-bold uppercase">Make *</label>
-                <Input {...form.register("make")} />
+                <Input
+                  className="bg-white text-black"
+                  value={editForm.make}
+                  onChange={e => setEditForm(f => ({ ...f, make: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-lg font-bold uppercase">Model *</label>
-                <Input {...form.register("model")} />
+                <Input
+                  className="bg-white text-black"
+                  value={editForm.model}
+                  onChange={e => setEditForm(f => ({ ...f, model: e.target.value }))}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Mileage</label>
-                <Input type="number" {...form.register("mileage")} />
+                <label className="text-lg font-bold uppercase">Current Mileage</label>
+                <Input
+                  inputMode="numeric"
+                  className="bg-white text-black"
+                  value={editForm.mileage}
+                  onChange={e => setEditForm(f => ({ ...f, mileage: e.target.value }))}
+                  placeholder="e.g. 47500"
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-lg font-bold uppercase">Color</label>
-                <Input {...form.register("color")} />
+                <Input
+                  className="bg-white text-black"
+                  value={editForm.color}
+                  onChange={e => setEditForm(f => ({ ...f, color: e.target.value }))}
+                />
               </div>
             </div>
 
+            {editError && <p className="text-destructive font-bold text-lg">{editError}</p>}
+
             <DialogFooter>
               <Button type="button" variant="outline" size="lg" onClick={() => setDialogOpen(false)}>CANCEL</Button>
-              <Button type="submit" size="lg" disabled={isUpdating}>
+              <Button type="button" size="lg" disabled={isUpdating} onClick={handleEditSave}>
                 {isUpdating ? "SAVING..." : "SAVE CHANGES"}
               </Button>
             </DialogFooter>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>
