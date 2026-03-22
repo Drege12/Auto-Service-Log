@@ -176,7 +176,7 @@ export function CostsTab({
         {/* Actual */}
         <div className="border-4 border-black rounded-xl overflow-hidden">
           <div className="bg-black border-b-4 border-black px-6 py-4">
-            <h3 className="text-xl font-black uppercase text-white">Actual / Sunk Cost</h3>
+            <h3 className="text-xl font-black uppercase text-white">Historical Costs</h3>
             <p className="text-gray-400 text-sm font-medium mt-0.5">What has already been spent</p>
           </div>
           <div className="p-6 space-y-5 bg-white">
