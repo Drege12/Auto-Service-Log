@@ -26,7 +26,7 @@ const emptyForm = {
 
 type FormState = typeof emptyForm;
 
-export function MileageTab({ carId, initialMileage }: { carId: number; initialMileage?: number }) {
+export function MileageTab({ carId, initialMileage, originalMileage }: { carId: number; initialMileage?: number; originalMileage?: number }) {
   const queryClient = useQueryClient();
   const { data: entries = [], isLoading } = useListMileage(carId);
   const { mutate: createEntry, isPending } = useCreateMileageEntry();
@@ -76,12 +76,10 @@ export function MileageTab({ carId, initialMileage }: { carId: number; initialMi
   };
 
   const sortedEntries = [...entries].sort((a, b) => a.odometer - b.odometer);
-  const firstOdo = sortedEntries[0]?.odometer ?? initialMileage ?? null;
-  const lastOdo = sortedEntries[sortedEntries.length - 1]?.odometer ?? null;
-  const dealerMiles = firstOdo !== null && lastOdo !== null && lastOdo > firstOdo
-    ? lastOdo - firstOdo
-    : sortedEntries.length === 1 && initialMileage
-    ? sortedEntries[0].odometer - initialMileage
+  const asAcquired = originalMileage ?? initialMileage ?? null;
+  const lastOdo = sortedEntries[sortedEntries.length - 1]?.odometer ?? initialMileage ?? null;
+  const dealerMiles = asAcquired !== null && lastOdo !== null && lastOdo > asAcquired
+    ? lastOdo - asAcquired
     : null;
 
   if (isLoading) return <div className="p-12 text-center text-2xl font-bold">Loading mileage log...</div>;
@@ -99,21 +97,29 @@ export function MileageTab({ carId, initialMileage }: { carId: number; initialMi
         </Button>
       </div>
 
-      {dealerMiles !== null && (
-        <div className="flex items-center gap-4 bg-black text-white p-6 rounded-xl border-4 border-black">
-          <TrendingUp className="w-10 h-10 flex-shrink-0" />
-          <div>
-            <div className="text-3xl font-black">{dealerMiles.toLocaleString()} mi</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {asAcquired !== null && (
+          <div className="border-4 border-black bg-white rounded-xl p-5 text-center">
+            <div className="text-2xl font-black font-mono">{asAcquired.toLocaleString()}</div>
+            <div className="text-gray-500 font-bold uppercase text-sm mt-1">As Acquired (mi)</div>
+          </div>
+        )}
+        {lastOdo !== null && (
+          <div className="border-4 border-black bg-white rounded-xl p-5 text-center">
+            <div className="text-2xl font-black font-mono">{lastOdo.toLocaleString()}</div>
+            <div className="text-gray-500 font-bold uppercase text-sm mt-1">Current (mi)</div>
+          </div>
+        )}
+        {dealerMiles !== null && (
+          <div className="border-4 border-black bg-black text-white rounded-xl p-5 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <TrendingUp className="w-6 h-6" />
+              <span className="text-2xl font-black">+{dealerMiles.toLocaleString()}</span>
+            </div>
             <div className="text-gray-300 font-bold uppercase text-sm mt-1">Dealer Miles Added</div>
           </div>
-          {lastOdo && (
-            <div className="ml-auto text-right">
-              <div className="text-2xl font-black">{lastOdo.toLocaleString()}</div>
-              <div className="text-gray-300 font-bold uppercase text-sm mt-1">Current Odometer</div>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {showForm && (
         <div className="border-4 border-black rounded-xl p-6 bg-white space-y-5">

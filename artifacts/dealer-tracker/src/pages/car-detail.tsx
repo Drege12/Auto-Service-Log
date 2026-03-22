@@ -180,7 +180,7 @@ export default function CarDetail() {
             <TodosTab carId={carId} />
           </TabsContent>
           <TabsContent value="mileage" className="mt-0">
-            <MileageTab carId={carId} initialMileage={car.mileage ?? undefined} />
+            <MileageTab carId={carId} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} />
           </TabsContent>
         </div>
       </Tabs>
