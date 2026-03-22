@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, max } from "drizzle-orm";
 import { z } from "zod";
 
 const router: IRouter = Router();
@@ -367,7 +367,26 @@ router.delete("/cars/:carId/mileage/:entryId", async (req, res) => {
   try {
     const carId = parseInt(req.params.carId, 10);
     const entryId = parseInt(req.params.entryId, 10);
+
     await db.delete(mileageEntriesTable).where(and(eq(mileageEntriesTable.id, entryId), eq(mileageEntriesTable.carId, carId)));
+
+    // After deletion, recalculate the car's current mileage from remaining entries.
+    // This corrects the odometer if the highest (possibly wrong) entry was just removed.
+    const [{ maxOdometer }] = await db
+      .select({ maxOdometer: max(mileageEntriesTable.odometer) })
+      .from(mileageEntriesTable)
+      .where(eq(mileageEntriesTable.carId, carId));
+
+    if (maxOdometer !== null) {
+      await db.update(carsTable).set({ mileage: maxOdometer }).where(eq(carsTable.id, carId));
+    } else {
+      // No entries left — fall back to the original intake mileage.
+      const [car] = await db.select().from(carsTable).where(eq(carsTable.id, carId));
+      if (car) {
+        await db.update(carsTable).set({ mileage: car.originalMileage }).where(eq(carsTable.id, carId));
+      }
+    }
+
     res.status(204).send();
   } catch (err) {
     res.status(500).json({ error: "Failed to delete mileage entry" });
