@@ -17,6 +17,7 @@ export const carsTable = pgTable("cars", {
   repairNotes: text("repair_notes"),
   partsCost: numeric("parts_cost"),
   laborHours: numeric("labor_hours"),
+  laborRate: numeric("labor_rate"),
   actualRepairNotes: text("actual_repair_notes"),
   actualPartsCost: numeric("actual_parts_cost"),
   actualLaborHours: numeric("actual_labor_hours"),
@@ -24,7 +25,7 @@ export const carsTable = pgTable("cars", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertCarSchema = createInsertSchema(carsTable).omit({ id: true, createdAt: true, originalMileage: true, repairNotes: true, partsCost: true, laborHours: true, actualRepairNotes: true, actualPartsCost: true, actualLaborHours: true });
+export const insertCarSchema = createInsertSchema(carsTable).omit({ id: true, createdAt: true, originalMileage: true, repairNotes: true, partsCost: true, laborHours: true, laborRate: true, actualRepairNotes: true, actualPartsCost: true, actualLaborHours: true });
 export type InsertCar = z.infer<typeof insertCarSchema>;
 export type Car = typeof carsTable.$inferSelect;
 
