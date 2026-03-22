@@ -3,52 +3,94 @@ import { useUpdateCarCosts } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Clock, FileText, Save } from "lucide-react";
+import { DollarSign, Clock, FileText, Save, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface CostsTabProps {
   carId: number;
   repairNotes?: string;
   partsCost?: string;
   laborHours?: string;
+  actualRepairNotes?: string;
+  actualPartsCost?: string;
+  actualLaborHours?: string;
 }
 
-export function CostsTab({ carId, repairNotes, partsCost, laborHours }: CostsTabProps) {
+function toNum(v?: string) {
+  if (!v || !v.trim()) return null;
+  const n = parseFloat(v.trim());
+  return isNaN(n) ? null : n;
+}
+
+function StatCard({ label, value, dark }: { label: string; value: string; dark?: boolean }) {
+  return (
+    <div className={`border-4 rounded-xl p-4 text-center ${dark ? "border-black bg-black text-white" : "border-black bg-white"}`}>
+      <div className={`text-xl font-black font-mono ${dark ? "text-white" : "text-black"}`}>{value}</div>
+      <div className={`font-bold uppercase text-xs mt-1 ${dark ? "text-gray-300" : "text-gray-500"}`}>{label}</div>
+    </div>
+  );
+}
+
+export function CostsTab({
+  carId,
+  repairNotes, partsCost, laborHours,
+  actualRepairNotes, actualPartsCost, actualLaborHours,
+}: CostsTabProps) {
   const queryClient = useQueryClient();
   const { mutate: updateCosts, isPending } = useUpdateCarCosts();
 
-  const [notes, setNotes] = useState(repairNotes ?? "");
-  const [parts, setParts] = useState(partsCost ?? "");
-  const [hours, setHours] = useState(laborHours ?? "");
+  const [projNotes, setProjNotes] = useState(repairNotes ?? "");
+  const [projParts, setProjParts] = useState(partsCost ?? "");
+  const [projHours, setProjHours] = useState(laborHours ?? "");
+
+  const [actNotes, setActNotes] = useState(actualRepairNotes ?? "");
+  const [actParts, setActParts] = useState(actualPartsCost ?? "");
+  const [actHours, setActHours] = useState(actualLaborHours ?? "");
+
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setNotes(repairNotes ?? "");
-    setParts(partsCost ?? "");
-    setHours(laborHours ?? "");
-  }, [repairNotes, partsCost, laborHours]);
+    setProjNotes(repairNotes ?? "");
+    setProjParts(partsCost ?? "");
+    setProjHours(laborHours ?? "");
+    setActNotes(actualRepairNotes ?? "");
+    setActParts(actualPartsCost ?? "");
+    setActHours(actualLaborHours ?? "");
+  }, [repairNotes, partsCost, laborHours, actualRepairNotes, actualPartsCost, actualLaborHours]);
 
-  const partsNum = parts.trim() ? parseFloat(parts.trim()) : null;
-  const hoursNum = hours.trim() ? parseFloat(hours.trim()) : null;
-  const laborRate = 100;
-  const laborCost = hoursNum != null ? hoursNum * laborRate : null;
-  const totalCost = (partsNum ?? 0) + (laborCost ?? 0);
-  const hasTotal = partsNum != null || laborCost != null;
+  const projPartsNum = toNum(projParts);
+  const projHoursNum = toNum(projHours);
+  const actPartsNum = toNum(actParts);
+  const actHoursNum = toNum(actHours);
+
+  const projTotal = (projPartsNum ?? 0) + (projHoursNum ?? 0) * 100;
+  const actTotal = (actPartsNum ?? 0) + (actHoursNum ?? 0) * 100;
+  const hasProjData = projPartsNum != null || projHoursNum != null;
+  const hasActData = actPartsNum != null || actHoursNum != null;
+  const hasBoth = hasProjData && hasActData;
+  const variance = actTotal - projTotal;
+
+  const validateNum = (label: string, val: string): string | null => {
+    if (val.trim() && isNaN(parseFloat(val.trim()))) return `${label} must be a valid number.`;
+    return null;
+  };
 
   const handleSave = () => {
     setError("");
-    if (parts.trim() && isNaN(parseFloat(parts.trim()))) {
-      setError("Parts cost must be a valid number.");
-      return;
-    }
-    if (hours.trim() && isNaN(parseFloat(hours.trim()))) {
-      setError("Labor hours must be a valid number.");
-      return;
-    }
+    const e =
+      validateNum("Projected parts cost", projParts) ||
+      validateNum("Projected labor hours", projHours) ||
+      validateNum("Actual parts cost", actParts) ||
+      validateNum("Actual labor hours", actHours);
+    if (e) { setError(e); return; }
+
     updateCosts({ carId, data: {
-      repairNotes: notes.trim() || null,
-      partsCost: partsNum,
-      laborHours: hoursNum,
+      repairNotes: projNotes.trim() || null,
+      partsCost: projPartsNum,
+      laborHours: projHoursNum,
+      actualRepairNotes: actNotes.trim() || null,
+      actualPartsCost: actPartsNum,
+      actualLaborHours: actHoursNum,
     }}, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });
@@ -63,100 +105,127 @@ export function CostsTab({ carId, repairNotes, partsCost, laborHours }: CostsTab
     <div className="space-y-8">
       <div className="bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
         <h2 className="text-2xl font-black uppercase">Cost of Repairs</h2>
-        <p className="text-gray-600 font-medium mt-1">Track parts costs, labor hours, and repair notes for this vehicle.</p>
+        <p className="text-gray-600 font-medium mt-1">Compare projected estimates against actual money and time spent.</p>
       </div>
 
-      {hasTotal && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {partsNum != null && (
-            <div className="border-4 border-black bg-white rounded-xl p-5 text-center">
-              <div className="flex items-center justify-center gap-1 text-2xl font-black font-mono">
-                <DollarSign className="w-6 h-6" />
-                {partsNum.toFixed(2)}
+      {(hasProjData || hasActData) && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Projected Total" value={`$${projTotal.toFixed(2)}`} />
+          <StatCard label="Actual Total" value={`$${actTotal.toFixed(2)}`} />
+          {hasBoth && (
+            <div className={`border-4 rounded-xl p-4 text-center col-span-2 ${variance > 0 ? "border-red-500 bg-red-50" : variance < 0 ? "border-green-600 bg-green-50" : "border-gray-400 bg-gray-50"}`}>
+              <div className={`flex items-center justify-center gap-2 text-xl font-black font-mono ${variance > 0 ? "text-red-600" : variance < 0 ? "text-green-700" : "text-gray-500"}`}>
+                {variance > 0 ? <TrendingUp className="w-5 h-5" /> : variance < 0 ? <TrendingDown className="w-5 h-5" /> : <Minus className="w-5 h-5" />}
+                {variance > 0 ? "+" : ""}{`$${variance.toFixed(2)}`}
               </div>
-              <div className="text-gray-500 font-bold uppercase text-sm mt-1">Parts Cost</div>
-            </div>
-          )}
-          {laborCost != null && (
-            <div className="border-4 border-black bg-white rounded-xl p-5 text-center">
-              <div className="flex items-center justify-center gap-1 text-2xl font-black font-mono">
-                <Clock className="w-6 h-6" />
-                {hoursNum} hrs
+              <div className="font-bold uppercase text-xs mt-1 text-gray-500">
+                {variance > 0 ? "Over Budget" : variance < 0 ? "Under Budget" : "On Budget"}
               </div>
-              <div className="text-gray-500 font-bold uppercase text-sm mt-1">Labor Hours</div>
-            </div>
-          )}
-          {hasTotal && (
-            <div className="border-4 border-black bg-black text-white rounded-xl p-5 text-center">
-              <div className="flex items-center justify-center gap-1 text-2xl font-black font-mono">
-                <DollarSign className="w-6 h-6" />
-                {totalCost.toFixed(2)}
-              </div>
-              <div className="text-gray-300 font-bold uppercase text-sm mt-1">Est. Total</div>
             </div>
           )}
         </div>
       )}
 
-      <div className="border-4 border-black rounded-xl p-6 bg-white space-y-6">
-        {error && (
-          <div className="bg-red-100 border-2 border-red-600 text-red-700 font-bold p-3 rounded-lg">{error}</div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-lg font-black uppercase flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
-              Cost of Parts
-            </label>
-            <Input
-              value={parts}
-              onChange={e => setParts(e.target.value)}
-              placeholder="e.g. 245.00"
-              inputMode="decimal"
-              className="bg-white text-black font-mono text-xl"
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Projected */}
+        <div className="border-4 border-black rounded-xl overflow-hidden">
+          <div className="bg-gray-100 border-b-4 border-black px-6 py-4">
+            <h3 className="text-xl font-black uppercase">Projected / Estimate</h3>
+            <p className="text-gray-600 text-sm font-medium mt-0.5">What you expect to spend</p>
           </div>
-          <div className="space-y-2">
-            <label className="text-lg font-black uppercase flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Estimated Labor Hours
-            </label>
-            <Input
-              value={hours}
-              onChange={e => setHours(e.target.value)}
-              placeholder="e.g. 3.5"
-              inputMode="decimal"
-              className="bg-white text-black font-mono text-xl"
-            />
+          <div className="p-6 space-y-5 bg-white">
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <DollarSign className="w-4 h-4" /> Parts Cost
+              </label>
+              <Input
+                value={projParts}
+                onChange={e => setProjParts(e.target.value)}
+                placeholder="e.g. 245.00"
+                inputMode="decimal"
+                className="bg-white text-black font-mono"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <Clock className="w-4 h-4" /> Labor Hours
+              </label>
+              <Input
+                value={projHours}
+                onChange={e => setProjHours(e.target.value)}
+                placeholder="e.g. 3.5"
+                inputMode="decimal"
+                className="bg-white text-black font-mono"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Notes
+              </label>
+              <textarea
+                value={projNotes}
+                onChange={e => setProjNotes(e.target.value)}
+                placeholder="Repairs needed, parts to order, observations…"
+                rows={4}
+                className="w-full border-2 border-black rounded-lg px-4 py-3 text-base font-medium bg-white text-black focus:outline-none focus:ring-2 focus:ring-black resize-none"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-lg font-black uppercase flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            General Notes
-          </label>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="Describe the repairs needed or completed, parts ordered, observations, etc."
-            rows={5}
-            className="w-full border-2 border-black rounded-lg px-4 py-3 text-base font-medium bg-white text-black focus:outline-none focus:ring-2 focus:ring-black resize-none"
-          />
+        {/* Actual */}
+        <div className="border-4 border-black rounded-xl overflow-hidden">
+          <div className="bg-black border-b-4 border-black px-6 py-4">
+            <h3 className="text-xl font-black uppercase text-white">Actual / Sunk Cost</h3>
+            <p className="text-gray-400 text-sm font-medium mt-0.5">What has already been spent</p>
+          </div>
+          <div className="p-6 space-y-5 bg-white">
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <DollarSign className="w-4 h-4" /> Parts Cost
+              </label>
+              <Input
+                value={actParts}
+                onChange={e => setActParts(e.target.value)}
+                placeholder="e.g. 189.50"
+                inputMode="decimal"
+                className="bg-white text-black font-mono"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <Clock className="w-4 h-4" /> Labor Hours
+              </label>
+              <Input
+                value={actHours}
+                onChange={e => setActHours(e.target.value)}
+                placeholder="e.g. 2.0"
+                inputMode="decimal"
+                className="bg-white text-black font-mono"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Notes
+              </label>
+              <textarea
+                value={actNotes}
+                onChange={e => setActNotes(e.target.value)}
+                placeholder="Work completed, actual parts used, time logged…"
+                rows={4}
+                className="w-full border-2 border-black rounded-lg px-4 py-3 text-base font-medium bg-white text-black focus:outline-none focus:ring-2 focus:ring-black resize-none"
+              />
+            </div>
+          </div>
         </div>
-
-        <Button
-          type="button"
-          size="lg"
-          className="w-full sm:w-auto"
-          disabled={isPending}
-          onClick={handleSave}
-        >
-          <Save className="w-5 h-5 mr-2" />
-          {isPending ? "SAVING..." : saved ? "SAVED!" : "SAVE CHANGES"}
-        </Button>
       </div>
+
+      {error && <div className="bg-red-100 border-2 border-red-600 text-red-700 font-bold p-3 rounded-lg">{error}</div>}
+
+      <Button type="button" size="lg" disabled={isPending} onClick={handleSave}>
+        <Save className="w-5 h-5 mr-2" />
+        {isPending ? "SAVING..." : saved ? "SAVED!" : "SAVE CHANGES"}
+      </Button>
     </div>
   );
 }

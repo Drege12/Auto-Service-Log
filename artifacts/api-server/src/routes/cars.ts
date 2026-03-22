@@ -381,6 +381,9 @@ router.patch("/cars/:carId/costs", async (req, res) => {
       repairNotes: z.string().optional().nullable(),
       partsCost: z.number().optional().nullable(),
       laborHours: z.number().optional().nullable(),
+      actualRepairNotes: z.string().optional().nullable(),
+      actualPartsCost: z.number().optional().nullable(),
+      actualLaborHours: z.number().optional().nullable(),
     });
     const parsed = costsSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -391,6 +394,9 @@ router.patch("/cars/:carId/costs", async (req, res) => {
     if (parsed.data.repairNotes !== undefined) updates.repairNotes = parsed.data.repairNotes ?? null;
     if (parsed.data.partsCost !== undefined) updates.partsCost = parsed.data.partsCost != null ? String(parsed.data.partsCost) : null;
     if (parsed.data.laborHours !== undefined) updates.laborHours = parsed.data.laborHours != null ? String(parsed.data.laborHours) : null;
+    if (parsed.data.actualRepairNotes !== undefined) updates.actualRepairNotes = parsed.data.actualRepairNotes ?? null;
+    if (parsed.data.actualPartsCost !== undefined) updates.actualPartsCost = parsed.data.actualPartsCost != null ? String(parsed.data.actualPartsCost) : null;
+    if (parsed.data.actualLaborHours !== undefined) updates.actualLaborHours = parsed.data.actualLaborHours != null ? String(parsed.data.actualLaborHours) : null;
     const [car] = await db.update(carsTable).set(updates).where(eq(carsTable.id, carId)).returning();
     if (!car) {
       res.status(404).json({ error: "Car not found" });
