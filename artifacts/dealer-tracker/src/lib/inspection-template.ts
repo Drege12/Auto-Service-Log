@@ -93,6 +93,8 @@ export const INSPECTION_TEMPLATE = [
   { category: "Exterior", item: "Front washer nozzle" },
   { category: "Exterior", item: "Rear washer nozzle" },
   { category: "Exterior", item: "Lights (headlights/taillights/signals)" },
+  { category: "Exterior", item: "High beams" },
+  { category: "Exterior", item: "Fog lights" },
   { category: "Exterior", item: "Wipers" },
   { category: "Exterior", item: "Body damage" },
   { category: "Exterior", item: "Door seals" },
