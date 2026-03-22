@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useListMaintenance, useCreateMaintenance, useUpdateMaintenance, useDeleteMaintenance, MaintenanceEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, Calendar, User, DollarSign } from "lucide-react";
+import { Plus, Edit2, Trash2, Calendar, User, DollarSign, Printer } from "lucide-react";
+import { printSection } from "@/lib/print-utils";
 
 type FormState = { date: string; description: string; technician: string; cost: string; notes: string };
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -18,7 +19,8 @@ const emptyForm = (): FormState => ({
   notes: "",
 });
 
-export function MaintenanceTab({ carId }: { carId: number }) {
+export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: string }) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { data: entries, isLoading } = useListMaintenance(carId);
   const { mutate: createEntry, isPending: isCreating } = useCreateMaintenance();
@@ -103,12 +105,17 @@ export function MaintenanceTab({ carId }: { carId: number }) {
   if (isLoading) return <div className="p-12 text-center text-2xl font-bold">Loading logs...</div>;
 
   return (
-    <div className="space-y-8">
+    <div ref={contentRef} className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-black uppercase">Service History</h2>
-        <Button size="lg" onClick={openNewDialog}>
-          <Plus className="w-6 h-6 mr-2" /> ADD ENTRY
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button type="button" variant="outline" size="lg" onClick={() => contentRef.current && printSection(`${carLabel} — Service History`, contentRef.current)}>
+            <Printer className="w-5 h-5 mr-2" /> PRINT
+          </Button>
+          <Button size="lg" onClick={openNewDialog}>
+            <Plus className="w-6 h-6 mr-2" /> ADD ENTRY
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-6">

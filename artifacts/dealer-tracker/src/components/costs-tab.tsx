@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUpdateCarCosts } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Clock, FileText, Save, TrendingUp, TrendingDown, Minus, ExternalLink } from "lucide-react";
+import { DollarSign, Clock, FileText, Save, TrendingUp, TrendingDown, Minus, ExternalLink, Printer } from "lucide-react";
+import { printSection } from "@/lib/print-utils";
 
 interface CostsTabProps {
   carId: number;
+  carLabel: string;
   repairNotes?: string;
   partsCost?: string;
   laborHours?: string;
@@ -32,10 +34,11 @@ function StatCard({ label, value, dark }: { label: string; value: string; dark?:
 }
 
 export function CostsTab({
-  carId,
+  carId, carLabel,
   repairNotes, partsCost, laborHours, laborRate,
   actualRepairNotes, actualPartsCost, actualLaborHours,
 }: CostsTabProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { mutate: updateCosts, isPending } = useUpdateCarCosts();
 
@@ -108,10 +111,15 @@ export function CostsTab({
   };
 
   return (
-    <div className="space-y-8">
-      <div className="bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
-        <h2 className="text-2xl font-black uppercase">Cost of Repairs</h2>
-        <p className="text-gray-600 font-medium mt-1">Compare projected estimates against actual money and time spent.</p>
+    <div ref={contentRef} className="space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
+        <div>
+          <h2 className="text-2xl font-black uppercase">Cost of Repairs</h2>
+          <p className="text-gray-600 font-medium mt-1">Compare projected estimates against actual money and time spent.</p>
+        </div>
+        <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => contentRef.current && printSection(`${carLabel} — Costs`, contentRef.current)}>
+          <Printer className="w-5 h-5 mr-2" /> PRINT
+        </Button>
       </div>
 
       {(hasProjData || hasActData) && (

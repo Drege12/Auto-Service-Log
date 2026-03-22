@@ -205,20 +205,21 @@ export default function CarDetail() {
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
           <TabsContent value="inspection" className="mt-0">
-            <InspectionsTab carId={carId} />
+            <InspectionsTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
           </TabsContent>
           <TabsContent value="maintenance" className="mt-0">
-            <MaintenanceTab carId={carId} />
+            <MaintenanceTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
           </TabsContent>
           <TabsContent value="todos" className="mt-0">
-            <TodosTab carId={carId} />
+            <TodosTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
           </TabsContent>
           <TabsContent value="mileage" className="mt-0">
-            <MileageTab carId={carId} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} />
+            <MileageTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} />
           </TabsContent>
           <TabsContent value="costs" className="mt-0">
             <CostsTab
               carId={carId}
+              carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`}
               repairNotes={car.repairNotes ?? undefined}
               partsCost={car.partsCost ?? undefined}
               laborHours={car.laborHours ?? undefined}

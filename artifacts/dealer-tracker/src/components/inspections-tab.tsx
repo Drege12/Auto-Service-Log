@@ -10,10 +10,12 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { INSPECTION_CATEGORIES, buildDefaultInspection } from "@/lib/inspection-template";
-import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, ChevronDown, ChevronRight, Printer } from "lucide-react";
+import { printSection } from "@/lib/print-utils";
 import { Textarea } from "@/components/ui/textarea";
 
-export function InspectionsTab({ carId }: { carId: number }) {
+export function InspectionsTab({ carId, carLabel }: { carId: number; carLabel: string }) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { data: inspectionItems, isLoading, isError } = useGetInspection(carId);
   const { mutate: upsertInspection, isPending } = useUpsertInspection();
@@ -190,7 +192,7 @@ export function InspectionsTab({ carId }: { carId: number }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={contentRef} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
         <div>
           <h2 className="text-2xl font-black uppercase">Standard Inspection</h2>
@@ -198,15 +200,26 @@ export function InspectionsTab({ carId }: { carId: number }) {
             Failed items are added to Needs Done on save.
           </p>
         </div>
-        <Button
-          size="lg"
-          onClick={handleSave}
-          disabled={!isDirty || isPending}
-          className="w-full sm:w-auto"
-        >
-          <Save className="w-6 h-6 mr-2" />
-          {isPending ? "SAVING..." : "SAVE CHANGES"}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="w-full sm:w-auto"
+            onClick={() => contentRef.current && printSection(`${carLabel} — Inspection`, contentRef.current)}
+          >
+            <Printer className="w-5 h-5 mr-2" /> PRINT
+          </Button>
+          <Button
+            size="lg"
+            onClick={handleSave}
+            disabled={!isDirty || isPending}
+            className="w-full sm:w-auto"
+          >
+            <Save className="w-6 h-6 mr-2" />
+            {isPending ? "SAVING..." : "SAVE CHANGES"}
+          </Button>
+        </div>
       </div>
 
       {savedMessage && (
