@@ -234,7 +234,7 @@ export default function CarDetail() {
 
       {/* Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>EDIT VEHICLE DETAILS</DialogTitle>
           </DialogHeader>

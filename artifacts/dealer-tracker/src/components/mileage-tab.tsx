@@ -7,7 +7,6 @@ import { Gauge, Plus, Trash2, TrendingUp, Fuel, Printer } from "lucide-react";
 import { printSection } from "@/lib/print-utils";
 
 const REASON_OPTIONS = [
-  "Test Drive",
   "Road Test / QC",
   "Parts Run",
   "Customer Demo",
