@@ -3,7 +3,7 @@ import { useUpdateCarCosts } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DollarSign, Clock, FileText, Save, TrendingUp, TrendingDown, Minus, ExternalLink, Printer } from "lucide-react";
+import { DollarSign, Clock, FileText, Save, TrendingUp, TrendingDown, Minus, Printer } from "lucide-react";
 import { printSection } from "@/lib/print-utils";
 
 interface CostsTabProps {
@@ -164,15 +164,6 @@ export function CostsTab({
           {!rate.trim() && (
             <span className="text-sm text-gray-400 font-medium italic">Defaults to $100/hr if left blank</span>
           )}
-          <a
-            href="https://repairpal.com/estimator"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto flex items-center gap-1.5 text-sm font-bold text-blue-700 underline underline-offset-2 hover:text-blue-900"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Look up labor times
-          </a>
         </div>
       </div>
 
