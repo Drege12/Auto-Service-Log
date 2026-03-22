@@ -21,7 +21,10 @@ router.post("/cars", async (req, res) => {
       res.status(400).json({ error: "Invalid car data", details: parsed.error.flatten() });
       return;
     }
-    const [car] = await db.insert(carsTable).values(parsed.data).returning();
+    const [car] = await db.insert(carsTable).values({
+      ...parsed.data,
+      originalMileage: parsed.data.mileage ?? null,
+    }).returning();
     res.status(201).json(car);
   } catch (err) {
     res.status(500).json({ error: "Failed to create car" });
@@ -326,6 +329,23 @@ router.post("/cars/:carId/mileage", async (req, res) => {
       return;
     }
     const [entry] = await db.insert(mileageEntriesTable).values({ carId, ...parsed.data }).returning();
+
+    // Update the car's current mileage if the new reading is higher,
+    // and capture original_mileage the first time a log entry is added.
+    const [currentCar] = await db.select().from(carsTable).where(eq(carsTable.id, carId));
+    if (currentCar) {
+      const updates: Record<string, number | null> = {};
+      if (!currentCar.mileage || parsed.data.odometer > currentCar.mileage) {
+        updates.mileage = parsed.data.odometer;
+      }
+      if (currentCar.originalMileage === null) {
+        updates.originalMileage = currentCar.mileage ?? parsed.data.odometer;
+      }
+      if (Object.keys(updates).length > 0) {
+        await db.update(carsTable).set(updates).where(eq(carsTable.id, carId));
+      }
+    }
+
     res.status(201).json(entry);
   } catch (err) {
     res.status(500).json({ error: "Failed to create mileage entry" });

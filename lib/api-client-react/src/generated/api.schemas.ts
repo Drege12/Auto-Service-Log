@@ -38,6 +38,7 @@ export interface Car {
   vin?: string;
   color?: string;
   mileage?: number;
+  originalMileage?: number;
   notes?: string;
   sold: number;
   createdAt: string;
