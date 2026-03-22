@@ -14,11 +14,14 @@ export const carsTable = pgTable("cars", {
   originalMileage: integer("original_mileage"),
   status: text("status"),
   notes: text("notes"),
+  repairNotes: text("repair_notes"),
+  partsCost: numeric("parts_cost"),
+  laborHours: numeric("labor_hours"),
   sold: integer("sold").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertCarSchema = createInsertSchema(carsTable).omit({ id: true, createdAt: true, originalMileage: true });
+export const insertCarSchema = createInsertSchema(carsTable).omit({ id: true, createdAt: true, originalMileage: true, repairNotes: true, partsCost: true, laborHours: true });
 export type InsertCar = z.infer<typeof insertCarSchema>;
 export type Car = typeof carsTable.$inferSelect;
 

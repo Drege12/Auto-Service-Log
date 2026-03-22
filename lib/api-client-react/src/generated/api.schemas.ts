@@ -43,6 +43,9 @@ export interface Car {
   originalMileage?: number;
   status?: string;
   notes?: string;
+  repairNotes?: string;
+  partsCost?: string;
+  laborHours?: string;
   sold: number;
   createdAt: string;
 }

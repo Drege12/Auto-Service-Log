@@ -374,4 +374,32 @@ router.delete("/cars/:carId/mileage/:entryId", async (req, res) => {
   }
 });
 
+router.patch("/cars/:carId/costs", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const costsSchema = z.object({
+      repairNotes: z.string().optional().nullable(),
+      partsCost: z.number().optional().nullable(),
+      laborHours: z.number().optional().nullable(),
+    });
+    const parsed = costsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid cost data" });
+      return;
+    }
+    const updates: Record<string, string | null> = {};
+    if (parsed.data.repairNotes !== undefined) updates.repairNotes = parsed.data.repairNotes ?? null;
+    if (parsed.data.partsCost !== undefined) updates.partsCost = parsed.data.partsCost != null ? String(parsed.data.partsCost) : null;
+    if (parsed.data.laborHours !== undefined) updates.laborHours = parsed.data.laborHours != null ? String(parsed.data.laborHours) : null;
+    const [car] = await db.update(carsTable).set(updates).where(eq(carsTable.id, carId)).returning();
+    if (!car) {
+      res.status(404).json({ error: "Car not found" });
+      return;
+    }
+    res.json(car);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update repair costs" });
+  }
+});
+
 export default router;
