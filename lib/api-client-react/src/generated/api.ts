@@ -20,10 +20,12 @@ import type {
   Car,
   CreateCar,
   CreateMaintenanceEntry,
+  CreateMileageEntry,
   CreateTodoEntry,
   HealthStatus,
   InspectionItem,
   MaintenanceEntry,
+  MileageEntry,
   TodoEntry,
   UpsertInspectionItem,
 } from "./api.schemas";
@@ -1454,4 +1456,50 @@ export const useDeleteTodo = <
   TContext
 > => {
   return useMutation(getDeleteTodoMutationOptions(options));
+};
+
+export const getListMileageUrl = (carId: number) => `/api/cars/${carId}/mileage`;
+
+export const listMileage = async (carId: number, options?: RequestInit): Promise<MileageEntry[]> => {
+  return customFetch<MileageEntry[]>(getListMileageUrl(carId), { ...options });
+};
+
+export function useListMileage<TData = Awaited<ReturnType<typeof listMileage>>, TError = ErrorType<unknown>>(
+  carId: number,
+  options?: { query?: UseQueryOptions<Awaited<ReturnType<typeof listMileage>>, TError, TData>; request?: SecondParameter<typeof customFetch> }
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? [getListMileageUrl(carId)];
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMileage>>> = ({ signal }) => listMileage(carId, { signal, ...requestOptions });
+  const query = useQuery({ queryKey, queryFn, enabled: !!carId, ...queryOptions }) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  query.queryKey = queryKey;
+  return query;
+}
+
+export const getCreateMileageUrl = (carId: number) => `/api/cars/${carId}/mileage`;
+
+export const createMileageEntry = async (carId: number, data: Omit<CreateMileageEntry, 'carId'>, options?: RequestInit): Promise<MileageEntry> => {
+  return customFetch<MileageEntry>(getCreateMileageUrl(carId), { ...options, method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+};
+
+export const useCreateMileageEntry = <TError = ErrorType<unknown>, TContext = unknown>(
+  options?: { mutation?: UseMutationOptions<Awaited<ReturnType<typeof createMileageEntry>>, TError, { carId: number; data: Omit<CreateMileageEntry, 'carId'> }, TContext>; request?: SecondParameter<typeof customFetch> }
+): UseMutationResult<Awaited<ReturnType<typeof createMileageEntry>>, TError, { carId: number; data: Omit<CreateMileageEntry, 'carId'> }, TContext> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMileageEntry>>, { carId: number; data: Omit<CreateMileageEntry, 'carId'> }> = ({ carId, data }) => createMileageEntry(carId, data, requestOptions);
+  return useMutation({ mutationKey: ['createMileageEntry'], mutationFn, ...mutationOptions });
+};
+
+export const getDeleteMileageUrl = (carId: number, entryId: number) => `/api/cars/${carId}/mileage/${entryId}`;
+
+export const deleteMileageEntry = async (carId: number, entryId: number, options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getDeleteMileageUrl(carId, entryId), { ...options, method: 'DELETE' });
+};
+
+export const useDeleteMileageEntry = <TError = ErrorType<unknown>, TContext = unknown>(
+  options?: { mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteMileageEntry>>, TError, { carId: number; entryId: number }, TContext>; request?: SecondParameter<typeof customFetch> }
+): UseMutationResult<Awaited<ReturnType<typeof deleteMileageEntry>>, TError, { carId: number; entryId: number }, TContext> => {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMileageEntry>>, { carId: number; entryId: number }> = ({ carId, entryId }) => deleteMileageEntry(carId, entryId, requestOptions);
+  return useMutation({ mutationKey: ['deleteMileageEntry'], mutationFn, ...mutationOptions });
 };

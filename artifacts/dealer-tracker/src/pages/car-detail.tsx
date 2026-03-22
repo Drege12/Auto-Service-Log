@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { InspectionsTab } from "@/components/inspections-tab";
 import { MaintenanceTab } from "@/components/maintenance-tab";
+import { MileageTab } from "@/components/mileage-tab";
 import { TodosTab } from "@/components/todos-tab";
 import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag } from "lucide-react";
 import { z } from "zod";
@@ -165,6 +166,7 @@ export default function CarDetail() {
           <TabsTrigger value="inspection" className="w-full sm:w-auto">INSPECTION</TabsTrigger>
           <TabsTrigger value="maintenance" className="w-full sm:w-auto">MAINTENANCE</TabsTrigger>
           <TabsTrigger value="todos" className="w-full sm:w-auto">NEEDS DONE</TabsTrigger>
+          <TabsTrigger value="mileage" className="w-full sm:w-auto">MILEAGE</TabsTrigger>
         </TabsList>
         
         <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
@@ -176,6 +178,9 @@ export default function CarDetail() {
           </TabsContent>
           <TabsContent value="todos" className="mt-0">
             <TodosTab carId={carId} />
+          </TabsContent>
+          <TabsContent value="mileage" className="mt-0">
+            <MileageTab carId={carId} initialMileage={car.mileage ?? undefined} />
           </TabsContent>
         </div>
       </Tabs>

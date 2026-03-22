@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, todosTable, insertCarSchema } from "@workspace/db";
+import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
@@ -295,6 +295,51 @@ router.delete("/cars/:carId/todos/:todoId", async (req, res) => {
     res.status(204).send();
   } catch (err) {
     res.status(500).json({ error: "Failed to delete todo" });
+  }
+});
+
+router.get("/cars/:carId/mileage", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const entries = await db.select().from(mileageEntriesTable)
+      .where(eq(mileageEntriesTable.carId, carId))
+      .orderBy(mileageEntriesTable.odometer);
+    res.json(entries);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch mileage log" });
+  }
+});
+
+router.post("/cars/:carId/mileage", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const entrySchema = z.object({
+      date: z.string(),
+      odometer: z.number().int().positive(),
+      reason: z.string(),
+      technician: z.string().optional().nullable(),
+      notes: z.string().optional().nullable(),
+    });
+    const parsed = entrySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid mileage data" });
+      return;
+    }
+    const [entry] = await db.insert(mileageEntriesTable).values({ carId, ...parsed.data }).returning();
+    res.status(201).json(entry);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create mileage entry" });
+  }
+});
+
+router.delete("/cars/:carId/mileage/:entryId", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const entryId = parseInt(req.params.entryId, 10);
+    await db.delete(mileageEntriesTable).where(and(eq(mileageEntriesTable.id, entryId), eq(mileageEntriesTable.carId, carId)));
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete mileage entry" });
   }
 });
 

@@ -48,6 +48,21 @@ export const insertMaintenanceEntrySchema = createInsertSchema(maintenanceEntrie
 export type InsertMaintenanceEntry = z.infer<typeof insertMaintenanceEntrySchema>;
 export type MaintenanceEntry = typeof maintenanceEntriesTable.$inferSelect;
 
+export const mileageEntriesTable = pgTable("mileage_entries", {
+  id: serial("id").primaryKey(),
+  carId: integer("car_id").notNull().references(() => carsTable.id, { onDelete: "cascade" }),
+  date: text("date").notNull(),
+  odometer: integer("odometer").notNull(),
+  reason: text("reason").notNull(),
+  technician: text("technician"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMileageEntrySchema = createInsertSchema(mileageEntriesTable).omit({ id: true, createdAt: true });
+export type InsertMileageEntry = z.infer<typeof insertMileageEntrySchema>;
+export type MileageEntry = typeof mileageEntriesTable.$inferSelect;
+
 export const todosTable = pgTable("todos", {
   id: serial("id").primaryKey(),
   carId: integer("car_id").notNull().references(() => carsTable.id, { onDelete: "cascade" }),
