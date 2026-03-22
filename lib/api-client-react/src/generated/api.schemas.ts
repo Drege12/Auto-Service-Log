@@ -39,6 +39,7 @@ export interface Car {
   color?: string;
   mileage?: number;
   originalMileage?: number;
+  status?: string;
   notes?: string;
   sold: number;
   createdAt: string;
