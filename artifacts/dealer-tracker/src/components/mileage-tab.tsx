@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useListMileage, useCreateMileageEntry, useDeleteMileageEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Gauge, Plus, Trash2, TrendingUp, Fuel } from "lucide-react";
+import { Gauge, Plus, Trash2, TrendingUp, Fuel, Printer } from "lucide-react";
+import { printSection } from "@/lib/print-utils";
 
 const REASON_OPTIONS = [
   "Test Drive",
@@ -59,7 +60,8 @@ const emptyForm = {
 
 type FormState = typeof emptyForm;
 
-export function MileageTab({ carId, initialMileage, originalMileage }: { carId: number; initialMileage?: number; originalMileage?: number }) {
+export function MileageTab({ carId, carLabel, initialMileage, originalMileage }: { carId: number; carLabel: string; initialMileage?: number; originalMileage?: number }) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { data: entries = [], isLoading } = useListMileage(carId);
   const { mutate: createEntry, isPending } = useCreateMileageEntry();
@@ -120,16 +122,21 @@ export function MileageTab({ carId, initialMileage, originalMileage }: { carId: 
   if (isLoading) return <div className="p-12 text-center text-2xl font-bold">Loading mileage log...</div>;
 
   return (
-    <div className="space-y-8">
+    <div ref={contentRef} className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
         <div>
           <h2 className="text-2xl font-black uppercase">Mileage Log</h2>
           <p className="text-gray-600 font-medium mt-1">Track odometer readings and fuel level after each drive.</p>
         </div>
-        <Button size="lg" onClick={() => { setShowForm(prev => !prev); setError(""); }} className="w-full sm:w-auto">
-          <Plus className="w-6 h-6 mr-2" />
-          {showForm ? "CANCEL" : "ADD READING"}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => contentRef.current && printSection(`${carLabel} — Mileage Log`, contentRef.current)}>
+            <Printer className="w-5 h-5 mr-2" /> PRINT
+          </Button>
+          <Button size="lg" onClick={() => { setShowForm(prev => !prev); setError(""); }} className="w-full sm:w-auto">
+            <Plus className="w-6 h-6 mr-2" />
+            {showForm ? "CANCEL" : "ADD READING"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

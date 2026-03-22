@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useListTodos, useCreateTodo, useUpdateTodo, useDeleteTodo, useCreateMaintenance, TodoEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, CheckCircle2, ClipboardCheck } from "lucide-react";
+import { Plus, Edit2, Trash2, CheckCircle2, ClipboardCheck, Printer } from "lucide-react";
+import { printSection } from "@/lib/print-utils";
 import { cn } from "@/lib/utils";
 
 type Priority = "low" | "medium" | "high";
@@ -25,7 +26,8 @@ const PRIORITY_COLORS: Record<Priority, string> = {
 
 const PRIORITY_UNSELECTED = "bg-white text-black border-black";
 
-export function TodosTab({ carId }: { carId: number }) {
+export function TodosTab({ carId, carLabel }: { carId: number; carLabel: string }) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { data: todos, isLoading } = useListTodos(carId);
   const { mutate: createTodo, isPending: isCreating } = useCreateTodo();
@@ -184,12 +186,17 @@ export function TodosTab({ carId }: { carId: number }) {
   const completedTodos = todos?.filter(t => t.completed) || [];
 
   return (
-    <div className="space-y-8">
+    <div ref={contentRef} className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-black uppercase">Needs Attention</h2>
-        <Button size="lg" onClick={openNewDialog}>
-          <Plus className="w-6 h-6 mr-2" /> ADD ITEM
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button type="button" variant="outline" size="lg" onClick={() => contentRef.current && printSection(`${carLabel} — Needs Done`, contentRef.current)}>
+            <Printer className="w-5 h-5 mr-2" /> PRINT
+          </Button>
+          <Button size="lg" onClick={openNewDialog}>
+            <Plus className="w-6 h-6 mr-2" /> ADD ITEM
+          </Button>
+        </div>
       </div>
 
       {todos?.length === 0 && (
