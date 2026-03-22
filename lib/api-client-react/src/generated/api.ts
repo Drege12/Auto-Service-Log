@@ -1508,7 +1508,7 @@ export const getUpdateCarCostsUrl = (carId: number) => `/api/cars/${carId}/costs
 
 export const updateCarCosts = async (
   carId: number,
-  data: { repairNotes?: string | null; partsCost?: number | null; laborHours?: number | null },
+  data: { repairNotes?: string | null; partsCost?: number | null; laborHours?: number | null; actualRepairNotes?: string | null; actualPartsCost?: number | null; actualLaborHours?: number | null },
   options?: RequestInit,
 ): Promise<Car> => {
   return customFetch<Car>(getUpdateCarCostsUrl(carId), {

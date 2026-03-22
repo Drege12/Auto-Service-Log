@@ -46,6 +46,9 @@ export interface Car {
   repairNotes?: string;
   partsCost?: string;
   laborHours?: string;
+  actualRepairNotes?: string;
+  actualPartsCost?: string;
+  actualLaborHours?: string;
   sold: number;
   createdAt: string;
 }

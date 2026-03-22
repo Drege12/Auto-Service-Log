@@ -222,6 +222,9 @@ export default function CarDetail() {
               repairNotes={car.repairNotes ?? undefined}
               partsCost={car.partsCost ?? undefined}
               laborHours={car.laborHours ?? undefined}
+              actualRepairNotes={car.actualRepairNotes ?? undefined}
+              actualPartsCost={car.actualPartsCost ?? undefined}
+              actualLaborHours={car.actualLaborHours ?? undefined}
             />
           </TabsContent>
         </div>
