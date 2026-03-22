@@ -13,6 +13,26 @@ import { MileageTab } from "@/components/mileage-tab";
 import { TodosTab } from "@/components/todos-tab";
 import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag } from "lucide-react";
 
+function statusBadge(status?: string | null) {
+  switch (status) {
+    case "in_service":
+      return <span className="bg-blue-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">In Service</span>;
+    case "ready":
+      return <span className="bg-green-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Ready</span>;
+    case "on_hold":
+      return <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">On Hold</span>;
+    default:
+      return null;
+  }
+}
+
+const STATUS_OPTIONS = [
+  { value: "", label: "— No Status —" },
+  { value: "in_service", label: "In Service" },
+  { value: "ready", label: "Ready" },
+  { value: "on_hold", label: "On Hold" },
+];
+
 const emptyEditForm = {
   stockNumber: "",
   year: "",
@@ -21,6 +41,7 @@ const emptyEditForm = {
   vin: "",
   color: "",
   mileage: "",
+  status: "",
 };
 
 export default function CarDetail() {
@@ -48,6 +69,7 @@ export default function CarDetail() {
         vin: car.vin || "",
         color: car.color || "",
         mileage: car.mileage != null ? String(car.mileage) : "",
+        status: car.status || "",
       });
       setEditError("");
       setDialogOpen(true);
@@ -68,6 +90,7 @@ export default function CarDetail() {
       vin: editForm.vin.trim() || undefined,
       color: editForm.color.trim() || undefined,
       mileage: editForm.mileage.trim() ? parseInt(editForm.mileage.trim(), 10) : undefined,
+      status: editForm.status || undefined,
     };
     updateCar({ carId, data }, {
       onSuccess: () => {
@@ -125,6 +148,7 @@ export default function CarDetail() {
               <h1 className="text-4xl sm:text-5xl font-black uppercase">
                 {car.year} {car.make} {car.model}
               </h1>
+              {statusBadge(car.status)}
             </div>
 
             <div className="flex flex-wrap gap-6 mt-4 font-mono text-xl font-bold">
@@ -265,6 +289,32 @@ export default function CarDetail() {
                   value={editForm.color}
                   onChange={e => setEditForm(f => ({ ...f, color: e.target.value }))}
                 />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-lg font-bold uppercase">Status</label>
+              <div className="flex flex-wrap gap-3">
+                {STATUS_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setEditForm(f => ({ ...f, status: opt.value }))}
+                    className={`px-4 py-2 rounded-lg border-4 font-black uppercase text-sm transition-colors ${
+                      editForm.status === opt.value
+                        ? opt.value === "in_service"
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : opt.value === "ready"
+                          ? "bg-green-600 text-white border-green-600"
+                          : opt.value === "on_hold"
+                          ? "bg-amber-500 text-white border-amber-500"
+                          : "bg-black text-white border-black"
+                        : "bg-white text-black border-black"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
 
