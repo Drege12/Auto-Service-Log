@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Wrench } from "lucide-react";
+import { Wrench, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -28,6 +28,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               CARS
             </Link>
+            <button
+              type="button"
+              onClick={() => { localStorage.removeItem("dt_auth"); window.location.reload(); }}
+              className="flex items-center gap-2 font-bold text-base px-4 py-2 border-2 border-black rounded-md hover:bg-black hover:text-white transition-all tap-target"
+              title="Log out"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="hidden sm:inline">LOG OUT</span>
+            </button>
           </nav>
         </div>
       </header>
