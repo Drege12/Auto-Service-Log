@@ -9,6 +9,26 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface MileageEntry {
+  id: number;
+  carId: number;
+  date: string;
+  odometer: number;
+  reason: string;
+  technician?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreateMileageEntry {
+  carId: number;
+  date: string;
+  odometer: number;
+  reason: string;
+  technician?: string;
+  notes?: string;
+}
+
 export interface Car {
   id: number;
   stockNumber: string;
