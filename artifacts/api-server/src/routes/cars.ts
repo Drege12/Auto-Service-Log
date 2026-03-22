@@ -332,6 +332,7 @@ router.post("/cars/:carId/mileage", async (req, res) => {
       reason: z.string(),
       technician: z.string().optional().nullable(),
       notes: z.string().optional().nullable(),
+      fuelLevel: z.string().optional().nullable(),
     });
     const parsed = entrySchema.safeParse(req.body);
     if (!parsed.success) {

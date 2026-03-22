@@ -17,6 +17,7 @@ export interface MileageEntry {
   reason: string;
   technician?: string;
   notes?: string;
+  fuelLevel?: string;
   createdAt: string;
 }
 
@@ -27,6 +28,7 @@ export interface CreateMileageEntry {
   reason: string;
   technician?: string;
   notes?: string;
+  fuelLevel?: string;
 }
 
 export interface Car {

@@ -3,7 +3,7 @@ import { useListMileage, useCreateMileageEntry, useDeleteMileageEntry } from "@w
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Gauge, Plus, Trash2, TrendingUp } from "lucide-react";
+import { Gauge, Plus, Trash2, TrendingUp, Fuel } from "lucide-react";
 
 const REASON_OPTIONS = [
   "Test Drive",
@@ -16,12 +16,45 @@ const REASON_OPTIONS = [
   "Other",
 ];
 
+const FUEL_LEVELS = ["E", "1/8", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "F"];
+
+function fuelColor(level: string): string {
+  switch (level) {
+    case "E":       return "bg-red-600 border-red-600 text-white";
+    case "1/8":     return "bg-red-400 border-red-400 text-white";
+    case "1/4":     return "bg-orange-500 border-orange-500 text-white";
+    case "3/8":     return "bg-amber-500 border-amber-500 text-white";
+    case "1/2":     return "bg-yellow-500 border-yellow-500 text-black";
+    case "5/8":     return "bg-lime-500 border-lime-500 text-black";
+    case "3/4":     return "bg-green-500 border-green-500 text-white";
+    case "7/8":     return "bg-green-600 border-green-600 text-white";
+    case "F":       return "bg-green-700 border-green-700 text-white";
+    default:        return "bg-gray-200 border-gray-400 text-black";
+  }
+}
+
+function fuelBadgeClass(level: string): string {
+  switch (level) {
+    case "E":       return "bg-red-100 text-red-700 border-red-400";
+    case "1/8":     return "bg-red-50 text-red-600 border-red-300";
+    case "1/4":     return "bg-orange-100 text-orange-700 border-orange-400";
+    case "3/8":     return "bg-amber-100 text-amber-700 border-amber-400";
+    case "1/2":     return "bg-yellow-100 text-yellow-700 border-yellow-400";
+    case "5/8":     return "bg-lime-100 text-lime-700 border-lime-400";
+    case "3/4":     return "bg-green-100 text-green-700 border-green-400";
+    case "7/8":     return "bg-green-100 text-green-800 border-green-500";
+    case "F":       return "bg-green-200 text-green-900 border-green-600";
+    default:        return "bg-gray-100 text-gray-600 border-gray-300";
+  }
+}
+
 const emptyForm = {
   date: new Date().toISOString().slice(0, 10),
   odometer: "",
   reason: "Test Drive",
   technician: "",
   notes: "",
+  fuelLevel: "",
 };
 
 type FormState = typeof emptyForm;
@@ -57,9 +90,11 @@ export function MileageTab({ carId, initialMileage, originalMileage }: { carId: 
       reason: form.reason.trim(),
       technician: form.technician.trim() || null,
       notes: form.notes.trim() || null,
+      fuelLevel: form.fuelLevel || null,
     }}, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/mileage`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });
         setForm(emptyForm);
         setShowForm(false);
         setError("");
@@ -89,7 +124,7 @@ export function MileageTab({ carId, initialMileage, originalMileage }: { carId: 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
         <div>
           <h2 className="text-2xl font-black uppercase">Mileage Log</h2>
-          <p className="text-gray-600 font-medium mt-1">Track odometer readings after test drives and moves.</p>
+          <p className="text-gray-600 font-medium mt-1">Track odometer readings and fuel level after each drive.</p>
         </div>
         <Button size="lg" onClick={() => { setShowForm(prev => !prev); setError(""); }} className="w-full sm:w-auto">
           <Plus className="w-6 h-6 mr-2" />
@@ -175,6 +210,29 @@ export function MileageTab({ carId, initialMileage, originalMileage }: { carId: 
             </div>
           </div>
 
+          <div className="space-y-2">
+            <label className="text-base font-black uppercase block">
+              <Fuel className="inline w-5 h-5 mr-2 mb-0.5" />
+              Fuel Level at End of Drive
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {FUEL_LEVELS.map(level => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setField("fuelLevel", form.fuelLevel === level ? "" : level)}
+                  className={`px-4 py-2 rounded-lg border-4 font-black text-sm min-w-[3rem] transition-colors ${
+                    form.fuelLevel === level
+                      ? fuelColor(level)
+                      : "bg-white text-black border-black"
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-1">
             <label className="text-base font-black uppercase block">Notes</label>
             <Input
@@ -209,12 +267,18 @@ export function MileageTab({ carId, initialMileage, originalMileage }: { carId: 
             const delta = prevOdo !== null ? entry.odometer - prevOdo : null;
             return (
               <div key={entry.id} className="border-4 border-black bg-white rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex-1 space-y-1">
+                <div className="flex-1 space-y-2">
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-2xl font-black font-mono">{entry.odometer.toLocaleString()} mi</span>
                     {delta !== null && delta > 0 && (
                       <span className="bg-gray-200 text-black font-black text-sm px-2 py-1 rounded">
                         +{delta.toLocaleString()} mi
+                      </span>
+                    )}
+                    {entry.fuelLevel && (
+                      <span className={`flex items-center gap-1 border-2 font-black text-sm px-2 py-1 rounded ${fuelBadgeClass(entry.fuelLevel)}`}>
+                        <Fuel className="w-4 h-4" />
+                        {entry.fuelLevel}
                       </span>
                     )}
                   </div>

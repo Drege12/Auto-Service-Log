@@ -58,6 +58,7 @@ export const mileageEntriesTable = pgTable("mileage_entries", {
   reason: text("reason").notNull(),
   technician: text("technician"),
   notes: text("notes"),
+  fuelLevel: text("fuel_level"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
