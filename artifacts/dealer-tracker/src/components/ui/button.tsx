@@ -52,4 +52,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 )
 Button.displayName = "Button"
 
+export function buttonVariants({ variant = "default", size = "default" }: { variant?: string; size?: string } = {}) {
+  const baseStyles = "inline-flex items-center justify-center whitespace-nowrap font-bold transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 tap-target border-2 border-black";
+  const variantMap: Record<string, string> = {
+    default: "bg-primary text-primary-foreground shadow-brutal hover-brutal active-brutal",
+    outline: "bg-background text-foreground shadow-brutal hover-brutal active-brutal",
+    destructive: "bg-[hsl(var(--color-destructive))] text-[hsl(var(--color-destructive-foreground))] shadow-brutal hover-brutal active-brutal",
+    ghost: "border-transparent hover:bg-secondary",
+  };
+  const sizeMap: Record<string, string> = {
+    default: "h-12 px-6 py-2 text-lg",
+    sm: "h-10 px-4 text-base",
+    lg: "h-16 px-8 text-xl",
+    icon: "h-12 w-12",
+  };
+  return cn(baseStyles, variantMap[variant] ?? variantMap.default, sizeMap[size] ?? sizeMap.default);
+}
+
 export { Button }

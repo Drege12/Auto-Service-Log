@@ -17,4 +17,5 @@ export interface CreateCar {
   mileage?: number;
   notes?: string;
   status?: CreateCarStatus;
+  sold?: number;
 }

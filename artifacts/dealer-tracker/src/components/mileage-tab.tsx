@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useListMileage, useCreateMileageEntry, useDeleteMileageEntry } from "@workspace/api-client-react";
+import { useListMileage, useCreateMileage, useDeleteMileage } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,8 +63,8 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage }:
   const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { data: entries = [], isLoading } = useListMileage(carId);
-  const { mutate: createEntry, isPending } = useCreateMileageEntry();
-  const { mutate: deleteEntry } = useDeleteMileageEntry();
+  const { mutate: createEntry, isPending } = useCreateMileage();
+  const { mutate: deleteEntry } = useDeleteMileage();
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -89,9 +89,9 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage }:
       date: form.date,
       odometer: odo,
       reason: form.reason.trim(),
-      technician: form.technician.trim() || null,
-      notes: form.notes.trim() || null,
-      fuelLevel: form.fuelLevel || null,
+      technician: form.technician.trim() || undefined,
+      notes: form.notes.trim() || undefined,
+      fuelLevel: form.fuelLevel || undefined,
     }}, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/mileage`] });

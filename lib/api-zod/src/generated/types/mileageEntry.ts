@@ -9,9 +9,12 @@
 export interface MileageEntry {
   id: number;
   carId: number;
+  date: string;
   odometer: number;
   reason: string;
+  technician?: string;
   fuelAdded?: number;
+  fuelLevel?: string;
   notes?: string;
   createdAt: Date;
 }
