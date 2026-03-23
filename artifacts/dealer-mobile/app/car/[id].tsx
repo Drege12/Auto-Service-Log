@@ -16,7 +16,7 @@ import {
   useDeleteMileage,
   useUpdateCosts,
 } from "@workspace/api-client-react";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
@@ -267,7 +267,7 @@ function MaintenanceTab({ carId }: { carId: number }) {
         ListEmptyComponent={<Text style={styles.emptyTextTab}>No maintenance recorded</Text>}
       />
       <TouchableOpacity style={styles.fab} onPress={() => setIsModalVisible(true)}>
-        <Feather name="plus" size={24} color="#000" />
+        <Ionicons name="add" size={26} color="#000" />
       </TouchableOpacity>
       <AddMaintenanceModal
         visible={isModalVisible}
@@ -353,7 +353,7 @@ function TodosTab({ carId }: { carId: number }) {
         {todos?.length === 0 && <Text style={styles.emptyTextTab}>No items needed</Text>}
       </ScrollView>
       <TouchableOpacity style={styles.fab} onPress={() => setIsModalVisible(true)}>
-        <Feather name="plus" size={24} color="#000" />
+        <Ionicons name="add" size={26} color="#000" />
       </TouchableOpacity>
       <AddTodoModal
         visible={isModalVisible}
@@ -416,7 +416,7 @@ function MileageTab({ carId, carMileage }: { carId: number, carMileage: number }
         )}
       />
       <TouchableOpacity style={styles.fab} onPress={() => setIsModalVisible(true)}>
-        <Feather name="plus" size={24} color="#000" />
+        <Ionicons name="add" size={26} color="#000" />
       </TouchableOpacity>
       <AddMileageModal
         visible={isModalVisible}

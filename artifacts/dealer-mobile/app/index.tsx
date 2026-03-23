@@ -3,7 +3,7 @@ import {
   useCreateCar,
   useDeleteCar,
 } from "@workspace/api-client-react";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState, useMemo } from "react";
@@ -159,7 +159,7 @@ export default function CarsListScreen() {
           />
         </View>
         <TouchableOpacity style={styles.addButton} onPress={() => setIsAddModalVisible(true)}>
-          <Feather name="plus" size={24} color="#000" />
+          <Ionicons name="add" size={26} color="#000" />
         </TouchableOpacity>
       </View>
 
