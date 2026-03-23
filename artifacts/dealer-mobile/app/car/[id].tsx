@@ -107,7 +107,7 @@ export default function CarDetailScreen() {
 
 function InspectionTab({ carId }: { carId: number }) {
   const { data: items, isLoading, refetch } = useGetInspection(carId);
-  const upsertMutation = useUpsertInspection(carId);
+  const upsertMutation = useUpsertInspection();
   const queryClient = useQueryClient();
 
   const groupedItems = useMemo(() => {
@@ -133,7 +133,7 @@ function InspectionTab({ carId }: { carId: number }) {
   const debouncedUpsert = useCallback((updatedItems: typeof items) => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
-      upsertMutation.mutate({ data: updatedItems as any });
+      upsertMutation.mutate({ carId, data: updatedItems as any });
     }, 1000);
   }, []);
 
@@ -142,7 +142,7 @@ function InspectionTab({ carId }: { carId: number }) {
     const newItems = items.map(item => 
       item.id === itemId ? { ...item, status: status as any } : item
     );
-    queryClient.setQueryData(["getInspection", carId], newItems);
+    queryClient.setQueryData([`/api/cars/${carId}/inspection`], newItems);
     debouncedUpsert(newItems.map(i => ({
       id: i.id,
       category: i.category,
@@ -157,7 +157,7 @@ function InspectionTab({ carId }: { carId: number }) {
     const newItems = items.map(item => 
       item.id === itemId ? { ...item, notes } : item
     );
-    queryClient.setQueryData(["getInspection", carId], newItems);
+    queryClient.setQueryData([`/api/cars/${carId}/inspection`], newItems);
     debouncedUpsert(newItems.map(i => ({
       id: i.id,
       category: i.category,
@@ -235,7 +235,7 @@ function MaintenanceTab({ carId }: { carId: number }) {
       { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: async () => {
         await deleteMutation.mutateAsync({ carId, entryId });
-        queryClient.invalidateQueries({ queryKey: ["listMaintenance", carId] });
+        queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/maintenance`] });
       }}
     ]);
   };
@@ -275,7 +275,7 @@ function MaintenanceTab({ carId }: { carId: number }) {
         carId={carId}
         onSuccess={() => {
           setIsModalVisible(false);
-          queryClient.invalidateQueries({ queryKey: ["listMaintenance", carId] });
+          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/maintenance`] });
         }}
       />
     </View>
@@ -296,7 +296,7 @@ function TodosTab({ carId }: { carId: number }) {
       todoId: todo.id,
       data: { ...todo, completed: !todo.completed }
     });
-    queryClient.invalidateQueries({ queryKey: ["listTodos", carId] });
+    queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/todos`] });
   };
 
   const handleDelete = (todoId: number) => {
@@ -304,7 +304,7 @@ function TodosTab({ carId }: { carId: number }) {
       { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: async () => {
         await deleteMutation.mutateAsync({ carId, todoId });
-        queryClient.invalidateQueries({ queryKey: ["listTodos", carId] });
+        queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/todos`] });
       }}
     ]);
   };
@@ -361,7 +361,7 @@ function TodosTab({ carId }: { carId: number }) {
         carId={carId}
         onSuccess={() => {
           setIsModalVisible(false);
-          queryClient.invalidateQueries({ queryKey: ["listTodos", carId] });
+          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/todos`] });
         }}
       />
     </View>
@@ -380,8 +380,8 @@ function MileageTab({ carId, carMileage }: { carId: number, carMileage: number }
       { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: async () => {
         await deleteMutation.mutateAsync({ carId, entryId });
-        queryClient.invalidateQueries({ queryKey: ["listMileage", carId] });
-        queryClient.invalidateQueries({ queryKey: ["getCar", carId] });
+        queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/mileage`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });
       }}
     ]);
   };
@@ -424,8 +424,8 @@ function MileageTab({ carId, carMileage }: { carId: number, carMileage: number }
         carId={carId}
         onSuccess={() => {
           setIsModalVisible(false);
-          queryClient.invalidateQueries({ queryKey: ["listMileage", carId] });
-          queryClient.invalidateQueries({ queryKey: ["getCar", carId] });
+          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/mileage`] });
+          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });
         }}
       />
     </View>
@@ -442,12 +442,12 @@ function CostsTab({ car }: { car: any }) {
     actualPartsCost: car.actualPartsCost || "0",
     actualLaborHours: car.actualLaborHours || "0",
   });
-  const updateMutation = useUpdateCosts(car.id);
+  const updateMutation = useUpdateCosts();
   const queryClient = useQueryClient();
 
   const handleSave = async () => {
-    await updateMutation.mutateAsync({ data: form });
-    queryClient.invalidateQueries({ queryKey: ["getCar", car.id] });
+    await updateMutation.mutateAsync({ carId: car.id, data: form });
+    queryClient.invalidateQueries({ queryKey: [`/api/cars/${car.id}`] });
     Alert.alert("Success", "Costs updated");
   };
 
