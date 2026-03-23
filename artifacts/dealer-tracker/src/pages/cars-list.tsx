@@ -81,7 +81,7 @@ function CarCard({ car }: { car: CarItem }) {
               #{car.stockNumber}
             </div>
             {car.carType === "personal" && (
-              <span className="bg-purple-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
+              <span className="bg-teal-700 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
             )}
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -99,7 +99,7 @@ function CarCard({ car }: { car: CarItem }) {
         <div className="space-y-3 font-mono font-bold bg-gray-100 p-4 rounded-xl border-2 border-black">
           {car.carType === "personal" && car.owner && (
             <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-purple-500" />
+              <User className="w-5 h-5 text-teal-600" />
               <span className="truncate">{car.owner}</span>
             </div>
           )}
@@ -234,7 +234,7 @@ export default function CarsList() {
             className={`px-5 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
               tab === t.value
                 ? t.value === "personal"
-                  ? "bg-purple-600 text-white border-purple-600"
+                  ? "bg-teal-700 text-white border-teal-700"
                   : "bg-black text-white border-black"
                 : "bg-white text-black border-black"
             }`}
@@ -323,7 +323,7 @@ export default function CarsList() {
                     className={`flex-1 px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
                       form.carType === opt.value
                         ? opt.value === "personal"
-                          ? "bg-purple-600 text-white border-purple-600"
+                          ? "bg-teal-700 text-white border-teal-700"
                           : "bg-black text-white border-black"
                         : "bg-white text-black border-black"
                     }`}
