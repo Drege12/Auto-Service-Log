@@ -65,6 +65,7 @@ export const CreateCarBody = zod.object({
   mileage: zod.number().optional(),
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  sold: zod.number().optional(),
 });
 
 /**
@@ -114,6 +115,7 @@ export const UpdateCarBody = zod.object({
   mileage: zod.number().optional(),
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  sold: zod.number().optional(),
 });
 
 export const UpdateCarResponse = zod.object({
@@ -333,9 +335,12 @@ export const ListMileageParams = zod.object({
 export const ListMileageResponseItem = zod.object({
   id: zod.number(),
   carId: zod.number(),
+  date: zod.string(),
   odometer: zod.number(),
   reason: zod.string(),
+  technician: zod.string().optional(),
   fuelAdded: zod.number().optional(),
+  fuelLevel: zod.string().optional(),
   notes: zod.string().optional(),
   createdAt: zod.date(),
 });
@@ -349,9 +354,12 @@ export const CreateMileageParams = zod.object({
 });
 
 export const CreateMileageBody = zod.object({
+  date: zod.string(),
   odometer: zod.number(),
   reason: zod.string(),
+  technician: zod.string().optional(),
   fuelAdded: zod.number().optional(),
+  fuelLevel: zod.string().optional(),
   notes: zod.string().optional(),
 });
 

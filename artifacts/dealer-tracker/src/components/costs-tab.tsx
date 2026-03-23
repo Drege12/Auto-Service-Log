@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useUpdateCarCosts } from "@workspace/api-client-react";
+import { useUpdateCosts } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export function CostsTab({
 }: CostsTabProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const { mutate: updateCosts, isPending } = useUpdateCarCosts();
+  const { mutate: updateCosts, isPending } = useUpdateCosts();
 
   const [projNotes, setProjNotes] = useState(repairNotes ?? "");
   const [projParts, setProjParts] = useState(partsCost ?? "");
@@ -93,13 +93,13 @@ export function CostsTab({
     if (e) { setError(e); return; }
 
     updateCosts({ carId, data: {
-      repairNotes: projNotes.trim() || null,
-      partsCost: projPartsNum,
-      laborHours: projHoursNum,
-      laborRate: toNum(rate),
-      actualRepairNotes: actNotes.trim() || null,
-      actualPartsCost: actPartsNum,
-      actualLaborHours: actHoursNum,
+      repairNotes: projNotes.trim() || undefined,
+      partsCost: projParts.trim() || undefined,
+      laborHours: projHours.trim() || undefined,
+      laborRate: rate.trim() || undefined,
+      actualRepairNotes: actNotes.trim() || undefined,
+      actualPartsCost: actParts.trim() || undefined,
+      actualLaborHours: actHours.trim() || undefined,
     }}, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });

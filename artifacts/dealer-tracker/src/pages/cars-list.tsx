@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListCars, useCreateCar } from "@workspace/api-client-react";
+import { useListCars, useCreateCar, CreateCarStatus } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -156,7 +156,7 @@ export default function CarsList() {
         vin: form.vin.trim() || undefined,
         color: form.color.trim() || undefined,
         mileage: mi,
-        status: form.status || undefined,
+        status: (form.status || undefined) as CreateCarStatus | undefined,
       }
     }, {
       onSuccess: () => {

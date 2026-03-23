@@ -570,6 +570,8 @@ components:
         status:
           type: string
           enum: [in_service, ready, on_hold]
+        sold:
+          type: integer
       required:
         - stockNumber
         - year
@@ -732,12 +734,18 @@ components:
           type: integer
         carId:
           type: integer
+        date:
+          type: string
         odometer:
           type: integer
         reason:
           type: string
+        technician:
+          type: string
         fuelAdded:
           type: number
+        fuelLevel:
+          type: string
         notes:
           type: string
         createdAt:
@@ -746,6 +754,7 @@ components:
       required:
         - id
         - carId
+        - date
         - odometer
         - reason
         - createdAt
@@ -753,14 +762,21 @@ components:
     CreateMileageEntry:
       type: object
       properties:
+        date:
+          type: string
         odometer:
           type: integer
         reason:
           type: string
+        technician:
+          type: string
         fuelAdded:
           type: number
+        fuelLevel:
+          type: string
         notes:
           type: string
       required:
+        - date
         - odometer
         - reason

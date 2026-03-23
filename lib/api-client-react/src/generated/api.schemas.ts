@@ -67,6 +67,7 @@ export interface CreateCar {
   mileage?: number;
   notes?: string;
   status?: CreateCarStatus;
+  sold?: number;
 }
 
 export interface UpdateCosts {
@@ -175,16 +176,22 @@ export interface CreateTodoEntry {
 export interface MileageEntry {
   id: number;
   carId: number;
+  date: string;
   odometer: number;
   reason: string;
+  technician?: string;
   fuelAdded?: number;
+  fuelLevel?: string;
   notes?: string;
   createdAt: string;
 }
 
 export interface CreateMileageEntry {
+  date: string;
   odometer: number;
   reason: string;
+  technician?: string;
   fuelAdded?: number;
+  fuelLevel?: string;
   notes?: string;
 }

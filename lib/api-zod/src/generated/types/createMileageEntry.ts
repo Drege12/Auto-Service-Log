@@ -7,8 +7,11 @@
  */
 
 export interface CreateMileageEntry {
+  date: string;
   odometer: number;
   reason: string;
+  technician?: string;
   fuelAdded?: number;
+  fuelLevel?: string;
   notes?: string;
 }
