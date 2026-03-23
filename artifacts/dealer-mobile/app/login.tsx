@@ -51,7 +51,7 @@ export default function LoginScreen() {
         <View style={styles.iconContainer}>
           <Feather name="tool" size={64} color={Colors.dark.tint} />
         </View>
-        <Text style={styles.title}>DEALER TRACKER</Text>
+        <Text style={styles.title}>MAINTENANCE TRACKER</Text>
         
         <View style={styles.inputContainer}>
           <TextInput
