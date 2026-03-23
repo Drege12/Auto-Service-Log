@@ -18,7 +18,7 @@ import {
 } from "@workspace/api-client-react";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -37,7 +37,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import Colors from "@/constants/colors";
-import { debounce } from "lodash";
 
 type Tab = "INSPECTION" | "MAINTENANCE" | "NEEDS DONE" | "MILEAGE" | "COSTS";
 
@@ -130,12 +129,13 @@ function InspectionTab({ carId }: { carId: number }) {
     }, { pass: 0, fail: 0, advisory: 0 });
   }, [items]);
 
-  const debouncedUpsert = useCallback(
-    debounce((updatedItems) => {
-      upsertMutation.mutate({ data: updatedItems });
-    }, 1000),
-    []
-  );
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedUpsert = useCallback((updatedItems: typeof items) => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      upsertMutation.mutate({ data: updatedItems as any });
+    }, 1000);
+  }, []);
 
   const updateItemStatus = (itemId: number, status: string) => {
     if (!items) return;
