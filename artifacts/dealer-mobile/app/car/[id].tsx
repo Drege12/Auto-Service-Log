@@ -16,7 +16,7 @@ import {
   useDeleteMileage,
   useUpdateCosts,
 } from "@workspace/api-client-react";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
@@ -66,7 +66,7 @@ export default function CarDetailScreen() {
           <Text style={styles.headerSubtitle}>STK: {car.stockNumber}</Text>
         </View>
         <TouchableOpacity style={styles.editButton} onPress={() => setIsEditModalVisible(true)}>
-          <Feather name="edit-2" size={20} color="#000" />
+          <Ionicons name="create-outline" size={20} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -250,7 +250,7 @@ function MaintenanceTab({ carId }: { carId: number }) {
         renderItem={({ item }) => (
           <Swipeable renderRightActions={() => (
             <TouchableOpacity style={styles.deleteActionTab} onPress={() => handleDelete(item.id)}>
-              <Feather name="trash-2" size={20} color="#fff" />
+              <Ionicons name="trash-outline" size={20} color="#fff" />
             </TouchableOpacity>
           )}>
             <View style={styles.entryCard}>
@@ -331,12 +331,12 @@ function TodosTab({ carId }: { carId: number }) {
               {groupedTodos[p].map((todo: any) => (
                 <Swipeable key={todo.id} renderRightActions={() => (
                   <TouchableOpacity style={styles.deleteActionTab} onPress={() => handleDelete(todo.id)}>
-                    <Feather name="trash-2" size={20} color="#fff" />
+                    <Ionicons name="trash-outline" size={20} color="#fff" />
                   </TouchableOpacity>
                 )}>
                   <TouchableOpacity style={styles.todoCard} onPress={() => toggleTodo(todo)}>
-                    <Feather
-                      name={todo.completed ? "check-square" : "square"}
+                    <Ionicons
+                      name={todo.completed ? "checkbox-outline" : "square-outline"}
                       size={24}
                       color={todo.completed ? Colors.dark.success : Colors.dark.muted}
                     />
@@ -400,7 +400,7 @@ function MileageTab({ carId, carMileage }: { carId: number, carMileage: number }
         renderItem={({ item }) => (
           <Swipeable renderRightActions={() => (
             <TouchableOpacity style={styles.deleteActionTab} onPress={() => handleDelete(item.id)}>
-              <Feather name="trash-2" size={20} color="#fff" />
+              <Ionicons name="trash-outline" size={20} color="#fff" />
             </TouchableOpacity>
           )}>
             <View style={styles.entryCard}>

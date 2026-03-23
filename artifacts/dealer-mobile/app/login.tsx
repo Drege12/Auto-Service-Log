@@ -1,5 +1,5 @@
 import { useLogin } from "@workspace/api-client-react";
-import { Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -49,7 +49,7 @@ export default function LoginScreen() {
     >
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <Feather name="tool" size={64} color={Colors.dark.tint} />
+          <Ionicons name="build-outline" size={64} color={Colors.dark.tint} />
         </View>
         <Text style={styles.title}>MAINTENANCE TRACKER</Text>
         
