@@ -99,7 +99,7 @@ export default function CarDetail() {
       vin: editForm.vin.trim() || undefined,
       color: editForm.color.trim() || undefined,
       mileage: editForm.mileage.trim() ? parseInt(editForm.mileage.trim(), 10) : undefined,
-      status: (editForm.status || undefined) as CreateCarStatus | undefined,
+      status: (editForm.status || null) as unknown as CreateCarStatus | undefined,
       carType: editForm.carType as CreateCarCarType,
       owner: editForm.carType === "personal" && editForm.owner.trim() ? editForm.owner.trim() : undefined,
     };
