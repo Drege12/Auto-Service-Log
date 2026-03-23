@@ -47,7 +47,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
               <Wrench className="w-12 h-12" />
             </div>
           </div>
-          <h1 className="text-4xl font-black uppercase tracking-tight">Dealer Tracker</h1>
+          <h1 className="text-4xl font-black uppercase tracking-tight">Maintenance Tracker</h1>
           <p className="text-gray-500 font-medium">Enter the shop password to continue.</p>
         </div>
 
