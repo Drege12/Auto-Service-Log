@@ -74,7 +74,7 @@ export default function CarsListScreen() {
           style: "destructive",
           onPress: async () => {
             await deleteCarMutation.mutateAsync({ carId });
-            queryClient.invalidateQueries({ queryKey: ["listCars"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
           },
         },
       ]
@@ -188,7 +188,7 @@ export default function CarsListScreen() {
         onClose={() => setIsAddModalVisible(false)}
         onSuccess={() => {
           setIsAddModalVisible(false);
-          queryClient.invalidateQueries({ queryKey: ["listCars"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
         }}
       />
     </View>
