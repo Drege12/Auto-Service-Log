@@ -523,6 +523,8 @@ components:
         carType:
           type: string
           enum: [dealer, personal]
+        owner:
+          type: string
         sold:
           type: integer
         repairNotes:
@@ -576,6 +578,8 @@ components:
         carType:
           type: string
           enum: [dealer, personal]
+        owner:
+          type: string
         sold:
           type: integer
       required:

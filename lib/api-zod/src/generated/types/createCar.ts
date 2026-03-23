@@ -19,5 +19,6 @@ export interface CreateCar {
   notes?: string;
   status?: CreateCarStatus;
   carType?: CreateCarCarType;
+  owner?: string;
   sold?: number;
 }
