@@ -25,6 +25,13 @@ export const CarStatus = {
   on_hold: "on_hold",
 } as const;
 
+export type CarCarType = (typeof CarCarType)[keyof typeof CarCarType];
+
+export const CarCarType = {
+  dealer: "dealer",
+  personal: "personal",
+} as const;
+
 export interface Car {
   id: number;
   stockNumber: string;
@@ -37,6 +44,7 @@ export interface Car {
   originalMileage?: number;
   notes?: string;
   status?: CarStatus;
+  carType?: CarCarType;
   sold: number;
   repairNotes?: string;
   partsCost?: string;
@@ -57,6 +65,14 @@ export const CreateCarStatus = {
   on_hold: "on_hold",
 } as const;
 
+export type CreateCarCarType =
+  (typeof CreateCarCarType)[keyof typeof CreateCarCarType];
+
+export const CreateCarCarType = {
+  dealer: "dealer",
+  personal: "personal",
+} as const;
+
 export interface CreateCar {
   stockNumber: string;
   year: number;
@@ -67,6 +83,7 @@ export interface CreateCar {
   mileage?: number;
   notes?: string;
   status?: CreateCarStatus;
+  carType?: CreateCarCarType;
   sold?: number;
 }
 

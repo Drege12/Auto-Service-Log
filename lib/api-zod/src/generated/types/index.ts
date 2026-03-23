@@ -7,8 +7,10 @@
  */
 
 export * from "./car";
+export * from "./carCarType";
 export * from "./carStatus";
 export * from "./createCar";
+export * from "./createCarCarType";
 export * from "./createCarStatus";
 export * from "./createMaintenanceEntry";
 export * from "./createMileageEntry";

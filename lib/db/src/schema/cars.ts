@@ -21,6 +21,7 @@ export const carsTable = pgTable("cars", {
   actualRepairNotes: text("actual_repair_notes"),
   actualPartsCost: numeric("actual_parts_cost"),
   actualLaborHours: numeric("actual_labor_hours"),
+  carType: text("car_type").notNull().default("dealer"),
   sold: integer("sold").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

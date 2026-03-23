@@ -1,18 +1,30 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListCars, useCreateCar, CreateCarStatus } from "@workspace/api-client-react";
+import { useListCars, useCreateCar, CreateCarStatus, CreateCarCarType } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Car, Plus, Key, Gauge, ChevronDown, ChevronRight, Search } from "lucide-react";
+import { Car, Plus, Key, Gauge, Search } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "", label: "— No Status —" },
   { value: "in_service", label: "In Service" },
   { value: "ready", label: "Ready" },
   { value: "on_hold", label: "On Hold" },
+];
+
+const TYPE_OPTIONS = [
+  { value: "dealer", label: "Dealership" },
+  { value: "personal", label: "Personal" },
+];
+
+type TabType = "all" | "dealer" | "personal";
+const TABS: { value: TabType; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "dealer", label: "Dealership" },
+  { value: "personal", label: "Personal" },
 ];
 
 function statusBadge(status?: string | null) {
@@ -37,6 +49,7 @@ const emptyForm = {
   color: "",
   mileage: "",
   status: "",
+  carType: "dealer" as "dealer" | "personal",
 };
 
 type FormState = typeof emptyForm;
@@ -52,6 +65,7 @@ type CarItem = {
   color?: string;
   mileage?: number;
   status?: string;
+  carType?: string;
   sold: number;
 };
 
@@ -60,8 +74,13 @@ function CarCard({ car }: { car: CarItem }) {
     <Link href={`/cars/${car.id}`} className="group outline-none">
       <div className={`h-full border-4 border-black bg-white rounded-2xl p-6 shadow-brutal ${car.sold ? "opacity-60" : ""}`}>
         <div className="flex justify-between items-start mb-4 gap-2 flex-wrap">
-          <div className="bg-black text-white font-mono font-bold px-3 py-1 rounded text-lg">
-            #{car.stockNumber}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="bg-black text-white font-mono font-bold px-3 py-1 rounded text-lg">
+              #{car.stockNumber}
+            </div>
+            {car.carType === "personal" && (
+              <span className="bg-purple-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {car.sold
@@ -111,22 +130,30 @@ export default function CarsList() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
-  const [soldOpen, setSoldOpen] = useState(false);
+  const [tab, setTab] = useState<TabType>("all");
   const [search, setSearch] = useState("");
 
   const allActive = cars?.filter(c => !c.sold) ?? [];
   const allSold = cars?.filter(c => c.sold) ?? [];
-  const activeCars = allActive.filter(c => matchesSearch(c, search));
-  const soldCars = allSold.filter(c => matchesSearch(c, search));
+
+  const activeFiltered = allActive
+    .filter(c => tab === "all" || c.carType === tab)
+    .filter(c => matchesSearch(c, search));
+  const soldFiltered = allSold
+    .filter(c => tab === "all" || c.carType === tab)
+    .filter(c => matchesSearch(c, search));
+
+  const totalInTab = allActive.filter(c => tab === "all" || c.carType === tab).length
+    + allSold.filter(c => tab === "all" || c.carType === tab).length;
 
   const openAddDialog = () => {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, carType: tab === "personal" ? "personal" : "dealer" });
     setErrors({});
     setSubmitError("");
     setDialogOpen(true);
   };
 
-  const setField = (field: keyof FormState, value: string) => {
+  const setField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
   };
@@ -157,6 +184,7 @@ export default function CarsList() {
         color: form.color.trim() || undefined,
         mileage: mi,
         status: (form.status || undefined) as CreateCarStatus | undefined,
+        carType: form.carType as CreateCarCarType,
       }
     }, {
       onSuccess: () => {
@@ -167,14 +195,17 @@ export default function CarsList() {
     });
   };
 
-  const noResults = !isLoading && !isError && activeCars.length === 0 && soldCars.length === 0;
-  const totalCars = allActive.length + allSold.length;
+  const tabCounts = {
+    all: allActive.length,
+    dealer: allActive.filter(c => c.carType === "dealer").length,
+    personal: allActive.filter(c => c.carType === "personal").length,
+  };
 
   return (
     <Layout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
         <div>
-          <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tight">Active Vehicles</h1>
+          <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tight">Vehicles</h1>
           <p className="text-xl text-muted-foreground mt-2 font-medium">Select a vehicle to log work or inspect.</p>
         </div>
         <Button size="lg" onClick={openAddDialog} className="w-full sm:w-auto text-xl py-8">
@@ -183,7 +214,31 @@ export default function CarsList() {
         </Button>
       </div>
 
-      {totalCars > 0 && (
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {TABS.map(t => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => setTab(t.value)}
+            className={`px-5 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
+              tab === t.value
+                ? t.value === "personal"
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : "bg-black text-white border-black"
+                : "bg-white text-black border-black"
+            }`}
+          >
+            {t.label}
+            <span className={`ml-2 text-sm font-bold ${tab === t.value ? "opacity-70" : "text-gray-500"}`}>
+              ({tabCounts[t.value]})
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      {totalInTab > 0 && (
         <div className="relative mb-8">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 pointer-events-none" />
           <Input
@@ -198,16 +253,18 @@ export default function CarsList() {
       {isLoading && <div className="text-center py-20 text-2xl font-bold">Loading vehicles...</div>}
       {isError && <div className="text-center py-20 text-2xl font-bold text-red-600">Failed to load vehicles.</div>}
 
-      {!isLoading && !isError && totalCars === 0 && (
+      {!isLoading && !isError && totalInTab === 0 && (
         <div className="text-center py-20 border-4 border-dashed border-black rounded-3xl bg-gray-100">
           <Car className="w-24 h-24 mx-auto mb-6 opacity-50" />
-          <h2 className="text-3xl font-black uppercase mb-4">Shop is Empty</h2>
+          <h2 className="text-3xl font-black uppercase mb-4">
+            {tab === "personal" ? "No Personal Vehicles" : tab === "dealer" ? "No Dealership Vehicles" : "Shop is Empty"}
+          </h2>
           <p className="text-xl text-gray-600 mb-8">Add a vehicle to start tracking inspections and maintenance.</p>
           <Button size="lg" onClick={openAddDialog}>ADD FIRST VEHICLE</Button>
         </div>
       )}
 
-      {!isLoading && !isError && noResults && totalCars > 0 && (
+      {!isLoading && !isError && activeFiltered.length === 0 && soldFiltered.length === 0 && totalInTab > 0 && (
         <div className="text-center py-16 border-4 border-dashed border-black rounded-3xl bg-gray-100 mb-8">
           <Search className="w-16 h-16 mx-auto mb-4 opacity-40" />
           <h2 className="text-2xl font-black uppercase mb-2">No Matches</h2>
@@ -215,43 +272,19 @@ export default function CarsList() {
         </div>
       )}
 
-      {!isLoading && !isError && activeCars.length === 0 && allActive.length > 0 && search && (
-        <div className="text-center py-10 border-4 border-dashed border-black rounded-3xl bg-gray-100 mb-8">
-          <p className="text-lg text-gray-600 font-bold">No active vehicles match "{search}".</p>
-        </div>
-      )}
-
-      {!isLoading && !isError && activeCars.length === 0 && allActive.length === 0 && allSold.length > 0 && !search && (
-        <div className="text-center py-16 border-4 border-dashed border-black rounded-3xl bg-gray-100 mb-8">
-          <Car className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <h2 className="text-2xl font-black uppercase mb-2">No Active Vehicles</h2>
-          <p className="text-lg text-gray-600">All vehicles have been marked as sold.</p>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {activeCars.map(car => <CarCard key={car.id} car={car} />)}
+        {activeFiltered.map(car => <CarCard key={car.id} car={car} />)}
       </div>
 
-      {(soldCars.length > 0 || (allSold.length > 0 && search)) && (
-        <div className="mt-12 border-4 border-gray-400 rounded-xl overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setSoldOpen(prev => !prev)}
-            className="w-full flex items-center justify-between gap-4 p-5 bg-gray-100 text-left font-black uppercase text-xl"
-          >
-            <span>Sold Vehicles ({soldCars.length}{search && allSold.length !== soldCars.length ? ` of ${allSold.length}` : ""})</span>
-            {soldOpen ? <ChevronDown className="w-8 h-8 flex-shrink-0" /> : <ChevronRight className="w-8 h-8 flex-shrink-0" />}
-          </button>
-          {soldOpen && (
-            <div className="p-6 bg-gray-50 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 border-t-4 border-gray-400">
-              {soldCars.length > 0
-                ? soldCars.map(car => <CarCard key={car.id} car={car} />)
-                : <p className="col-span-full text-center text-gray-500 font-bold py-6">No sold vehicles match "{search}".</p>
-              }
-            </div>
-          )}
-        </div>
+      {soldFiltered.length > 0 && (
+        <details className="mt-12 border-4 border-gray-400 rounded-xl overflow-hidden">
+          <summary className="flex items-center justify-between gap-4 p-5 bg-gray-100 cursor-pointer font-black uppercase text-xl list-none">
+            <span>Sold Vehicles ({soldFiltered.length})</span>
+          </summary>
+          <div className="p-6 bg-gray-50 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 border-t-4 border-gray-400">
+            {soldFiltered.map(car => <CarCard key={car.id} car={car} />)}
+          </div>
+        </details>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -267,6 +300,30 @@ export default function CarsList() {
           )}
 
           <div className="space-y-5 mt-2">
+
+            {/* Type selector */}
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase block">Type</label>
+              <div className="flex gap-3">
+                {TYPE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setField("carType", opt.value as "dealer" | "personal")}
+                    className={`flex-1 px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
+                      form.carType === opt.value
+                        ? opt.value === "personal"
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-black text-white border-black"
+                        : "bg-white text-black border-black"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-1">
                 <label className="text-base font-black uppercase block">Stock Number *</label>

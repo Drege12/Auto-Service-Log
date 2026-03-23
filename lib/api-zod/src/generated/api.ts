@@ -40,6 +40,7 @@ export const ListCarsResponseItem = zod.object({
   originalMileage: zod.number().optional(),
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  carType: zod.enum(["dealer", "personal"]).optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
   partsCost: zod.string().optional(),
@@ -65,6 +66,7 @@ export const CreateCarBody = zod.object({
   mileage: zod.number().optional(),
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  carType: zod.enum(["dealer", "personal"]).optional(),
   sold: zod.number().optional(),
 });
 
@@ -87,6 +89,7 @@ export const GetCarResponse = zod.object({
   originalMileage: zod.number().optional(),
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  carType: zod.enum(["dealer", "personal"]).optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
   partsCost: zod.string().optional(),
@@ -115,6 +118,7 @@ export const UpdateCarBody = zod.object({
   mileage: zod.number().optional(),
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  carType: zod.enum(["dealer", "personal"]).optional(),
   sold: zod.number().optional(),
 });
 
@@ -130,6 +134,7 @@ export const UpdateCarResponse = zod.object({
   originalMileage: zod.number().optional(),
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  carType: zod.enum(["dealer", "personal"]).optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
   partsCost: zod.string().optional(),
@@ -400,6 +405,7 @@ export const UpdateCostsResponse = zod.object({
   originalMileage: zod.number().optional(),
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  carType: zod.enum(["dealer", "personal"]).optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
   partsCost: zod.string().optional(),
