@@ -9,27 +9,21 @@ export interface HealthStatus {
   status: string;
 }
 
-export interface MileageEntry {
-  id: number;
-  carId: number;
-  date: string;
-  odometer: number;
-  reason: string;
-  technician?: string;
-  notes?: string;
-  fuelLevel?: string;
-  createdAt: string;
+export interface LoginRequest {
+  password: string;
 }
 
-export interface CreateMileageEntry {
-  carId: number;
-  date: string;
-  odometer: number;
-  reason: string;
-  technician?: string;
-  notes?: string;
-  fuelLevel?: string;
+export interface LoginResponse {
+  ok: boolean;
 }
+
+export type CarStatus = (typeof CarStatus)[keyof typeof CarStatus];
+
+export const CarStatus = {
+  in_service: "in_service",
+  ready: "ready",
+  on_hold: "on_hold",
+} as const;
 
 export interface Car {
   id: number;
@@ -41,8 +35,9 @@ export interface Car {
   color?: string;
   mileage?: number;
   originalMileage?: number;
-  status?: string;
   notes?: string;
+  status?: CarStatus;
+  sold: number;
   repairNotes?: string;
   partsCost?: string;
   laborHours?: string;
@@ -50,9 +45,17 @@ export interface Car {
   actualRepairNotes?: string;
   actualPartsCost?: string;
   actualLaborHours?: string;
-  sold: number;
   createdAt: string;
 }
+
+export type CreateCarStatus =
+  (typeof CreateCarStatus)[keyof typeof CreateCarStatus];
+
+export const CreateCarStatus = {
+  in_service: "in_service",
+  ready: "ready",
+  on_hold: "on_hold",
+} as const;
 
 export interface CreateCar {
   stockNumber: string;
@@ -63,6 +66,17 @@ export interface CreateCar {
   color?: string;
   mileage?: number;
   notes?: string;
+  status?: CreateCarStatus;
+}
+
+export interface UpdateCosts {
+  repairNotes?: string;
+  partsCost?: string;
+  laborHours?: string;
+  laborRate?: string;
+  actualRepairNotes?: string;
+  actualPartsCost?: string;
+  actualLaborHours?: string;
 }
 
 export type InspectionItemStatus =
@@ -71,6 +85,7 @@ export type InspectionItemStatus =
 export const InspectionItemStatus = {
   pass: "pass",
   fail: "fail",
+  advisory: "advisory",
   na: "na",
   pending: "pending",
 } as const;
@@ -154,5 +169,22 @@ export interface CreateTodoEntry {
   description: string;
   priority: CreateTodoEntryPriority;
   completed?: boolean;
+  notes?: string;
+}
+
+export interface MileageEntry {
+  id: number;
+  carId: number;
+  odometer: number;
+  reason: string;
+  fuelAdded?: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreateMileageEntry {
+  odometer: number;
+  reason: string;
+  fuelAdded?: number;
   notes?: string;
 }

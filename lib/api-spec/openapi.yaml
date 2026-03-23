@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
   - name: cars
     description: Car management
   - name: inspections
@@ -17,6 +19,10 @@ tags:
     description: Maintenance log
   - name: todos
     description: Work needed log
+  - name: mileage
+    description: Mileage log
+  - name: costs
+    description: Cost tracking
 paths:
   /healthz:
     get:
@@ -30,6 +36,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Verify shop password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Incorrect password
 
   /cars:
     get:
@@ -352,6 +379,95 @@ paths:
         "204":
           description: Deleted
 
+  /cars/{carId}/mileage:
+    get:
+      operationId: listMileage
+      tags: [mileage]
+      summary: Get mileage log for a car
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Mileage entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MileageEntry"
+    post:
+      operationId: createMileage
+      tags: [mileage]
+      summary: Add a mileage log entry
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMileageEntry"
+      responses:
+        "201":
+          description: Mileage entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MileageEntry"
+
+  /cars/{carId}/mileage/{entryId}:
+    delete:
+      operationId: deleteMileage
+      tags: [mileage]
+      summary: Delete a mileage log entry
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /cars/{carId}/costs:
+    patch:
+      operationId: updateCosts
+      tags: [costs]
+      summary: Update projected and actual costs for a car
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCosts"
+      responses:
+        "200":
+          description: Costs updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+
 components:
   schemas:
     HealthStatus:
@@ -361,6 +477,22 @@ components:
           type: string
       required:
         - status
+
+    LoginRequest:
+      type: object
+      properties:
+        password:
+          type: string
+      required:
+        - password
+
+    LoginResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
 
     Car:
       type: object
@@ -381,10 +513,29 @@ components:
           type: string
         mileage:
           type: integer
+        originalMileage:
+          type: integer
         notes:
           type: string
+        status:
+          type: string
+          enum: [in_service, ready, on_hold]
         sold:
           type: integer
+        repairNotes:
+          type: string
+        partsCost:
+          type: string
+        laborHours:
+          type: string
+        laborRate:
+          type: string
+        actualRepairNotes:
+          type: string
+        actualPartsCost:
+          type: string
+        actualLaborHours:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -416,11 +567,32 @@ components:
           type: integer
         notes:
           type: string
+        status:
+          type: string
+          enum: [in_service, ready, on_hold]
       required:
         - stockNumber
         - year
         - make
         - model
+
+    UpdateCosts:
+      type: object
+      properties:
+        repairNotes:
+          type: string
+        partsCost:
+          type: string
+        laborHours:
+          type: string
+        laborRate:
+          type: string
+        actualRepairNotes:
+          type: string
+        actualPartsCost:
+          type: string
+        actualLaborHours:
+          type: string
 
     InspectionItem:
       type: object
@@ -552,3 +724,43 @@ components:
       required:
         - description
         - priority
+
+    MileageEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        carId:
+          type: integer
+        odometer:
+          type: integer
+        reason:
+          type: string
+        fuelAdded:
+          type: number
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - carId
+        - odometer
+        - reason
+        - createdAt
+
+    CreateMileageEntry:
+      type: object
+      properties:
+        odometer:
+          type: integer
+        reason:
+          type: string
+        fuelAdded:
+          type: number
+        notes:
+          type: string
+      required:
+        - odometer
+        - reason

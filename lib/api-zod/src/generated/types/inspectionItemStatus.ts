@@ -12,6 +12,7 @@ export type InspectionItemStatus =
 export const InspectionItemStatus = {
   pass: "pass",
   fail: "fail",
+  advisory: "advisory",
   na: "na",
   pending: "pending",
 } as const;

@@ -5,21 +5,8 @@
  * Dealer Car Tracker API
  * OpenAPI spec version: 0.1.0
  */
-import type { CarStatus } from "./carStatus";
 
-export interface Car {
-  id: number;
-  stockNumber: string;
-  year: number;
-  make: string;
-  model: string;
-  vin?: string;
-  color?: string;
-  mileage?: number;
-  originalMileage?: number;
-  notes?: string;
-  status?: CarStatus;
-  sold: number;
+export interface UpdateCosts {
   repairNotes?: string;
   partsCost?: string;
   laborHours?: string;
@@ -27,5 +14,4 @@ export interface Car {
   actualRepairNotes?: string;
   actualPartsCost?: string;
   actualLaborHours?: string;
-  createdAt: Date;
 }
