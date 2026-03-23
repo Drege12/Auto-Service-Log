@@ -3,7 +3,7 @@ import {
   useCreateCar,
   useDeleteCar,
 } from "@workspace/api-client-react";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState, useMemo } from "react";
@@ -87,7 +87,7 @@ export default function CarsListScreen() {
         style={styles.deleteAction}
         onPress={() => handleDelete(car.id, car.stockNumber)}
       >
-        <Feather name="trash-2" size={24} color="#fff" />
+        <Ionicons name="trash-outline" size={24} color="#fff" />
       </TouchableOpacity>
     );
 
@@ -117,12 +117,12 @@ export default function CarsListScreen() {
           </View>
           <View style={styles.carFooter}>
             <View style={styles.infoItem}>
-              <Feather name="map-pin" size={14} color={Colors.dark.muted} />
+              <Ionicons name="speedometer-outline" size={14} color={Colors.dark.muted} />
               <Text style={styles.infoText}>{car.mileage?.toLocaleString()} mi</Text>
             </View>
             {car.vin && (
               <View style={styles.infoItem}>
-                <Feather name="hash" size={14} color={Colors.dark.muted} />
+                <Ionicons name="pricetag-outline" size={14} color={Colors.dark.muted} />
                 <Text style={styles.infoText}>{car.vin.slice(-6)}</Text>
               </View>
             )}
@@ -149,7 +149,7 @@ export default function CarsListScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.searchContainer}>
-          <Feather name="search" size={20} color={Colors.dark.muted} style={styles.searchIcon} />
+          <Ionicons name="search-outline" size={20} color={Colors.dark.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by Stock, Make, Model, VIN..."
@@ -177,7 +177,7 @@ export default function CarsListScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Feather name="tool" size={64} color={Colors.dark.muted} />
+            <Ionicons name="build-outline" size={64} color={Colors.dark.muted} />
             <Text style={styles.emptyText}>No vehicles found</Text>
           </View>
         }
