@@ -14,7 +14,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Wrench className="w-8 h-8" />
             </div>
             <span className="text-2xl font-black uppercase tracking-tight hidden sm:inline-block">
-              Dealer Tracker
+              Maintenance Tracker
             </span>
           </Link>
           

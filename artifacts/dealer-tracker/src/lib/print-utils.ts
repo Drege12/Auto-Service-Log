@@ -92,7 +92,7 @@ export function printInspection(title: string, items: PrintInspectionItem[], cat
       <div style="font-size:18px;font-weight:900;text-transform:uppercase;">${title}</div>
       <div style="font-size:10px;color:#6b7280;margin-top:2px;">Printed ${date}</div>
     </div>
-    <div style="font-size:10px;color:#9ca3af;font-family:monospace;">Dealer Car Tracker</div>
+    <div style="font-size:10px;color:#9ca3af;font-family:monospace;">Maintenance Tracker</div>
   </div>
   ${categoryBlocks}
   <script>
@@ -141,7 +141,7 @@ export function printSection(title: string, el: HTMLElement) {
       <div class="text-xl font-black uppercase tracking-wide">${title}</div>
       <div class="text-sm text-gray-500 mt-1">Printed ${date}</div>
     </div>
-    <div class="text-xs text-gray-400 font-mono">Dealer Car Tracker</div>
+    <div class="text-xs text-gray-400 font-mono">Maintenance Tracker</div>
   </div>
   ${el.innerHTML}
   <script>

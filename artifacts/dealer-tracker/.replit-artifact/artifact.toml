@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Dealer Car Tracker"
+title = "Maintenance Tracker"
 version = "1.0.0"
 id = "artifacts/dealer-tracker"
 router = "path"
