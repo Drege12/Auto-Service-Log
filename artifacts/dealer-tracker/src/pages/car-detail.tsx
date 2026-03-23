@@ -162,13 +162,13 @@ export default function CarDetail() {
               </h1>
               {statusBadge(car.status)}
               {car.carType === "personal" && (
-                <span className="bg-purple-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Personal</span>
+                <span className="bg-teal-700 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Personal</span>
               )}
             </div>
 
             <div className="flex flex-wrap gap-6 mt-4 font-mono text-xl font-bold">
               {car.carType === "personal" && car.owner && (
-                <div className="flex items-center gap-2 text-purple-700">
+                <div className="flex items-center gap-2 text-teal-700">
                   <User className="w-6 h-6" />
                   {car.owner}
                 </div>
@@ -338,7 +338,7 @@ export default function CarDetail() {
                     className={`flex-1 px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
                       editForm.carType === opt.value
                         ? opt.value === "personal"
-                          ? "bg-purple-600 text-white border-purple-600"
+                          ? "bg-teal-700 text-white border-teal-700"
                           : "bg-black text-white border-black"
                         : "bg-white text-black border-black"
                     }`}
