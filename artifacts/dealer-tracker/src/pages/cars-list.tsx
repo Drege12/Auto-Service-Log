@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Car, Plus, Key, Gauge, Search } from "lucide-react";
+import { Car, Plus, Key, Gauge, Search, User } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "", label: "— No Status —" },
@@ -50,6 +50,7 @@ const emptyForm = {
   mileage: "",
   status: "",
   carType: "dealer" as "dealer" | "personal",
+  owner: "",
 };
 
 type FormState = typeof emptyForm;
@@ -66,6 +67,7 @@ type CarItem = {
   mileage?: number;
   status?: string;
   carType?: string;
+  owner?: string;
   sold: number;
 };
 
@@ -95,6 +97,12 @@ function CarCard({ car }: { car: CarItem }) {
           <span className="text-gray-500">{car.model}</span>
         </h2>
         <div className="space-y-3 font-mono font-bold bg-gray-100 p-4 rounded-xl border-2 border-black">
+          {car.carType === "personal" && car.owner && (
+            <div className="flex items-center gap-3">
+              <User className="w-5 h-5 text-purple-500" />
+              <span className="truncate">{car.owner}</span>
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <Key className="w-5 h-5 text-gray-500" />
             <span className="truncate">{car.vin || 'NO VIN RECORDED'}</span>
@@ -118,7 +126,8 @@ function matchesSearch(car: CarItem, q: string): boolean {
     car.model.toLowerCase().includes(lower) ||
     String(car.year).includes(lower) ||
     (car.vin?.toLowerCase().includes(lower) ?? false) ||
-    (car.color?.toLowerCase().includes(lower) ?? false)
+    (car.color?.toLowerCase().includes(lower) ?? false) ||
+    (car.owner?.toLowerCase().includes(lower) ?? false)
   );
 }
 
@@ -185,6 +194,7 @@ export default function CarsList() {
         mileage: mi,
         status: (form.status || undefined) as CreateCarStatus | undefined,
         carType: form.carType as CreateCarCarType,
+        owner: form.carType === "personal" && form.owner.trim() ? form.owner.trim() : undefined,
       }
     }, {
       onSuccess: () => {
@@ -323,6 +333,18 @@ export default function CarsList() {
                 ))}
               </div>
             </div>
+
+            {form.carType === "personal" && (
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Owner Name</label>
+                <Input
+                  value={form.owner}
+                  onChange={e => setField("owner", e.target.value)}
+                  placeholder="e.g. John Smith"
+                  className="bg-white text-black"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-1">

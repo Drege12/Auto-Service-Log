@@ -45,6 +45,7 @@ export interface Car {
   notes?: string;
   status?: CarStatus;
   carType?: CarCarType;
+  owner?: string;
   sold: number;
   repairNotes?: string;
   partsCost?: string;
@@ -84,6 +85,7 @@ export interface CreateCar {
   notes?: string;
   status?: CreateCarStatus;
   carType?: CreateCarCarType;
+  owner?: string;
   sold?: number;
 }
 

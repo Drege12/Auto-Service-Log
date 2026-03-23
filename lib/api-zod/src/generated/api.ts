@@ -41,6 +41,7 @@ export const ListCarsResponseItem = zod.object({
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
+  owner: zod.string().optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
   partsCost: zod.string().optional(),
@@ -67,6 +68,7 @@ export const CreateCarBody = zod.object({
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
+  owner: zod.string().optional(),
   sold: zod.number().optional(),
 });
 
@@ -90,6 +92,7 @@ export const GetCarResponse = zod.object({
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
+  owner: zod.string().optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
   partsCost: zod.string().optional(),
@@ -119,6 +122,7 @@ export const UpdateCarBody = zod.object({
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
+  owner: zod.string().optional(),
   sold: zod.number().optional(),
 });
 
@@ -135,6 +139,7 @@ export const UpdateCarResponse = zod.object({
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
+  owner: zod.string().optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
   partsCost: zod.string().optional(),
@@ -406,6 +411,7 @@ export const UpdateCostsResponse = zod.object({
   notes: zod.string().optional(),
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
+  owner: zod.string().optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
   partsCost: zod.string().optional(),

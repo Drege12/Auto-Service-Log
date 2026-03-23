@@ -21,6 +21,7 @@ export interface Car {
   notes?: string;
   status?: CarStatus;
   carType?: CarCarType;
+  owner?: string;
   sold: number;
   repairNotes?: string;
   partsCost?: string;

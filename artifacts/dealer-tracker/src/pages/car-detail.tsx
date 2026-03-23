@@ -12,7 +12,7 @@ import { MaintenanceTab } from "@/components/maintenance-tab";
 import { MileageTab } from "@/components/mileage-tab";
 import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
-import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User } from "lucide-react";
 
 function statusBadge(status?: string | null) {
   switch (status) {
@@ -49,6 +49,7 @@ const emptyEditForm = {
   mileage: "",
   status: "",
   carType: "dealer" as "dealer" | "personal",
+  owner: "",
 };
 
 export default function CarDetail() {
@@ -77,6 +78,7 @@ export default function CarDetail() {
         mileage: car.mileage != null ? String(car.mileage) : "",
         status: car.status || "",
         carType: (car.carType === "personal" ? "personal" : "dealer") as "dealer" | "personal",
+        owner: car.owner || "",
       });
       setEditError("");
       setDialogOpen(true);
@@ -99,6 +101,7 @@ export default function CarDetail() {
       mileage: editForm.mileage.trim() ? parseInt(editForm.mileage.trim(), 10) : undefined,
       status: (editForm.status || undefined) as CreateCarStatus | undefined,
       carType: editForm.carType as CreateCarCarType,
+      owner: editForm.carType === "personal" && editForm.owner.trim() ? editForm.owner.trim() : undefined,
     };
     updateCar({ carId, data }, {
       onSuccess: () => {
@@ -164,6 +167,12 @@ export default function CarDetail() {
             </div>
 
             <div className="flex flex-wrap gap-6 mt-4 font-mono text-xl font-bold">
+              {car.carType === "personal" && car.owner && (
+                <div className="flex items-center gap-2 text-purple-700">
+                  <User className="w-6 h-6" />
+                  {car.owner}
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Key className="w-6 h-6 text-muted-foreground" />
                 {car.vin || 'NO VIN'}
@@ -339,6 +348,18 @@ export default function CarDetail() {
                 ))}
               </div>
             </div>
+
+            {editForm.carType === "personal" && (
+              <div className="space-y-2">
+                <label className="text-lg font-bold uppercase">Owner Name</label>
+                <Input
+                  className="bg-white text-black"
+                  value={editForm.owner}
+                  placeholder="e.g. John Smith"
+                  onChange={e => setEditForm(f => ({ ...f, owner: e.target.value }))}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-lg font-bold uppercase">Status</label>
