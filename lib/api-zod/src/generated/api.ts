@@ -15,6 +15,17 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Verify shop password
+ */
+export const LoginBody = zod.object({
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
  * @summary List all cars
  */
 export const ListCarsResponseItem = zod.object({
@@ -26,7 +37,17 @@ export const ListCarsResponseItem = zod.object({
   vin: zod.string().optional(),
   color: zod.string().optional(),
   mileage: zod.number().optional(),
+  originalMileage: zod.number().optional(),
   notes: zod.string().optional(),
+  status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  sold: zod.number(),
+  repairNotes: zod.string().optional(),
+  partsCost: zod.string().optional(),
+  laborHours: zod.string().optional(),
+  laborRate: zod.string().optional(),
+  actualRepairNotes: zod.string().optional(),
+  actualPartsCost: zod.string().optional(),
+  actualLaborHours: zod.string().optional(),
   createdAt: zod.date(),
 });
 export const ListCarsResponse = zod.array(ListCarsResponseItem);
@@ -43,6 +64,7 @@ export const CreateCarBody = zod.object({
   color: zod.string().optional(),
   mileage: zod.number().optional(),
   notes: zod.string().optional(),
+  status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
 });
 
 /**
@@ -61,7 +83,17 @@ export const GetCarResponse = zod.object({
   vin: zod.string().optional(),
   color: zod.string().optional(),
   mileage: zod.number().optional(),
+  originalMileage: zod.number().optional(),
   notes: zod.string().optional(),
+  status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  sold: zod.number(),
+  repairNotes: zod.string().optional(),
+  partsCost: zod.string().optional(),
+  laborHours: zod.string().optional(),
+  laborRate: zod.string().optional(),
+  actualRepairNotes: zod.string().optional(),
+  actualPartsCost: zod.string().optional(),
+  actualLaborHours: zod.string().optional(),
   createdAt: zod.date(),
 });
 
@@ -81,6 +113,7 @@ export const UpdateCarBody = zod.object({
   color: zod.string().optional(),
   mileage: zod.number().optional(),
   notes: zod.string().optional(),
+  status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
 });
 
 export const UpdateCarResponse = zod.object({
@@ -92,7 +125,17 @@ export const UpdateCarResponse = zod.object({
   vin: zod.string().optional(),
   color: zod.string().optional(),
   mileage: zod.number().optional(),
+  originalMileage: zod.number().optional(),
   notes: zod.string().optional(),
+  status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  sold: zod.number(),
+  repairNotes: zod.string().optional(),
+  partsCost: zod.string().optional(),
+  laborHours: zod.string().optional(),
+  laborRate: zod.string().optional(),
+  actualRepairNotes: zod.string().optional(),
+  actualPartsCost: zod.string().optional(),
+  actualLaborHours: zod.string().optional(),
   createdAt: zod.date(),
 });
 
@@ -115,7 +158,7 @@ export const GetInspectionResponseItem = zod.object({
   carId: zod.number(),
   category: zod.string(),
   item: zod.string(),
-  status: zod.enum(["pass", "fail", "na", "pending"]),
+  status: zod.enum(["pass", "fail", "advisory", "na", "pending"]),
   notes: zod.string().optional(),
 });
 export const GetInspectionResponse = zod.array(GetInspectionResponseItem);
@@ -131,7 +174,7 @@ export const UpsertInspectionBodyItem = zod.object({
   id: zod.number().optional(),
   category: zod.string(),
   item: zod.string(),
-  status: zod.enum(["pass", "fail", "na", "pending"]),
+  status: zod.enum(["pass", "fail", "advisory", "na", "pending"]),
   notes: zod.string().optional(),
 });
 export const UpsertInspectionBody = zod.array(UpsertInspectionBodyItem);
@@ -141,7 +184,7 @@ export const UpsertInspectionResponseItem = zod.object({
   carId: zod.number(),
   category: zod.string(),
   item: zod.string(),
-  status: zod.enum(["pass", "fail", "na", "pending"]),
+  status: zod.enum(["pass", "fail", "advisory", "na", "pending"]),
   notes: zod.string().optional(),
 });
 export const UpsertInspectionResponse = zod.array(UpsertInspectionResponseItem);
@@ -278,4 +321,84 @@ export const UpdateTodoResponse = zod.object({
 export const DeleteTodoParams = zod.object({
   carId: zod.coerce.number(),
   todoId: zod.coerce.number(),
+});
+
+/**
+ * @summary Get mileage log for a car
+ */
+export const ListMileageParams = zod.object({
+  carId: zod.coerce.number(),
+});
+
+export const ListMileageResponseItem = zod.object({
+  id: zod.number(),
+  carId: zod.number(),
+  odometer: zod.number(),
+  reason: zod.string(),
+  fuelAdded: zod.number().optional(),
+  notes: zod.string().optional(),
+  createdAt: zod.date(),
+});
+export const ListMileageResponse = zod.array(ListMileageResponseItem);
+
+/**
+ * @summary Add a mileage log entry
+ */
+export const CreateMileageParams = zod.object({
+  carId: zod.coerce.number(),
+});
+
+export const CreateMileageBody = zod.object({
+  odometer: zod.number(),
+  reason: zod.string(),
+  fuelAdded: zod.number().optional(),
+  notes: zod.string().optional(),
+});
+
+/**
+ * @summary Delete a mileage log entry
+ */
+export const DeleteMileageParams = zod.object({
+  carId: zod.coerce.number(),
+  entryId: zod.coerce.number(),
+});
+
+/**
+ * @summary Update projected and actual costs for a car
+ */
+export const UpdateCostsParams = zod.object({
+  carId: zod.coerce.number(),
+});
+
+export const UpdateCostsBody = zod.object({
+  repairNotes: zod.string().optional(),
+  partsCost: zod.string().optional(),
+  laborHours: zod.string().optional(),
+  laborRate: zod.string().optional(),
+  actualRepairNotes: zod.string().optional(),
+  actualPartsCost: zod.string().optional(),
+  actualLaborHours: zod.string().optional(),
+});
+
+export const UpdateCostsResponse = zod.object({
+  id: zod.number(),
+  stockNumber: zod.string(),
+  year: zod.number(),
+  make: zod.string(),
+  model: zod.string(),
+  vin: zod.string().optional(),
+  color: zod.string().optional(),
+  mileage: zod.number().optional(),
+  originalMileage: zod.number().optional(),
+  notes: zod.string().optional(),
+  status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
+  sold: zod.number(),
+  repairNotes: zod.string().optional(),
+  partsCost: zod.string().optional(),
+  laborHours: zod.string().optional(),
+  laborRate: zod.string().optional(),
+  actualRepairNotes: zod.string().optional(),
+  actualPartsCost: zod.string().optional(),
+  actualLaborHours: zod.string().optional(),
+  createdAt: zod.date(),
 });

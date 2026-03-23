@@ -5,6 +5,7 @@
  * Dealer Car Tracker API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateCarStatus } from "./createCarStatus";
 
 export interface CreateCar {
   stockNumber: string;
@@ -15,4 +16,5 @@ export interface CreateCar {
   color?: string;
   mileage?: number;
   notes?: string;
+  status?: CreateCarStatus;
 }
