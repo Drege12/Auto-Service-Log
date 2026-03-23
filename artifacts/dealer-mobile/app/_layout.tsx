@@ -38,7 +38,7 @@ function RootLayoutNav() {
         headerTitleStyle: { fontFamily: "Inter_600SemiBold" },
       }}
     >
-      <Stack.Screen name="index" options={{ title: "DEALER TRACKER" }} />
+      <Stack.Screen name="index" options={{ title: "MAINTENANCE TRACKER" }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="car/[id]" options={{ title: "Car Detail" }} />
     </Stack>
