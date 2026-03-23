@@ -329,23 +329,22 @@ function TodosTab({ carId }: { carId: number }) {
                 {p.toUpperCase()} PRIORITY
               </Text>
               {groupedTodos[p].map((todo: any) => (
-                <Swipeable key={todo.id} renderRightActions={() => (
-                  <TouchableOpacity style={styles.deleteActionTab} onPress={() => handleDelete(todo.id)}>
-                    <Ionicons name="trash-outline" size={20} color="#fff" />
-                  </TouchableOpacity>
-                )}>
-                  <TouchableOpacity style={styles.todoCard} onPress={() => toggleTodo(todo)}>
+                <View key={todo.id} style={styles.todoCard}>
+                  <TouchableOpacity onPress={() => toggleTodo(todo)} style={styles.todoCheckArea}>
                     <Ionicons
                       name={todo.completed ? "checkbox-outline" : "square-outline"}
                       size={24}
                       color={todo.completed ? Colors.dark.success : Colors.dark.muted}
                     />
-                    <View style={styles.todoContent}>
-                      <Text style={[styles.todoDesc, todo.completed && styles.todoCompleted]}>{todo.description}</Text>
-                      {todo.notes && <Text style={styles.todoNotes}>{todo.notes}</Text>}
-                    </View>
                   </TouchableOpacity>
-                </Swipeable>
+                  <View style={styles.todoContent}>
+                    <Text style={[styles.todoDesc, todo.completed && styles.todoCompleted]}>{todo.description}</Text>
+                    {todo.notes && <Text style={styles.todoNotes}>{todo.notes}</Text>}
+                  </View>
+                  <TouchableOpacity onPress={() => handleDelete(todo.id)} style={styles.todoDeleteBtn}>
+                    <Ionicons name="trash-outline" size={20} color={Colors.dark.error} />
+                  </TouchableOpacity>
+                </View>
               ))}
             </View>
           )
@@ -737,11 +736,13 @@ const styles = StyleSheet.create({
   entryNotes: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.muted, fontStyle: "italic" },
   deleteActionTab: { backgroundColor: Colors.dark.error, justifyContent: "center", alignItems: "center", width: 60, height: "100%", borderRadius: 12, marginLeft: 10 },
   fab: { position: "absolute", right: 20, bottom: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.dark.tint, justifyContent: "center", alignItems: "center", elevation: 4 },
-  todoCard: { backgroundColor: Colors.dark.card, padding: 16, borderRadius: 12, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 12 },
+  todoCard: { backgroundColor: Colors.dark.card, paddingVertical: 12, paddingLeft: 12, paddingRight: 4, borderRadius: 12, marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 10 },
+  todoCheckArea: { padding: 4 },
   todoContent: { flex: 1 },
   todoDesc: { fontSize: 15, fontFamily: "Inter_500Medium", color: Colors.dark.text },
   todoCompleted: { textDecorationLine: "line-through", color: Colors.dark.muted },
   todoNotes: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.dark.muted, marginTop: 2 },
+  todoDeleteBtn: { padding: 10 },
   mileageHeader: { backgroundColor: Colors.dark.card, padding: 20, borderRadius: 12, marginBottom: 20, alignItems: "center" },
   currentMileageLabel: { fontSize: 14, color: Colors.dark.muted, fontFamily: "Inter_500Medium" },
   currentMileageValue: { fontSize: 32, color: Colors.dark.tint, fontFamily: "Inter_700Bold" },
