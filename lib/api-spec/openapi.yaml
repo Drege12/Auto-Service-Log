@@ -520,6 +520,9 @@ components:
         status:
           type: string
           enum: [in_service, ready, on_hold]
+        carType:
+          type: string
+          enum: [dealer, personal]
         sold:
           type: integer
         repairNotes:
@@ -570,6 +573,9 @@ components:
         status:
           type: string
           enum: [in_service, ready, on_hold]
+        carType:
+          type: string
+          enum: [dealer, personal]
         sold:
           type: integer
       required:

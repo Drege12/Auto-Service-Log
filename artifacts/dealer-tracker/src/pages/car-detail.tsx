@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useGetCar, useUpdateCar, useDeleteCar, CreateCarStatus } from "@workspace/api-client-react";
+import { useGetCar, useUpdateCar, useDeleteCar, CreateCarStatus, CreateCarCarType } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -34,6 +34,11 @@ const STATUS_OPTIONS = [
   { value: "on_hold", label: "On Hold" },
 ];
 
+const TYPE_OPTIONS = [
+  { value: "dealer", label: "Dealership" },
+  { value: "personal", label: "Personal" },
+];
+
 const emptyEditForm = {
   stockNumber: "",
   year: "",
@@ -43,6 +48,7 @@ const emptyEditForm = {
   color: "",
   mileage: "",
   status: "",
+  carType: "dealer" as "dealer" | "personal",
 };
 
 export default function CarDetail() {
@@ -70,6 +76,7 @@ export default function CarDetail() {
         color: car.color || "",
         mileage: car.mileage != null ? String(car.mileage) : "",
         status: car.status || "",
+        carType: (car.carType === "personal" ? "personal" : "dealer") as "dealer" | "personal",
       });
       setEditError("");
       setDialogOpen(true);
@@ -91,6 +98,7 @@ export default function CarDetail() {
       color: editForm.color.trim() || undefined,
       mileage: editForm.mileage.trim() ? parseInt(editForm.mileage.trim(), 10) : undefined,
       status: (editForm.status || undefined) as CreateCarStatus | undefined,
+      carType: editForm.carType as CreateCarCarType,
     };
     updateCar({ carId, data }, {
       onSuccess: () => {
@@ -150,6 +158,9 @@ export default function CarDetail() {
                 {car.year} {car.make} {car.model}
               </h1>
               {statusBadge(car.status)}
+              {car.carType === "personal" && (
+                <span className="bg-purple-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Personal</span>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-6 mt-4 font-mono text-xl font-bold">
@@ -304,6 +315,28 @@ export default function CarDetail() {
                   value={editForm.color}
                   onChange={e => setEditForm(f => ({ ...f, color: e.target.value }))}
                 />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-lg font-bold uppercase">Type</label>
+              <div className="flex gap-3">
+                {TYPE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setEditForm(f => ({ ...f, carType: opt.value as "dealer" | "personal" }))}
+                    className={`flex-1 px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
+                      editForm.carType === opt.value
+                        ? opt.value === "personal"
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-black text-white border-black"
+                        : "bg-white text-black border-black"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
 
