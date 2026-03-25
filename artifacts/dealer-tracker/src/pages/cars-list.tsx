@@ -27,6 +27,15 @@ const VEHICLE_TYPE_OPTIONS = [
   { value: "atv",        label: "ATV / UTV" },
 ];
 
+function vinLabel(vehicleType?: string | null): { label: string; placeholder: string; empty: string } {
+  switch (vehicleType) {
+    case "boat":       return { label: "Hull ID (HIN)", placeholder: "e.g. ABC12345D101", empty: "NO HIN RECORDED" };
+    case "atv":        return { label: "VIN / Serial #", placeholder: "Serial # (may be shorter than 17 digits)", empty: "NO VIN/SERIAL RECORDED" };
+    case "motorcycle": return { label: "VIN", placeholder: "VIN (vintage bikes may be shorter)", empty: "NO VIN RECORDED" };
+    default:           return { label: "VIN", placeholder: "17-character VIN", empty: "NO VIN RECORDED" };
+  }
+}
+
 type TabType = "all" | "dealer" | "personal";
 const TABS: { value: TabType; label: string }[] = [
   { value: "all", label: "All" },
@@ -119,7 +128,7 @@ function CarCard({ car }: { car: CarItem }) {
           )}
           <div className="flex items-center gap-3">
             <Key className="w-5 h-5 text-gray-500" />
-            <span className="truncate">{car.vin || 'NO VIN RECORDED'}</span>
+            <span className="truncate">{car.vin || vinLabel(car.vehicleType).empty}</span>
           </div>
           <div className="flex items-center gap-3">
             <Gauge className="w-5 h-5 text-gray-500" />
@@ -389,8 +398,8 @@ export default function CarsList() {
                 {errors.stockNumber && <p className="text-red-600 font-bold text-base">{errors.stockNumber}</p>}
               </div>
               <div className="space-y-1">
-                <label className="text-base font-black uppercase block">VIN</label>
-                <Input value={form.vin} onChange={e => setField("vin", e.target.value)} placeholder="17-character VIN" className="font-mono bg-white text-black" />
+                <label className="text-base font-black uppercase block">{vinLabel(form.vehicleType).label}</label>
+                <Input value={form.vin} onChange={e => setField("vin", e.target.value)} placeholder={vinLabel(form.vehicleType).placeholder} className="font-mono bg-white text-black" />
               </div>
             </div>
 
