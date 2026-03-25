@@ -91,8 +91,17 @@ export default function CarsList() {
   const [submitError, setSubmitError] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
   const [showSold, setShowSold] = useState(false);
   const [soldCollapsed, setSoldCollapsed] = useState(true);
+
+  const toggleFilter = (key: string) => {
+    setActiveFilters(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
 
   const setField = (key: keyof FormState, value: string) => {
     setForm(f => ({ ...f, [key]: value }));
@@ -161,11 +170,31 @@ export default function CarsList() {
   const soldCars = allCars.filter(c => c.sold);
 
   const filterCars = (list: CarItem[]) => {
-    if (!searchTerm.trim()) return list;
-    const q = searchTerm.toLowerCase();
-    return list.filter(c =>
-      `${c.year} ${c.make} ${c.model} ${c.stockNumber} ${c.vin || ""} ${c.owner || ""}`.toLowerCase().includes(q)
-    );
+    let result = list;
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter(c =>
+        `${c.year} ${c.make} ${c.model} ${c.stockNumber} ${c.vin || ""} ${c.owner || ""}`.toLowerCase().includes(q)
+      );
+    }
+
+    const typeFilters = ["car", "motorcycle", "boat", "atv"].filter(t => activeFilters.has(`type:${t}`));
+    if (typeFilters.length > 0) {
+      result = result.filter(c => typeFilters.includes(c.vehicleType || "car"));
+    }
+
+    const statusFilters = ["in_service", "ready", "on_hold"].filter(s => activeFilters.has(`status:${s}`));
+    if (statusFilters.length > 0) {
+      result = result.filter(c => statusFilters.includes(c.status || ""));
+    }
+
+    const ownerFilters = ["dealer", "personal"].filter(o => activeFilters.has(`owner:${o}`));
+    if (ownerFilters.length > 0) {
+      result = result.filter(c => ownerFilters.includes(c.carType || "dealer"));
+    }
+
+    return result;
   };
 
   const filteredActive = filterCars(activeCars);
@@ -185,7 +214,7 @@ export default function CarsList() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
@@ -195,6 +224,39 @@ export default function CarsList() {
             className="pl-10 bg-white text-black"
           />
         </div>
+      </div>
+
+      {/* Filter badges */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {[
+          { key: "type:car",        label: "Car / Truck",  on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
+          { key: "type:motorcycle", label: "Motorcycle",   on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
+          { key: "type:boat",       label: "Boat",         on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
+          { key: "type:atv",        label: "ATV / UTV",    on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
+          { key: "status:in_service", label: "In Service", on: "bg-blue-600 text-white",   off: "bg-white text-black border-2 border-blue-400" },
+          { key: "status:ready",      label: "Ready",      on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400" },
+          { key: "status:on_hold",    label: "On Hold",    on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
+          { key: "owner:dealer",    label: "Dealer",       on: "bg-black text-white",      off: "bg-white text-black border-2 border-gray-400" },
+          { key: "owner:personal",  label: "Personal",     on: "bg-teal-700 text-white",   off: "bg-white text-black border-2 border-teal-400" },
+        ].map(({ key, label, on, off }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => toggleFilter(key)}
+            className={`px-3 py-1.5 rounded-lg font-black uppercase text-sm tracking-wide transition-colors ${activeFilters.has(key) ? on : off}`}
+          >
+            {label}
+          </button>
+        ))}
+        {activeFilters.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setActiveFilters(new Set())}
+            className="px-3 py-1.5 rounded-lg font-black uppercase text-sm tracking-wide bg-white text-black border-2 border-gray-300 text-gray-500"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {isLoading && <p className="text-xl font-bold text-center py-12 text-muted-foreground">Loading vehicles...</p>}
