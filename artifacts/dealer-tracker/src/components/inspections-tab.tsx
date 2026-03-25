@@ -9,12 +9,12 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { INSPECTION_CATEGORIES, buildDefaultInspection } from "@/lib/inspection-template";
+import { getCategoriesForVehicleType, buildDefaultInspection } from "@/lib/inspection-template";
 import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, ChevronDown, ChevronRight, Printer } from "lucide-react";
 import { printInspection } from "@/lib/print-utils";
 import { Textarea } from "@/components/ui/textarea";
 
-export function InspectionsTab({ carId, carLabel }: { carId: number; carLabel: string }) {
+export function InspectionsTab({ carId, carLabel, vehicleType }: { carId: number; carLabel: string; vehicleType?: string | null }) {
   const queryClient = useQueryClient();
   const { data: inspectionItems, isLoading, isError } = useGetInspection(carId);
   const { mutate: upsertInspection, isPending } = useUpsertInspection();
@@ -29,7 +29,7 @@ export function InspectionsTab({ carId, carLabel }: { carId: number; carLabel: s
 
   useEffect(() => {
     if (inspectionItems) {
-      const items = inspectionItems.length === 0 ? buildDefaultInspection() : inspectionItems;
+      const items = inspectionItems.length === 0 ? buildDefaultInspection(vehicleType) : inspectionItems;
       setLocalItems(items);
       serverStateRef.current = items;
       setIsDirty(false);
@@ -205,7 +205,7 @@ export function InspectionsTab({ carId, carLabel }: { carId: number; carLabel: s
             variant="outline"
             size="lg"
             className="w-full sm:w-auto"
-            onClick={() => printInspection(`${carLabel} — Inspection`, localItems.map(i => ({ category: i.category || "", item: i.item || "", status: i.status || "pending", notes: i.notes })), INSPECTION_CATEGORIES)}
+            onClick={() => printInspection(`${carLabel} — Inspection`, localItems.map(i => ({ category: i.category || "", item: i.item || "", status: i.status || "pending", notes: i.notes })), getCategoriesForVehicleType(vehicleType))}
           >
             <Printer className="w-5 h-5 mr-2" /> PRINT
           </Button>
@@ -228,7 +228,7 @@ export function InspectionsTab({ carId, carLabel }: { carId: number; carLabel: s
       )}
 
       <div className="space-y-3">
-        {INSPECTION_CATEGORIES.map(category => {
+        {getCategoriesForVehicleType(vehicleType).map(category => {
           const categoryItems = localItems
             .map((item, index) => ({ item, index }))
             .filter(x => x.item.category === category);

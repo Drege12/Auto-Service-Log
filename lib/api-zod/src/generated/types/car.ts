@@ -7,6 +7,7 @@
  */
 import type { CarCarType } from "./carCarType";
 import type { CarStatus } from "./carStatus";
+import type { CarVehicleType } from "./carVehicleType";
 
 export interface Car {
   id: number;
@@ -21,6 +22,7 @@ export interface Car {
   notes?: string;
   status?: CarStatus;
   carType?: CarCarType;
+  vehicleType?: CarVehicleType;
   owner?: string;
   sold: number;
   repairNotes?: string;

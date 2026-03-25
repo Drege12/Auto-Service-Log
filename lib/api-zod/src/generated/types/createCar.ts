@@ -7,6 +7,7 @@
  */
 import type { CreateCarCarType } from "./createCarCarType";
 import type { CreateCarStatus } from "./createCarStatus";
+import type { CreateCarVehicleType } from "./createCarVehicleType";
 
 export interface CreateCar {
   stockNumber: string;
@@ -19,6 +20,7 @@ export interface CreateCar {
   notes?: string;
   status?: CreateCarStatus;
   carType?: CreateCarCarType;
+  vehicleType?: CreateCarVehicleType;
   owner?: string;
   sold?: number;
 }
