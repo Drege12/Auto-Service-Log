@@ -13,6 +13,7 @@ import { MileageTab } from "@/components/mileage-tab";
 import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
 import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User } from "lucide-react";
+import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 
 function statusBadge(status?: string | null) {
   switch (status) {
@@ -46,14 +47,6 @@ const VEHICLE_TYPE_OPTIONS = [
   { value: "atv",        label: "ATV / UTV" },
 ];
 
-function vinLabel(vehicleType?: string | null): { label: string; placeholder: string; empty: string } {
-  switch (vehicleType) {
-    case "boat":       return { label: "Hull ID (HIN)", placeholder: "e.g. ABC12345D101", empty: "NO HIN" };
-    case "atv":        return { label: "VIN / Serial #", placeholder: "Serial # (may be shorter than 17 digits)", empty: "NO VIN/SERIAL" };
-    case "motorcycle": return { label: "VIN", placeholder: "VIN (vintage bikes may be shorter)", empty: "NO VIN" };
-    default:           return { label: "VIN", placeholder: "17-character VIN", empty: "NO VIN" };
-  }
-}
 
 function vehicleTypeBadge(vt?: string | null) {
   if (!vt || vt === "car") return null;
@@ -205,7 +198,7 @@ export default function CarDetail() {
               </div>
               <div className="flex items-center gap-2">
                 <Gauge className="w-6 h-6 text-muted-foreground" />
-                {car.mileage ? `${car.mileage.toLocaleString()} mi` : 'UNKNOWN MILEAGE'}
+                {car.mileage ? `${car.mileage.toLocaleString()} ${mileageLabel(car.vehicleType).unit}` : mileageLabel(car.vehicleType).empty}
               </div>
               {car.color && (
                 <div className="flex items-center gap-2 font-sans uppercase bg-secondary px-3 py-1 rounded-md border-2 border-black">
@@ -260,7 +253,7 @@ export default function CarDetail() {
             <TodosTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
           </TabsContent>
           <TabsContent value="mileage" className="mt-0">
-            <MileageTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} />
+            <MileageTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} />
           </TabsContent>
           <TabsContent value="costs" className="mt-0">
             <CostsTab
@@ -335,7 +328,7 @@ export default function CarDetail() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Current Mileage</label>
+                <label className="text-lg font-bold uppercase">{mileageLabel(editForm.vehicleType).label}</label>
                 <Input
                   inputMode="numeric"
                   className="bg-white text-black"
