@@ -239,8 +239,8 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
           const hasFail = categoryItems.some(x => x.item.status === "fail");
           const hasAdvisory = categoryItems.some(x => x.item.status === "advisory");
           const naButtonLabel: Record<string, string> = {
-            "Diesel Systems": "Not a Diesel",
-            "Hybrid & Electric": "Not a Hybrid/EV",
+            "Diesel": "NOT A DIESEL",
+            "Hybrid / EV": "NOT A HYBRID/EV",
           };
           const naLabel = naButtonLabel[category];
 
