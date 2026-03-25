@@ -200,7 +200,7 @@ export default function CarDetail() {
       <div className="mb-8">
         <Button variant="ghost" onClick={() => setLocation("/")} className="mb-6 -ml-4">
           <ArrowLeft className="w-6 h-6 mr-2" />
-          BACK TO CARS
+          BACK TO VEHICLES
         </Button>
 
         <div className="bg-white border-4 border-black rounded-2xl p-6 sm:p-8 shadow-brutal flex flex-col md:flex-row justify-between gap-6">
