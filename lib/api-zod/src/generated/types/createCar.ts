@@ -5,6 +5,7 @@
  * Dealer Car Tracker API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateCarAtvSubtype } from "./createCarAtvSubtype";
 import type { CreateCarCarType } from "./createCarCarType";
 import type { CreateCarStatus } from "./createCarStatus";
 import type { CreateCarVehicleType } from "./createCarVehicleType";
@@ -21,6 +22,7 @@ export interface CreateCar {
   status?: CreateCarStatus;
   carType?: CreateCarCarType;
   vehicleType?: CreateCarVehicleType;
+  atvSubtype?: CreateCarAtvSubtype;
   owner?: string;
   sold?: number;
 }

@@ -526,6 +526,9 @@ components:
         vehicleType:
           type: string
           enum: [car, motorcycle, boat, atv]
+        atvSubtype:
+          type: string
+          enum: [quad, side-by-side, dirtbike, snowmobile, 3wheeler]
         owner:
           type: string
         sold:
@@ -584,6 +587,9 @@ components:
         vehicleType:
           type: string
           enum: [car, motorcycle, boat, atv]
+        atvSubtype:
+          type: string
+          enum: [quad, side-by-side, dirtbike, snowmobile, 3wheeler]
         owner:
           type: string
         sold:

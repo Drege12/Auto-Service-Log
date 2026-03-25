@@ -14,7 +14,7 @@ import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, Chev
 import { printInspection } from "@/lib/print-utils";
 import { Textarea } from "@/components/ui/textarea";
 
-export function InspectionsTab({ carId, carLabel, vehicleType }: { carId: number; carLabel: string; vehicleType?: string | null }) {
+export function InspectionsTab({ carId, carLabel, vehicleType, atvSubtype }: { carId: number; carLabel: string; vehicleType?: string | null; atvSubtype?: string | null }) {
   const queryClient = useQueryClient();
   const { data: inspectionItems, isLoading, isError } = useGetInspection(carId);
   const { mutate: upsertInspection, isPending } = useUpsertInspection();
@@ -29,7 +29,7 @@ export function InspectionsTab({ carId, carLabel, vehicleType }: { carId: number
 
   useEffect(() => {
     if (inspectionItems) {
-      const items = inspectionItems.length === 0 ? buildDefaultInspection(vehicleType) : inspectionItems;
+      const items = inspectionItems.length === 0 ? buildDefaultInspection(vehicleType, atvSubtype) : inspectionItems;
       setLocalItems(items);
       serverStateRef.current = items;
       setIsDirty(false);
@@ -205,7 +205,7 @@ export function InspectionsTab({ carId, carLabel, vehicleType }: { carId: number
             variant="outline"
             size="lg"
             className="w-full sm:w-auto"
-            onClick={() => printInspection(`${carLabel} — Inspection`, localItems.map(i => ({ category: i.category || "", item: i.item || "", status: i.status || "pending", notes: i.notes })), getCategoriesForVehicleType(vehicleType))}
+            onClick={() => printInspection(`${carLabel} — Inspection`, localItems.map(i => ({ category: i.category || "", item: i.item || "", status: i.status || "pending", notes: i.notes })), getCategoriesForVehicleType(vehicleType, atvSubtype))}
           >
             <Printer className="w-5 h-5 mr-2" /> PRINT
           </Button>
@@ -228,7 +228,7 @@ export function InspectionsTab({ carId, carLabel, vehicleType }: { carId: number
       )}
 
       <div className="space-y-3">
-        {getCategoriesForVehicleType(vehicleType).map(category => {
+        {getCategoriesForVehicleType(vehicleType, atvSubtype).map(category => {
           const categoryItems = localItems
             .map((item, index) => ({ item, index }))
             .filter(x => x.item.category === category);

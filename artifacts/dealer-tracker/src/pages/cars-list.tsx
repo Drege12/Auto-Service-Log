@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListCars, useCreateCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType } from "@workspace/api-client-react";
+import { useListCars, useCreateCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType, CreateCarAtvSubtype } from "@workspace/api-client-react";
+import { ATV_SUBTYPES, atvSubtypeLabel } from "@/lib/inspection-template";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ const emptyForm = {
   status: "",
   carType: "dealer" as "dealer" | "personal",
   vehicleType: "car" as "car" | "motorcycle" | "boat" | "atv",
+  atvSubtype: "quad" as string,
   owner: "",
 };
 
@@ -78,6 +80,7 @@ type CarItem = {
   status?: string;
   carType?: string;
   vehicleType?: string;
+  atvSubtype?: string;
   owner?: string;
   sold: number;
 };
@@ -96,7 +99,10 @@ function CarCard({ car }: { car: CarItem }) {
             )}
             {car.vehicleType && car.vehicleType !== "car" && (
               <span className="bg-slate-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
-                {{ motorcycle: "Motorcycle", boat: "Boat", atv: "ATV/UTV" }[car.vehicleType] ?? car.vehicleType}
+                {car.vehicleType === "atv"
+                  ? `ATV / ${atvSubtypeLabel(car.atvSubtype)}`
+                  : ({ motorcycle: "Motorcycle", boat: "Boat" }[car.vehicleType] ?? car.vehicleType)
+                }
               </span>
             )}
           </div>
@@ -211,6 +217,7 @@ export default function CarsList() {
         status: (form.status || undefined) as CreateCarStatus | undefined,
         carType: form.carType as CreateCarCarType,
         vehicleType: form.vehicleType as CreateCarVehicleType,
+        atvSubtype: form.vehicleType === "atv" ? form.atvSubtype as CreateCarAtvSubtype : undefined,
         owner: form.carType === "personal" && form.owner.trim() ? form.owner.trim() : undefined,
       }
     }, {
@@ -374,6 +381,29 @@ export default function CarsList() {
                 ))}
               </div>
             </div>
+
+            {/* ATV sub-type selector — only shown when ATV/UTV is selected */}
+            {form.vehicleType === "atv" && (
+              <div className="space-y-2">
+                <label className="text-base font-black uppercase block">ATV / UTV Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {ATV_SUBTYPES.map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setField("atvSubtype", opt.value)}
+                      className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
+                        form.atvSubtype === opt.value
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-black border-black"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {form.carType === "personal" && (
               <div className="space-y-1">
