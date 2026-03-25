@@ -127,6 +127,10 @@ export default function CarDetail() {
         queryClient.invalidateQueries({ queryKey: [`/api/cars`] });
         setDialogOpen(false);
       },
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Failed to save changes.";
+        setEditError(msg);
+      },
     });
   };
 
@@ -148,7 +152,20 @@ export default function CarDetail() {
       ? `Mark ${car?.year} ${car?.make} ${car?.model} as active again?`
       : `Mark ${car?.year} ${car?.make} ${car?.model} as sold? It will move to the Sold Vehicles list.`;
     if (confirm(confirmMsg)) {
-      updateCar({ carId, data: { stockNumber: car.stockNumber, year: car.year, make: car.make, model: car.model, sold: isSold ? 0 : 1 } }, {
+      updateCar({ carId, data: {
+        stockNumber: car.stockNumber,
+        year: car.year,
+        make: car.make,
+        model: car.model,
+        vin: car.vin || undefined,
+        color: car.color || undefined,
+        mileage: car.mileage ?? undefined,
+        status: (car.status || undefined) as CreateCarStatus | undefined,
+        carType: (car.carType || "dealer") as CreateCarCarType,
+        vehicleType: (car.vehicleType || "car") as CreateCarVehicleType,
+        owner: car.owner || undefined,
+        sold: isSold ? 0 : 1,
+      } }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: [`/api/cars`] });
           queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });

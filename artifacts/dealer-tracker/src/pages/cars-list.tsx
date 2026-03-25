@@ -218,7 +218,10 @@ export default function CarsList() {
         queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
         setDialogOpen(false);
       },
-      onError: () => setSubmitError("Failed to save. Please try again."),
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Failed to save. Please try again.";
+        setSubmitError(msg);
+      },
     });
   };
 
