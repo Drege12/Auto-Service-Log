@@ -312,14 +312,14 @@ export const BOAT_TEMPLATE = [
   { category: "Trailer", item: "Frame — rust, cracks, damage" },
 ];
 
-// ─── ATV / UTV ────────────────────────────────────────────────────────────────
+// ─── ATV / UTV — 4-Wheeler / Quad ─────────────────────────────────────────────
 
-export const ATV_CATEGORIES = [
+export const ATV_QUAD_CATEGORIES = [
   "Engine", "Drivetrain", "Brakes", "Suspension", "Tires & Wheels",
   "Electrical", "Frame & Body", "Fluids",
 ];
 
-export const ATV_TEMPLATE = [
+export const ATV_QUAD_TEMPLATE = [
   { category: "Engine", item: "Oil level & condition" },
   { category: "Engine", item: "Coolant level (liquid-cooled)" },
   { category: "Engine", item: "Air filter" },
@@ -330,7 +330,7 @@ export const ATV_TEMPLATE = [
   { category: "Engine", item: "Exhaust / muffler condition" },
   { category: "Engine", item: "Engine mounts" },
   { category: "Engine", item: "Radiator & hoses (liquid-cooled)" },
-  { category: "Drivetrain", item: "CVT belt condition (if CVT)" },
+  { category: "Drivetrain", item: "CVT belt condition" },
   { category: "Drivetrain", item: "CVT clutch — primary & secondary" },
   { category: "Drivetrain", item: "Chain or shaft drive condition" },
   { category: "Drivetrain", item: "Chain tension & lubrication (if chain)" },
@@ -375,7 +375,6 @@ export const ATV_TEMPLATE = [
   { category: "Frame & Body", item: "Footpegs / floorboards" },
   { category: "Frame & Body", item: "Handlebars & steering stem" },
   { category: "Frame & Body", item: "Tow hitch (if equipped)" },
-  { category: "Frame & Body", item: "Grab bar / roll cage (UTV)" },
   { category: "Fluids", item: "Engine oil" },
   { category: "Fluids", item: "Coolant (if liquid-cooled)" },
   { category: "Fluids", item: "Brake fluid" },
@@ -383,31 +382,362 @@ export const ATV_TEMPLATE = [
   { category: "Fluids", item: "CVT housing (clean, dry)" },
 ];
 
+// ─── ATV / UTV — Side-by-Side / UTV ──────────────────────────────────────────
+
+export const ATV_SXS_CATEGORIES = [
+  "Engine", "Drivetrain", "Brakes", "Suspension", "Tires & Wheels",
+  "Electrical", "Cab & Safety", "Frame & Body", "Fluids",
+];
+
+export const ATV_SXS_TEMPLATE = [
+  { category: "Engine", item: "Oil level & condition" },
+  { category: "Engine", item: "Coolant level" },
+  { category: "Engine", item: "Air filter" },
+  { category: "Engine", item: "Spark plug(s)" },
+  { category: "Engine", item: "Fuel delivery (carb or injection)" },
+  { category: "Engine", item: "Fuel filter" },
+  { category: "Engine", item: "Idle & throttle response" },
+  { category: "Engine", item: "Exhaust / muffler condition" },
+  { category: "Engine", item: "Engine mounts" },
+  { category: "Engine", item: "Radiator & hoses" },
+  { category: "Drivetrain", item: "CVT belt condition" },
+  { category: "Drivetrain", item: "CVT clutch — primary & secondary" },
+  { category: "Drivetrain", item: "Front differential / gearbox" },
+  { category: "Drivetrain", item: "Rear differential / gearbox" },
+  { category: "Drivetrain", item: "4WD / AWD engagement" },
+  { category: "Drivetrain", item: "Transmission shift quality (H/L/R)" },
+  { category: "Drivetrain", item: "Prop shaft / CV axles" },
+  { category: "Brakes", item: "Front brake pads" },
+  { category: "Brakes", item: "Rear brake pads" },
+  { category: "Brakes", item: "Rotor condition (all four)" },
+  { category: "Brakes", item: "Brake fluid level" },
+  { category: "Brakes", item: "Brake lines & hoses" },
+  { category: "Brakes", item: "Brake pedal feel" },
+  { category: "Brakes", item: "Parking brake" },
+  { category: "Suspension", item: "Front A-arms — condition & bushings" },
+  { category: "Suspension", item: "Rear A-arms / trailing arms" },
+  { category: "Suspension", item: "Ball joints (all)" },
+  { category: "Suspension", item: "Front shocks — travel & leaks" },
+  { category: "Suspension", item: "Rear shocks — travel & leaks" },
+  { category: "Suspension", item: "Tie rods & ends" },
+  { category: "Suspension", item: "Wheel bearings (all four)" },
+  { category: "Tires & Wheels", item: "Front left tire tread & condition" },
+  { category: "Tires & Wheels", item: "Front right tire tread & condition" },
+  { category: "Tires & Wheels", item: "Rear left tire tread & condition" },
+  { category: "Tires & Wheels", item: "Rear right tire tread & condition" },
+  { category: "Tires & Wheels", item: "Tire pressures (all four)" },
+  { category: "Tires & Wheels", item: "Wheel condition & lug nuts" },
+  { category: "Electrical", item: "Battery condition & voltage" },
+  { category: "Electrical", item: "Charging system output" },
+  { category: "Electrical", item: "Headlights & taillights" },
+  { category: "Electrical", item: "Brake lights" },
+  { category: "Electrical", item: "Turn signals (if equipped)" },
+  { category: "Electrical", item: "Instrument cluster / warning lights" },
+  { category: "Electrical", item: "Winch (if equipped)" },
+  { category: "Electrical", item: "Horn" },
+  { category: "Electrical", item: "Fuses" },
+  { category: "Cab & Safety", item: "ROPS / roll cage — cracks or damage" },
+  { category: "Cab & Safety", item: "Driver seatbelt & latch" },
+  { category: "Cab & Safety", item: "Passenger seatbelt & latch" },
+  { category: "Cab & Safety", item: "Door nets / panels" },
+  { category: "Cab & Safety", item: "Grab handles / bars" },
+  { category: "Cab & Safety", item: "Mirrors (side & rear)" },
+  { category: "Cab & Safety", item: "Windshield (if equipped)" },
+  { category: "Cab & Safety", item: "Roof (if equipped)" },
+  { category: "Cab & Safety", item: "Seats & seat hardware" },
+  { category: "Cab & Safety", item: "Floorboards & pedals" },
+  { category: "Cab & Safety", item: "Steering wheel / column" },
+  { category: "Frame & Body", item: "Frame / chassis — cracks or bends" },
+  { category: "Frame & Body", item: "Skid plates condition" },
+  { category: "Frame & Body", item: "Bed / cargo area (if equipped)" },
+  { category: "Frame & Body", item: "Dump bed latch & lift (if equipped)" },
+  { category: "Frame & Body", item: "Fuel tank — leaks or damage" },
+  { category: "Frame & Body", item: "Tow hitch (if equipped)" },
+  { category: "Fluids", item: "Engine oil" },
+  { category: "Fluids", item: "Coolant" },
+  { category: "Fluids", item: "Brake fluid" },
+  { category: "Fluids", item: "Differential / gearbox oil (front & rear)" },
+  { category: "Fluids", item: "CVT housing (clean, dry)" },
+];
+
+// ─── ATV / UTV — Dirtbike ─────────────────────────────────────────────────────
+
+export const ATV_DIRTBIKE_CATEGORIES = [
+  "Engine", "Drivetrain", "Brakes", "Suspension", "Tires & Wheels",
+  "Controls", "Frame & Body", "Fluids",
+];
+
+export const ATV_DIRTBIKE_TEMPLATE = [
+  { category: "Engine", item: "Oil level & condition (4-stroke)" },
+  { category: "Engine", item: "Pre-mix fuel ratio check (2-stroke)" },
+  { category: "Engine", item: "Air filter" },
+  { category: "Engine", item: "Spark plug" },
+  { category: "Engine", item: "Fuel delivery (carb or injection)" },
+  { category: "Engine", item: "Idle & throttle response" },
+  { category: "Engine", item: "Exhaust / silencer condition" },
+  { category: "Engine", item: "Exhaust packing / repack needed (2-stroke)" },
+  { category: "Engine", item: "Engine mounts" },
+  { category: "Engine", item: "Coolant level (liquid-cooled)" },
+  { category: "Engine", item: "Radiator & hoses (liquid-cooled)" },
+  { category: "Engine", item: "Coolant overflow bottle" },
+  { category: "Drivetrain", item: "Chain condition & stretch" },
+  { category: "Drivetrain", item: "Chain tension" },
+  { category: "Drivetrain", item: "Chain lubrication" },
+  { category: "Drivetrain", item: "Front sprocket condition" },
+  { category: "Drivetrain", item: "Rear sprocket condition" },
+  { category: "Drivetrain", item: "Clutch adjustment & feel (4-stroke)" },
+  { category: "Drivetrain", item: "Transmission shift quality" },
+  { category: "Brakes", item: "Front brake pad thickness" },
+  { category: "Brakes", item: "Rear brake pad thickness" },
+  { category: "Brakes", item: "Front rotor condition" },
+  { category: "Brakes", item: "Rear rotor condition" },
+  { category: "Brakes", item: "Brake fluid level" },
+  { category: "Brakes", item: "Brake lines & hoses" },
+  { category: "Brakes", item: "Front brake lever feel" },
+  { category: "Brakes", item: "Rear brake pedal feel" },
+  { category: "Suspension", item: "Front forks — oil seals (leaks)" },
+  { category: "Suspension", item: "Front forks — travel & damping" },
+  { category: "Suspension", item: "Front forks — spring sag" },
+  { category: "Suspension", item: "Rear shock — condition & damping" },
+  { category: "Suspension", item: "Rear shock — linkage & bearings" },
+  { category: "Suspension", item: "Rear shock — spring sag" },
+  { category: "Suspension", item: "Steering head bearings" },
+  { category: "Suspension", item: "Swingarm pivot bearings" },
+  { category: "Tires & Wheels", item: "Front tire tread & sidewall" },
+  { category: "Tires & Wheels", item: "Rear tire tread & sidewall" },
+  { category: "Tires & Wheels", item: "Front tire pressure" },
+  { category: "Tires & Wheels", item: "Rear tire pressure" },
+  { category: "Tires & Wheels", item: "Front wheel bearing" },
+  { category: "Tires & Wheels", item: "Rear wheel bearing" },
+  { category: "Tires & Wheels", item: "Wheel rim condition" },
+  { category: "Tires & Wheels", item: "Spokes (if applicable)" },
+  { category: "Controls", item: "Throttle — free play & return" },
+  { category: "Controls", item: "Clutch lever — cable or hydraulic" },
+  { category: "Controls", item: "Handlebars — tightness & alignment" },
+  { category: "Controls", item: "Hand guards (if equipped)" },
+  { category: "Controls", item: "Kill switch operation" },
+  { category: "Controls", item: "Footpegs & mounts" },
+  { category: "Controls", item: "Kickstand / side stand" },
+  { category: "Controls", item: "Bark busters (if equipped)" },
+  { category: "Frame & Body", item: "Frame — cracks or damage" },
+  { category: "Frame & Body", item: "Subframe — cracks or damage" },
+  { category: "Frame & Body", item: "Plastics / bodywork condition" },
+  { category: "Frame & Body", item: "Fuel tank — leaks or damage" },
+  { category: "Frame & Body", item: "Seat & seat strap" },
+  { category: "Frame & Body", item: "Skid plate (if equipped)" },
+  { category: "Frame & Body", item: "Number plates" },
+  { category: "Fluids", item: "Engine oil (4-stroke)" },
+  { category: "Fluids", item: "Coolant (if liquid-cooled)" },
+  { category: "Fluids", item: "Brake fluid (front)" },
+  { category: "Fluids", item: "Brake fluid (rear)" },
+  { category: "Fluids", item: "Fork oil (check for leaks)" },
+  { category: "Fluids", item: "Transmission oil (4-stroke, if separate)" },
+];
+
+// ─── ATV / UTV — Snowmobile ───────────────────────────────────────────────────
+
+export const ATV_SNOWMOBILE_CATEGORIES = [
+  "Engine", "Track & Drive", "Skis & Front Suspension",
+  "Rear Suspension", "Brakes", "Electrical", "Chassis & Body", "Fluids",
+];
+
+export const ATV_SNOWMOBILE_TEMPLATE = [
+  { category: "Engine", item: "Oil level & condition (4-stroke)" },
+  { category: "Engine", item: "Fuel/oil mix system (2-stroke)" },
+  { category: "Engine", item: "Air intake & silencer" },
+  { category: "Engine", item: "Spark plug(s)" },
+  { category: "Engine", item: "Fuel delivery (carb or EFI)" },
+  { category: "Engine", item: "Fuel filter" },
+  { category: "Engine", item: "Idle & throttle response" },
+  { category: "Engine", item: "Exhaust & pipe condition" },
+  { category: "Engine", item: "Coolant level (liquid-cooled)" },
+  { category: "Engine", item: "Radiator / heat exchanger & hoses" },
+  { category: "Engine", item: "Engine mounts" },
+  { category: "Track & Drive", item: "Drive belt — condition & width" },
+  { category: "Track & Drive", item: "Drive clutch (primary) — engagement" },
+  { category: "Track & Drive", item: "Driven clutch (secondary) — condition" },
+  { category: "Track & Drive", item: "Track condition — lugs, cracks, rips" },
+  { category: "Track & Drive", item: "Track tension & alignment" },
+  { category: "Track & Drive", item: "Drive sprockets / drive lugs" },
+  { category: "Track & Drive", item: "Idler wheels — condition & bearings" },
+  { category: "Track & Drive", item: "Chaincase / gearcase oil" },
+  { category: "Track & Drive", item: "Chaincase chain & sprockets" },
+  { category: "Skis & Front Suspension", item: "Ski condition — cracks or damage" },
+  { category: "Skis & Front Suspension", item: "Ski runners / carbides" },
+  { category: "Skis & Front Suspension", item: "Ski alignment (toe-in/out)" },
+  { category: "Skis & Front Suspension", item: "Steering pivot / kingpin" },
+  { category: "Skis & Front Suspension", item: "Tie rods & ends" },
+  { category: "Skis & Front Suspension", item: "Front A-arms / spindles" },
+  { category: "Skis & Front Suspension", item: "Front shocks — travel & leaks" },
+  { category: "Skis & Front Suspension", item: "Handlebar alignment & tightness" },
+  { category: "Rear Suspension", item: "Slide rails — condition & wear" },
+  { category: "Rear Suspension", item: "Skid frame — cracks or bends" },
+  { category: "Rear Suspension", item: "Rear shocks (front & rear of skid)" },
+  { category: "Rear Suspension", item: "Suspension springs & preload" },
+  { category: "Rear Suspension", item: "Limiter straps — condition" },
+  { category: "Rear Suspension", item: "HYFAX / slide wear" },
+  { category: "Rear Suspension", item: "Rear axle & bearings" },
+  { category: "Brakes", item: "Brake lever feel & free play" },
+  { category: "Brakes", item: "Brake pad thickness" },
+  { category: "Brakes", item: "Brake disc / rotor condition" },
+  { category: "Brakes", item: "Brake caliper (squeeze & release)" },
+  { category: "Brakes", item: "Brake fluid level" },
+  { category: "Brakes", item: "Brake lines & hoses" },
+  { category: "Electrical", item: "Battery condition & voltage" },
+  { category: "Electrical", item: "Charging system output" },
+  { category: "Electrical", item: "Headlight(s) — high & low beam" },
+  { category: "Electrical", item: "Taillight & brake light" },
+  { category: "Electrical", item: "Kill switch operation" },
+  { category: "Electrical", item: "Tether / safety lanyard" },
+  { category: "Electrical", item: "Instrument cluster / warning lights" },
+  { category: "Electrical", item: "Hand warmers / thumb warmers" },
+  { category: "Electrical", item: "Heated seat (if equipped)" },
+  { category: "Electrical", item: "Fuses" },
+  { category: "Chassis & Body", item: "Tunnel — cracks or corrosion" },
+  { category: "Chassis & Body", item: "Hood & latch" },
+  { category: "Chassis & Body", item: "Belly pan / splash guard" },
+  { category: "Chassis & Body", item: "Side panels & fasteners" },
+  { category: "Chassis & Body", item: "Windshield — cracks or damage" },
+  { category: "Chassis & Body", item: "Seat & latch" },
+  { category: "Chassis & Body", item: "Footrests & running boards" },
+  { category: "Chassis & Body", item: "Fuel tank — leaks or damage" },
+  { category: "Fluids", item: "Engine oil (4-stroke)" },
+  { category: "Fluids", item: "Injection oil reservoir (2-stroke)" },
+  { category: "Fluids", item: "Coolant" },
+  { category: "Fluids", item: "Brake fluid" },
+  { category: "Fluids", item: "Chaincase / gearcase oil" },
+];
+
+// ─── ATV / UTV — 3-Wheeler ────────────────────────────────────────────────────
+
+export const ATV_3WHEELER_CATEGORIES = [
+  "Engine", "Drivetrain", "Brakes", "Front Suspension", "Rear Suspension",
+  "Tires & Wheels", "Controls", "Frame & Body", "Fluids",
+];
+
+export const ATV_3WHEELER_TEMPLATE = [
+  { category: "Engine", item: "Oil level & condition" },
+  { category: "Engine", item: "Coolant level (liquid-cooled)" },
+  { category: "Engine", item: "Air filter" },
+  { category: "Engine", item: "Spark plug(s)" },
+  { category: "Engine", item: "Fuel delivery (carb or injection)" },
+  { category: "Engine", item: "Fuel filter" },
+  { category: "Engine", item: "Idle & throttle response" },
+  { category: "Engine", item: "Exhaust / muffler condition" },
+  { category: "Engine", item: "Engine mounts" },
+  { category: "Drivetrain", item: "Chain condition & stretch" },
+  { category: "Drivetrain", item: "Chain tension" },
+  { category: "Drivetrain", item: "Chain lubrication" },
+  { category: "Drivetrain", item: "Rear sprockets (left & right)" },
+  { category: "Drivetrain", item: "Front sprocket" },
+  { category: "Drivetrain", item: "Clutch adjustment & feel" },
+  { category: "Drivetrain", item: "Transmission shift quality" },
+  { category: "Drivetrain", item: "Rear axle — straight & bearings" },
+  { category: "Brakes", item: "Front brake — drum or disc condition" },
+  { category: "Brakes", item: "Front brake lever feel" },
+  { category: "Brakes", item: "Rear brake pads / shoes (left)" },
+  { category: "Brakes", item: "Rear brake pads / shoes (right)" },
+  { category: "Brakes", item: "Rear rotor / drum condition" },
+  { category: "Brakes", item: "Brake fluid level" },
+  { category: "Brakes", item: "Brake lines & hoses" },
+  { category: "Brakes", item: "Rear brake pedal feel" },
+  { category: "Front Suspension", item: "Front forks — oil seals (leaks)" },
+  { category: "Front Suspension", item: "Front forks — travel & damping" },
+  { category: "Front Suspension", item: "Steering head bearings" },
+  { category: "Front Suspension", item: "Front wheel bearing" },
+  { category: "Rear Suspension", item: "Rear swingarm — condition & pivot" },
+  { category: "Rear Suspension", item: "Rear shocks — travel & leaks" },
+  { category: "Rear Suspension", item: "Rear axle bearings (left & right)" },
+  { category: "Tires & Wheels", item: "Front tire tread & condition" },
+  { category: "Tires & Wheels", item: "Rear left tire tread & condition" },
+  { category: "Tires & Wheels", item: "Rear right tire tread & condition" },
+  { category: "Tires & Wheels", item: "Front tire pressure" },
+  { category: "Tires & Wheels", item: "Rear tire pressure (left & right)" },
+  { category: "Tires & Wheels", item: "Front wheel rim condition" },
+  { category: "Tires & Wheels", item: "Rear wheel rims condition" },
+  { category: "Controls", item: "Throttle — free play & return" },
+  { category: "Controls", item: "Clutch lever — cable or hydraulic" },
+  { category: "Controls", item: "Handlebars — tightness & alignment" },
+  { category: "Controls", item: "Footpegs / floorboards" },
+  { category: "Controls", item: "Kill switch operation" },
+  { category: "Controls", item: "Reverse lock (if equipped)" },
+  { category: "Frame & Body", item: "Frame — cracks or bends" },
+  { category: "Frame & Body", item: "Rear frame / swingarm attachment" },
+  { category: "Frame & Body", item: "Fuel tank — leaks or damage" },
+  { category: "Frame & Body", item: "Seat & seat latch" },
+  { category: "Frame & Body", item: "Front fender & plastics" },
+  { category: "Frame & Body", item: "Rear fender & plastics" },
+  { category: "Frame & Body", item: "Headlight" },
+  { category: "Frame & Body", item: "Taillight" },
+  { category: "Fluids", item: "Engine oil" },
+  { category: "Fluids", item: "Coolant (if liquid-cooled)" },
+  { category: "Fluids", item: "Brake fluid" },
+  { category: "Fluids", item: "Fork oil (check for leaks)" },
+];
+
+// Backwards-compatible aliases for any code using the old names
+export const ATV_CATEGORIES = ATV_QUAD_CATEGORIES;
+export const ATV_TEMPLATE = ATV_QUAD_TEMPLATE;
+
 // ─── Lookup helpers ───────────────────────────────────────────────────────────
 
 export const INSPECTION_CATEGORIES = CAR_CATEGORIES;
 export const INSPECTION_TEMPLATE = CAR_TEMPLATE;
 
-export function getCategoriesForVehicleType(vehicleType?: string | null) {
+export type AtvSubtype = "quad" | "side-by-side" | "dirtbike" | "snowmobile" | "3wheeler";
+
+export const ATV_SUBTYPES: { value: AtvSubtype; label: string }[] = [
+  { value: "quad",        label: "4-WHEELER" },
+  { value: "side-by-side", label: "SIDE-BY-SIDE" },
+  { value: "dirtbike",   label: "DIRTBIKE" },
+  { value: "snowmobile", label: "SNOWMOBILE" },
+  { value: "3wheeler",   label: "3-WHEELER" },
+];
+
+export function atvSubtypeLabel(subtype?: string | null): string {
+  return ATV_SUBTYPES.find(s => s.value === subtype)?.label ?? "4-WHEELER";
+}
+
+function getAtvTemplate(atvSubtype?: string | null) {
+  switch (atvSubtype) {
+    case "side-by-side": return ATV_SXS_TEMPLATE;
+    case "dirtbike":     return ATV_DIRTBIKE_TEMPLATE;
+    case "snowmobile":   return ATV_SNOWMOBILE_TEMPLATE;
+    case "3wheeler":     return ATV_3WHEELER_TEMPLATE;
+    default:             return ATV_QUAD_TEMPLATE;
+  }
+}
+
+function getAtvCategories(atvSubtype?: string | null) {
+  switch (atvSubtype) {
+    case "side-by-side": return ATV_SXS_CATEGORIES;
+    case "dirtbike":     return ATV_DIRTBIKE_CATEGORIES;
+    case "snowmobile":   return ATV_SNOWMOBILE_CATEGORIES;
+    case "3wheeler":     return ATV_3WHEELER_CATEGORIES;
+    default:             return ATV_QUAD_CATEGORIES;
+  }
+}
+
+export function getCategoriesForVehicleType(vehicleType?: string | null, atvSubtype?: string | null) {
   switch (vehicleType) {
     case "motorcycle": return MOTORCYCLE_CATEGORIES;
     case "boat":       return BOAT_CATEGORIES;
-    case "atv":        return ATV_CATEGORIES;
+    case "atv":        return getAtvCategories(atvSubtype);
     default:           return CAR_CATEGORIES;
   }
 }
 
-export function getTemplateForVehicleType(vehicleType?: string | null) {
+export function getTemplateForVehicleType(vehicleType?: string | null, atvSubtype?: string | null) {
   switch (vehicleType) {
     case "motorcycle": return MOTORCYCLE_TEMPLATE;
     case "boat":       return BOAT_TEMPLATE;
-    case "atv":        return ATV_TEMPLATE;
+    case "atv":        return getAtvTemplate(atvSubtype);
     default:           return CAR_TEMPLATE;
   }
 }
 
-export function buildDefaultInspection(vehicleType?: string | null) {
-  return getTemplateForVehicleType(vehicleType).map(t => ({
+export function buildDefaultInspection(vehicleType?: string | null, atvSubtype?: string | null) {
+  return getTemplateForVehicleType(vehicleType, atvSubtype).map(t => ({
     ...t,
     status: UpsertInspectionItemStatus.pending,
     notes: "",

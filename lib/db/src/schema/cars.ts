@@ -23,6 +23,7 @@ export const carsTable = pgTable("cars", {
   actualLaborHours: numeric("actual_labor_hours"),
   carType: text("car_type").notNull().default("dealer"),
   vehicleType: text("vehicle_type").notNull().default("car"),
+  atvSubtype: text("atv_subtype"),
   owner: text("owner"),
   sold: integer("sold").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -42,6 +42,16 @@ export const CarVehicleType = {
   atv: "atv",
 } as const;
 
+export type CarAtvSubtype = (typeof CarAtvSubtype)[keyof typeof CarAtvSubtype];
+
+export const CarAtvSubtype = {
+  quad: "quad",
+  "side-by-side": "side-by-side",
+  dirtbike: "dirtbike",
+  snowmobile: "snowmobile",
+  "3wheeler": "3wheeler",
+} as const;
+
 export interface Car {
   id: number;
   stockNumber: string;
@@ -56,6 +66,7 @@ export interface Car {
   status?: CarStatus;
   carType?: CarCarType;
   vehicleType?: CarVehicleType;
+  atvSubtype?: CarAtvSubtype;
   owner?: string;
   sold: number;
   repairNotes?: string;
@@ -95,6 +106,17 @@ export const CreateCarVehicleType = {
   atv: "atv",
 } as const;
 
+export type CreateCarAtvSubtype =
+  (typeof CreateCarAtvSubtype)[keyof typeof CreateCarAtvSubtype];
+
+export const CreateCarAtvSubtype = {
+  quad: "quad",
+  "side-by-side": "side-by-side",
+  dirtbike: "dirtbike",
+  snowmobile: "snowmobile",
+  "3wheeler": "3wheeler",
+} as const;
+
 export interface CreateCar {
   stockNumber: string;
   year: number;
@@ -107,6 +129,7 @@ export interface CreateCar {
   status?: CreateCarStatus;
   carType?: CreateCarCarType;
   vehicleType?: CreateCarVehicleType;
+  atvSubtype?: CreateCarAtvSubtype;
   owner?: string;
   sold?: number;
 }

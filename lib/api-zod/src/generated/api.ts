@@ -42,6 +42,9 @@ export const ListCarsResponseItem = zod.object({
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
   vehicleType: zod.enum(["car", "motorcycle", "boat", "atv"]).optional(),
+  atvSubtype: zod
+    .enum(["quad", "side-by-side", "dirtbike", "snowmobile", "3wheeler"])
+    .optional(),
   owner: zod.string().optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
@@ -70,6 +73,9 @@ export const CreateCarBody = zod.object({
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
   vehicleType: zod.enum(["car", "motorcycle", "boat", "atv"]).optional(),
+  atvSubtype: zod
+    .enum(["quad", "side-by-side", "dirtbike", "snowmobile", "3wheeler"])
+    .optional(),
   owner: zod.string().optional(),
   sold: zod.number().optional(),
 });
@@ -95,6 +101,9 @@ export const GetCarResponse = zod.object({
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
   vehicleType: zod.enum(["car", "motorcycle", "boat", "atv"]).optional(),
+  atvSubtype: zod
+    .enum(["quad", "side-by-side", "dirtbike", "snowmobile", "3wheeler"])
+    .optional(),
   owner: zod.string().optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
@@ -126,6 +135,9 @@ export const UpdateCarBody = zod.object({
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
   vehicleType: zod.enum(["car", "motorcycle", "boat", "atv"]).optional(),
+  atvSubtype: zod
+    .enum(["quad", "side-by-side", "dirtbike", "snowmobile", "3wheeler"])
+    .optional(),
   owner: zod.string().optional(),
   sold: zod.number().optional(),
 });
@@ -144,6 +156,9 @@ export const UpdateCarResponse = zod.object({
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
   vehicleType: zod.enum(["car", "motorcycle", "boat", "atv"]).optional(),
+  atvSubtype: zod
+    .enum(["quad", "side-by-side", "dirtbike", "snowmobile", "3wheeler"])
+    .optional(),
   owner: zod.string().optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
@@ -417,6 +432,9 @@ export const UpdateCostsResponse = zod.object({
   status: zod.enum(["in_service", "ready", "on_hold"]).optional(),
   carType: zod.enum(["dealer", "personal"]).optional(),
   vehicleType: zod.enum(["car", "motorcycle", "boat", "atv"]).optional(),
+  atvSubtype: zod
+    .enum(["quad", "side-by-side", "dirtbike", "snowmobile", "3wheeler"])
+    .optional(),
   owner: zod.string().optional(),
   sold: zod.number(),
   repairNotes: zod.string().optional(),
