@@ -526,9 +526,9 @@ components:
         vehicleType:
           type: string
           enum: [car, motorcycle, boat, atv]
-        atvSubtype:
+        vehicleSubtype:
           type: string
-          enum: [quad, side-by-side, dirtbike, snowmobile, 3wheeler]
+          enum: [sedan, truck, suv, van, coupe, wagon, convertible, cruiser, sport, touring, dualsport, standard, outboard, inboard, sterndrive, jetboat, pwc, pontoon, sailboat, quad, side-by-side, dirtbike, snowmobile, 3wheeler]
         owner:
           type: string
         sold:
@@ -587,9 +587,9 @@ components:
         vehicleType:
           type: string
           enum: [car, motorcycle, boat, atv]
-        atvSubtype:
+        vehicleSubtype:
           type: string
-          enum: [quad, side-by-side, dirtbike, snowmobile, 3wheeler]
+          enum: [sedan, truck, suv, van, coupe, wagon, convertible, cruiser, sport, touring, dualsport, standard, outboard, inboard, sterndrive, jetboat, pwc, pontoon, sailboat, quad, side-by-side, dirtbike, snowmobile, 3wheeler]
         owner:
           type: string
         sold:

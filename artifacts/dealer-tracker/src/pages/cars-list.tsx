@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListCars, useCreateCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType, CreateCarAtvSubtype } from "@workspace/api-client-react";
-import { ATV_SUBTYPES, atvSubtypeLabel } from "@/lib/inspection-template";
+import { useListCars, useCreateCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType, CreateCarVehicleSubtype } from "@workspace/api-client-react";
+import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Car, Plus, Key, Gauge, Search, User } from "lucide-react";
+import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 
 const STATUS_OPTIONS = [
@@ -17,24 +17,11 @@ const STATUS_OPTIONS = [
   { value: "on_hold", label: "On Hold" },
 ];
 
-const TYPE_OPTIONS = [
-  { value: "dealer", label: "Dealership" },
-  { value: "personal", label: "Personal" },
-];
-
 const VEHICLE_TYPE_OPTIONS = [
   { value: "car",        label: "Car / Truck" },
   { value: "motorcycle", label: "Motorcycle" },
   { value: "boat",       label: "Boat" },
   { value: "atv",        label: "ATV / UTV" },
-];
-
-
-type TabType = "all" | "dealer" | "personal";
-const TABS: { value: TabType; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "dealer", label: "Dealership" },
-  { value: "personal", label: "Personal" },
 ];
 
 function statusBadge(status?: string | null) {
@@ -50,6 +37,13 @@ function statusBadge(status?: string | null) {
   }
 }
 
+const vehicleTypeLabels: Record<string, string> = {
+  car: "Car / Truck",
+  motorcycle: "Motorcycle",
+  boat: "Boat",
+  atv: "ATV / UTV",
+};
+
 const emptyForm = {
   stockNumber: "",
   year: String(new Date().getFullYear()),
@@ -61,7 +55,7 @@ const emptyForm = {
   status: "",
   carType: "dealer" as "dealer" | "personal",
   vehicleType: "car" as "car" | "motorcycle" | "boat" | "atv",
-  atvSubtype: "quad" as string,
+  vehicleSubtype: "sedan" as string,
   owner: "",
 };
 
@@ -80,122 +74,52 @@ type CarItem = {
   status?: string;
   carType?: string;
   vehicleType?: string;
-  atvSubtype?: string;
+  vehicleSubtype?: string;
   owner?: string;
-  sold: number;
+  sold?: number;
+  createdAt?: string;
 };
-
-function CarCard({ car }: { car: CarItem }) {
-  return (
-    <Link href={`/cars/${car.id}`} className="group outline-none">
-      <div className={`h-full border-4 border-black bg-white rounded-2xl p-6 shadow-brutal ${car.sold ? "opacity-60" : ""}`}>
-        <div className="flex justify-between items-start mb-4 gap-2 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="bg-black text-white font-mono font-bold px-3 py-1 rounded text-lg">
-              #{car.stockNumber}
-            </div>
-            {car.carType === "personal" && (
-              <span className="bg-teal-700 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
-            )}
-            {car.vehicleType && car.vehicleType !== "car" && (
-              <span className="bg-slate-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
-                {car.vehicleType === "atv"
-                  ? `ATV / ${atvSubtypeLabel(car.atvSubtype)}`
-                  : ({ motorcycle: "Motorcycle", boat: "Boat" }[car.vehicleType] ?? car.vehicleType)
-                }
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            {car.sold
-              ? <span className="bg-gray-500 text-white font-black px-3 py-1 rounded text-sm uppercase">Sold</span>
-              : statusBadge(car.status)
-            }
-            {car.color && <div className="text-gray-600 font-bold">{car.color}</div>}
-          </div>
-        </div>
-        <h2 className="text-3xl font-black uppercase leading-tight mb-6">
-          {car.year} {car.make} <br />
-          <span className="text-gray-500">{car.model}</span>
-        </h2>
-        <div className="space-y-3 font-mono font-bold bg-gray-100 p-4 rounded-xl border-2 border-black">
-          {car.carType === "personal" && car.owner && (
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-teal-600" />
-              <span className="truncate">{car.owner}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-3">
-            <Key className="w-5 h-5 text-gray-500" />
-            <span className="truncate">{car.vin || vinLabel(car.vehicleType).empty}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Gauge className="w-5 h-5 text-gray-500" />
-            <span>{car.mileage ? `${car.mileage.toLocaleString()} ${mileageLabel(car.vehicleType).unit}` : mileageLabel(car.vehicleType).empty}</span>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function matchesSearch(car: CarItem, q: string): boolean {
-  if (!q) return true;
-  const lower = q.toLowerCase();
-  return (
-    car.stockNumber.toLowerCase().includes(lower) ||
-    car.make.toLowerCase().includes(lower) ||
-    car.model.toLowerCase().includes(lower) ||
-    String(car.year).includes(lower) ||
-    (car.vin?.toLowerCase().includes(lower) ?? false) ||
-    (car.color?.toLowerCase().includes(lower) ?? false) ||
-    (car.owner?.toLowerCase().includes(lower) ?? false)
-  );
-}
 
 export default function CarsList() {
   const queryClient = useQueryClient();
   const { data: cars, isLoading, isError } = useListCars();
-  const { mutate: createCar, isPending } = useCreateCar();
+  const { mutate: createCar, isPending: isCreating } = useCreateCar();
+
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] = useState<FormState>({ ...emptyForm });
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
-  const [tab, setTab] = useState<TabType>("all");
-  const [search, setSearch] = useState("");
 
-  const allActive = cars?.filter(c => !c.sold) ?? [];
-  const allSold = cars?.filter(c => c.sold) ?? [];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSold, setShowSold] = useState(false);
+  const [soldCollapsed, setSoldCollapsed] = useState(true);
 
-  const activeFiltered = allActive
-    .filter(c => tab === "all" || c.carType === tab)
-    .filter(c => matchesSearch(c, search));
-  const soldFiltered = allSold
-    .filter(c => tab === "all" || c.carType === tab)
-    .filter(c => matchesSearch(c, search));
+  const setField = (key: keyof FormState, value: string) => {
+    setForm(f => ({ ...f, [key]: value }));
+    setErrors(e => ({ ...e, [key]: undefined }));
+  };
 
-  const totalInTab = allActive.filter(c => tab === "all" || c.carType === tab).length
-    + allSold.filter(c => tab === "all" || c.carType === tab).length;
+  const setVehicleType = (vt: string) => {
+    setForm(f => ({
+      ...f,
+      vehicleType: vt as FormState["vehicleType"],
+      vehicleSubtype: getDefaultSubtype(vt),
+    }));
+  };
 
   const openAddDialog = () => {
-    setForm({ ...emptyForm, carType: tab === "personal" ? "personal" : "dealer" });
+    setForm({ ...emptyForm });
     setErrors({});
     setSubmitError("");
     setDialogOpen(true);
   };
 
-  const setField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
-  };
-
-  const validate = (): boolean => {
+  const validate = () => {
     const newErrors: FormErrors = {};
-    if (!form.stockNumber.trim()) newErrors.stockNumber = "Stock number is required";
-    if (!form.make.trim()) newErrors.make = "Make is required";
-    if (!form.model.trim()) newErrors.model = "Model is required";
-    const yr = Number(form.year);
-    if (!form.year || isNaN(yr) || yr < 1900 || yr > 2100) newErrors.year = "Enter a valid year (e.g. 2022)";
+    if (!form.stockNumber.trim()) newErrors.stockNumber = "Required";
+    if (!form.year.trim() || isNaN(Number(form.year))) newErrors.year = "Required";
+    if (!form.make.trim()) newErrors.make = "Required";
+    if (!form.model.trim()) newErrors.model = "Required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -217,7 +141,7 @@ export default function CarsList() {
         status: (form.status || undefined) as CreateCarStatus | undefined,
         carType: form.carType as CreateCarCarType,
         vehicleType: form.vehicleType as CreateCarVehicleType,
-        atvSubtype: form.vehicleType === "atv" ? form.atvSubtype as CreateCarAtvSubtype : undefined,
+        vehicleSubtype: form.vehicleSubtype as CreateCarVehicleSubtype,
         owner: form.carType === "personal" && form.owner.trim() ? form.owner.trim() : undefined,
       }
     }, {
@@ -232,126 +156,250 @@ export default function CarsList() {
     });
   };
 
-  const tabCounts = {
-    all: allActive.length,
-    dealer: allActive.filter(c => c.carType === "dealer").length,
-    personal: allActive.filter(c => c.carType === "personal").length,
+  const allCars = ((cars as unknown) as CarItem[] | undefined) ?? [];
+  const activeCars = allCars.filter(c => !c.sold);
+  const soldCars = allCars.filter(c => c.sold);
+
+  const filterCars = (list: CarItem[]) => {
+    if (!searchTerm.trim()) return list;
+    const q = searchTerm.toLowerCase();
+    return list.filter(c =>
+      `${c.year} ${c.make} ${c.model} ${c.stockNumber} ${c.vin || ""} ${c.owner || ""}`.toLowerCase().includes(q)
+    );
   };
+
+  const filteredActive = filterCars(activeCars);
+  const filteredSold = filterCars(soldCars);
+
+  const vLabel = vinLabel(undefined);
+  const mLabel = mileageLabel(undefined);
+
+  const subtypeOptions = getSubtypesForVehicleType(form.vehicleType);
 
   return (
     <Layout>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
-        <div>
-          <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tight">Vehicles</h1>
-          <p className="text-xl text-muted-foreground mt-2 font-medium">Select a vehicle to log work or inspect.</p>
-        </div>
-        <Button size="lg" onClick={openAddDialog} className="w-full sm:w-auto text-xl py-8">
-          <Plus className="w-8 h-8 mr-2" />
-          ADD VEHICLE
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+        <h1 className="text-4xl sm:text-5xl font-black uppercase">Vehicles</h1>
+        <Button onClick={openAddDialog} size="lg" className="font-black uppercase text-xl px-6 py-3">
+          <Plus className="w-6 h-6 mr-2" /> Add
         </Button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {TABS.map(t => (
-          <button
-            key={t.value}
-            type="button"
-            onClick={() => setTab(t.value)}
-            className={`px-5 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
-              tab === t.value
-                ? t.value === "personal"
-                  ? "bg-teal-700 text-white border-teal-700"
-                  : "bg-black text-white border-black"
-                : "bg-white text-black border-black"
-            }`}
-          >
-            {t.label}
-            <span className={`ml-2 text-sm font-bold ${tab === t.value ? "opacity-70" : "text-gray-500"}`}>
-              ({tabCounts[t.value]})
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Search */}
-      {totalInTab > 0 && (
-        <div className="relative mb-8">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400 pointer-events-none" />
+      <div className="flex items-center gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            className="pl-14 py-6 text-xl font-bold bg-white text-black border-4 border-black rounded-xl"
-            placeholder="Search by stock #, make, model, VIN, year, color…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Search by name, stock #, VIN, or owner..."
+            className="pl-10 bg-white text-black"
           />
         </div>
-      )}
-
-      {isLoading && <div className="text-center py-20 text-2xl font-bold">Loading vehicles...</div>}
-      {isError && <div className="text-center py-20 text-2xl font-bold text-red-600">Failed to load vehicles.</div>}
-
-      {!isLoading && !isError && totalInTab === 0 && (
-        <div className="text-center py-20 border-4 border-dashed border-black rounded-3xl bg-gray-100">
-          <Car className="w-24 h-24 mx-auto mb-6 opacity-50" />
-          <h2 className="text-3xl font-black uppercase mb-4">
-            {tab === "personal" ? "No Personal Vehicles" : tab === "dealer" ? "No Dealership Vehicles" : "Shop is Empty"}
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">Add a vehicle to start tracking inspections and maintenance.</p>
-          <Button size="lg" onClick={openAddDialog}>ADD FIRST VEHICLE</Button>
-        </div>
-      )}
-
-      {!isLoading && !isError && activeFiltered.length === 0 && soldFiltered.length === 0 && totalInTab > 0 && (
-        <div className="text-center py-16 border-4 border-dashed border-black rounded-3xl bg-gray-100 mb-8">
-          <Search className="w-16 h-16 mx-auto mb-4 opacity-40" />
-          <h2 className="text-2xl font-black uppercase mb-2">No Matches</h2>
-          <p className="text-lg text-gray-600">Try a different search term.</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {activeFiltered.map(car => <CarCard key={car.id} car={car} />)}
       </div>
 
-      {soldFiltered.length > 0 && (
-        <details className="mt-12 border-4 border-gray-400 rounded-xl overflow-hidden">
-          <summary className="flex items-center justify-between gap-4 p-5 bg-gray-100 cursor-pointer font-black uppercase text-xl list-none">
-            <span>Sold Vehicles ({soldFiltered.length})</span>
-          </summary>
-          <div className="p-6 bg-gray-50 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 border-t-4 border-gray-400">
-            {soldFiltered.map(car => <CarCard key={car.id} car={car} />)}
-          </div>
-        </details>
+      {isLoading && <p className="text-xl font-bold text-center py-12 text-muted-foreground">Loading vehicles...</p>}
+      {isError && <p className="text-xl font-bold text-center py-12 text-destructive">Failed to load vehicles.</p>}
+
+      {!isLoading && !isError && filteredActive.length === 0 && (
+        <div className="text-center py-16 space-y-4">
+          <p className="text-2xl font-bold text-muted-foreground uppercase">No vehicles yet</p>
+          <p className="text-lg text-muted-foreground">Tap "Add" to add your first vehicle.</p>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {filteredActive.map(car => {
+          const vt = car.vehicleType || "car";
+          return (
+          <Link key={car.id} href={`/cars/${car.id}`} className="block">
+            <div className="bg-card border-4 border-black rounded-2xl p-5 active:bg-muted transition-colors">
+              <div className="flex items-start justify-between flex-wrap gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="bg-secondary text-secondary-foreground font-black px-3 py-1 rounded text-lg tracking-wider">
+                      #{car.stockNumber}
+                    </span>
+                    {car.carType === "personal" && (
+                      <span className="bg-teal-700 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
+                    )}
+                    {vt !== "car" || car.vehicleSubtype ? (
+                      <span className="bg-slate-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
+                        {vehicleSubtypeLabel(vt, car.vehicleSubtype) || (vehicleTypeLabels[vt] ?? vt)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {car.sold
+                      ? <span className="bg-gray-500 text-white font-black px-3 py-1 rounded text-sm uppercase">Sold</span>
+                      : statusBadge(car.status)
+                    }
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black uppercase leading-tight">
+                    {car.year} {car.make} {car.model}
+                  </h2>
+                  {car.carType === "personal" && car.owner && (
+                    <p className="text-lg font-bold text-teal-700 uppercase">{car.owner}</p>
+                  )}
+                </div>
+
+                <div className="text-right font-mono text-lg font-bold text-muted-foreground space-y-1">
+                  {car.mileage != null && <div>{car.mileage.toLocaleString()} {mileageLabel(vt).unit}</div>}
+                  {car.color && <div className="uppercase">{car.color}</div>}
+                </div>
+              </div>
+            </div>
+          </Link>
+        )})}
+      </div>
+
+      {soldCars.length > 0 && (
+        <div className="mt-12">
+          <button
+            type="button"
+            onClick={() => { setShowSold(!showSold); setSoldCollapsed(!soldCollapsed); }}
+            className="flex items-center gap-3 text-2xl font-black uppercase text-muted-foreground mb-4 bg-transparent border-0 p-0"
+          >
+            {showSold ? <EyeOff className="w-7 h-7" /> : <Eye className="w-7 h-7" />}
+            Sold Vehicles ({soldCars.length})
+            {showSold ? <ChevronUp className="w-6 h-6" /> : <ChevronDown className="w-6 h-6" />}
+          </button>
+
+          {showSold && (
+            <div className="space-y-4 opacity-60">
+              {filteredSold.map(car => {
+                const vt = car.vehicleType || "car";
+                return (
+                <Link key={car.id} href={`/cars/${car.id}`} className="block">
+                  <div className="bg-card border-4 border-gray-400 rounded-2xl p-5 active:bg-muted transition-colors">
+                    <div className="flex items-start justify-between flex-wrap gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <span className="bg-secondary text-secondary-foreground font-black px-3 py-1 rounded text-lg tracking-wider">
+                            #{car.stockNumber}
+                          </span>
+                          <span className="bg-gray-500 text-white font-black px-3 py-1 rounded text-sm uppercase">Sold</span>
+                          {car.carType === "personal" && (
+                            <span className="bg-teal-700 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
+                          )}
+                          {vt !== "car" || car.vehicleSubtype ? (
+                            <span className="bg-slate-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
+                              {vehicleSubtypeLabel(vt, car.vehicleSubtype) || (vehicleTypeLabels[vt] ?? vt)}
+                            </span>
+                          ) : null}
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-black uppercase leading-tight">
+                          {car.year} {car.make} {car.model}
+                        </h2>
+                        {car.carType === "personal" && car.owner && (
+                          <p className="text-lg font-bold text-teal-700 uppercase">{car.owner}</p>
+                        )}
+                      </div>
+                      <div className="text-right font-mono text-lg font-bold text-muted-foreground space-y-1">
+                        {car.mileage != null && <div>{car.mileage.toLocaleString()} {mileageLabel(vt).unit}</div>}
+                        {car.color && <div className="uppercase">{car.color}</div>}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )})}
+            </div>
+          )}
+        </div>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white text-black">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black uppercase">Add New Vehicle</DialogTitle>
+            <DialogTitle className="text-3xl font-black uppercase">Add Vehicle</DialogTitle>
           </DialogHeader>
-
-          {submitError && (
-            <div className="bg-red-100 border-2 border-red-600 text-red-700 font-bold p-4 rounded-lg">
-              {submitError}
+          <div className="space-y-5 py-4">
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Stock / ID *</label>
+              <Input
+                value={form.stockNumber}
+                onChange={e => setField("stockNumber", e.target.value)}
+                placeholder="e.g. A1234"
+                className="bg-white text-black"
+              />
+              {errors.stockNumber && <p className="text-destructive font-bold text-sm">{errors.stockNumber}</p>}
             </div>
-          )}
 
-          <div className="space-y-5 mt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Year *</label>
+                <Input
+                  value={form.year}
+                  onChange={e => setField("year", e.target.value)}
+                  inputMode="numeric"
+                  className="bg-white text-black"
+                />
+                {errors.year && <p className="text-destructive font-bold text-sm">{errors.year}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Color</label>
+                <Input
+                  value={form.color}
+                  onChange={e => setField("color", e.target.value)}
+                  placeholder="e.g. Red"
+                  className="bg-white text-black"
+                />
+              </div>
+            </div>
 
-            {/* Type selector */}
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Make *</label>
+              <Input
+                value={form.make}
+                onChange={e => setField("make", e.target.value)}
+                placeholder="e.g. Toyota"
+                className="bg-white text-black"
+              />
+              {errors.make && <p className="text-destructive font-bold text-sm">{errors.make}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Model *</label>
+              <Input
+                value={form.model}
+                onChange={e => setField("model", e.target.value)}
+                placeholder="e.g. Camry"
+                className="bg-white text-black"
+              />
+              {errors.model && <p className="text-destructive font-bold text-sm">{errors.model}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">{vinLabel(form.vehicleType).label}</label>
+              <Input
+                value={form.vin}
+                onChange={e => setField("vin", e.target.value)}
+                placeholder={vinLabel(form.vehicleType).placeholder}
+                className="bg-white text-black"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">{mileageLabel(form.vehicleType).fieldLabel}</label>
+              <Input
+                value={form.mileage}
+                onChange={e => setField("mileage", e.target.value)}
+                inputMode="numeric"
+                placeholder={mileageLabel(form.vehicleType).placeholder}
+                className="bg-white text-black"
+              />
+            </div>
+
             <div className="space-y-2">
-              <label className="text-base font-black uppercase block">Type</label>
+              <label className="text-base font-black uppercase block">Ownership</label>
               <div className="flex gap-3">
-                {TYPE_OPTIONS.map(opt => (
+                {[{ value: "dealer", label: "Dealership" }, { value: "personal", label: "Personal" }].map(opt => (
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setField("carType", opt.value as "dealer" | "personal")}
-                    className={`flex-1 px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
+                    onClick={() => setField("carType", opt.value)}
+                    className={`flex-1 px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
                       form.carType === opt.value
-                        ? opt.value === "personal"
-                          ? "bg-teal-700 text-white border-teal-700"
-                          : "bg-black text-white border-black"
+                        ? "bg-black text-white border-black"
                         : "bg-white text-black border-black"
                     }`}
                   >
@@ -361,7 +409,6 @@ export default function CarsList() {
               </div>
             </div>
 
-            {/* Vehicle type selector */}
             <div className="space-y-2">
               <label className="text-base font-black uppercase block">Vehicle Type</label>
               <div className="grid grid-cols-2 gap-3">
@@ -369,8 +416,8 @@ export default function CarsList() {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setField("vehicleType", opt.value as typeof form.vehicleType)}
-                    className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
+                    onClick={() => setVehicleType(opt.value)}
+                    className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
                       form.vehicleType === opt.value
                         ? "bg-black text-white border-black"
                         : "bg-white text-black border-black"
@@ -382,28 +429,27 @@ export default function CarsList() {
               </div>
             </div>
 
-            {/* ATV sub-type selector — only shown when ATV/UTV is selected */}
-            {form.vehicleType === "atv" && (
-              <div className="space-y-2">
-                <label className="text-base font-black uppercase block">ATV / UTV Type</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {ATV_SUBTYPES.map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setField("atvSubtype", opt.value)}
-                      className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
-                        form.atvSubtype === opt.value
-                          ? "bg-black text-white border-black"
-                          : "bg-white text-black border-black"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase block">
+                {form.vehicleType === "car" ? "Body Style" : form.vehicleType === "motorcycle" ? "Motorcycle Type" : form.vehicleType === "boat" ? "Boat Type" : "ATV / UTV Type"}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {subtypeOptions.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setField("vehicleSubtype", opt.value)}
+                    className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
+                      form.vehicleSubtype === opt.value
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-black border-black"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
             {form.carType === "personal" && (
               <div className="space-y-1">
@@ -416,47 +462,6 @@ export default function CarsList() {
                 />
               </div>
             )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">Stock Number *</label>
-                <Input value={form.stockNumber} onChange={e => setField("stockNumber", e.target.value)} placeholder="e.g. 1045A" className="bg-white text-black" />
-                {errors.stockNumber && <p className="text-red-600 font-bold text-base">{errors.stockNumber}</p>}
-              </div>
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">{vinLabel(form.vehicleType).label}</label>
-                <Input value={form.vin} onChange={e => setField("vin", e.target.value)} placeholder={vinLabel(form.vehicleType).placeholder} className="font-mono bg-white text-black" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">Year *</label>
-                <Input value={form.year} onChange={e => setField("year", e.target.value)} placeholder="e.g. 2022" inputMode="numeric" className="bg-white text-black" />
-                {errors.year && <p className="text-red-600 font-bold text-base">{errors.year}</p>}
-              </div>
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">Make *</label>
-                <Input value={form.make} onChange={e => setField("make", e.target.value)} placeholder="e.g. Ford" className="bg-white text-black" />
-                {errors.make && <p className="text-red-600 font-bold text-base">{errors.make}</p>}
-              </div>
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">Model *</label>
-                <Input value={form.model} onChange={e => setField("model", e.target.value)} placeholder="e.g. F-150" className="bg-white text-black" />
-                {errors.model && <p className="text-red-600 font-bold text-base">{errors.model}</p>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">{mileageLabel(form.vehicleType).label}</label>
-                <Input value={form.mileage} onChange={e => setField("mileage", e.target.value)} placeholder={mileageLabel(form.vehicleType).placeholder} inputMode="numeric" className="bg-white text-black" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">Color</label>
-                <Input value={form.color} onChange={e => setField("color", e.target.value)} placeholder="e.g. Red" className="bg-white text-black" />
-              </div>
-            </div>
 
             <div className="space-y-2">
               <label className="text-base font-black uppercase block">Status</label>
@@ -483,16 +488,16 @@ export default function CarsList() {
                 ))}
               </div>
             </div>
-          </div>
 
-          <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" size="lg" className="text-lg" onClick={() => setDialogOpen(false)}>
-              CANCEL
-            </Button>
-            <Button type="button" size="lg" className="text-lg" disabled={isPending} onClick={handleSubmit}>
-              {isPending ? "ADDING..." : "ADD VEHICLE"}
-            </Button>
-          </DialogFooter>
+            {submitError && <p className="text-destructive font-bold text-lg">{submitError}</p>}
+
+            <DialogFooter>
+              <Button type="button" variant="outline" size="lg" onClick={() => setDialogOpen(false)}>CANCEL</Button>
+              <Button type="button" size="lg" disabled={isCreating} onClick={handleSubmit}>
+                {isCreating ? "SAVING..." : "ADD VEHICLE"}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>

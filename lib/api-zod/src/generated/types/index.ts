@@ -7,14 +7,14 @@
  */
 
 export * from "./car";
-export * from "./carAtvSubtype";
 export * from "./carCarType";
 export * from "./carStatus";
+export * from "./carVehicleSubtype";
 export * from "./carVehicleType";
 export * from "./createCar";
-export * from "./createCarAtvSubtype";
 export * from "./createCarCarType";
 export * from "./createCarStatus";
+export * from "./createCarVehicleSubtype";
 export * from "./createCarVehicleType";
 export * from "./createMaintenanceEntry";
 export * from "./createMileageEntry";

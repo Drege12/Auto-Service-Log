@@ -42,9 +42,29 @@ export const CarVehicleType = {
   atv: "atv",
 } as const;
 
-export type CarAtvSubtype = (typeof CarAtvSubtype)[keyof typeof CarAtvSubtype];
+export type CarVehicleSubtype =
+  (typeof CarVehicleSubtype)[keyof typeof CarVehicleSubtype];
 
-export const CarAtvSubtype = {
+export const CarVehicleSubtype = {
+  sedan: "sedan",
+  truck: "truck",
+  suv: "suv",
+  van: "van",
+  coupe: "coupe",
+  wagon: "wagon",
+  convertible: "convertible",
+  cruiser: "cruiser",
+  sport: "sport",
+  touring: "touring",
+  dualsport: "dualsport",
+  standard: "standard",
+  outboard: "outboard",
+  inboard: "inboard",
+  sterndrive: "sterndrive",
+  jetboat: "jetboat",
+  pwc: "pwc",
+  pontoon: "pontoon",
+  sailboat: "sailboat",
   quad: "quad",
   "side-by-side": "side-by-side",
   dirtbike: "dirtbike",
@@ -66,7 +86,7 @@ export interface Car {
   status?: CarStatus;
   carType?: CarCarType;
   vehicleType?: CarVehicleType;
-  atvSubtype?: CarAtvSubtype;
+  vehicleSubtype?: CarVehicleSubtype;
   owner?: string;
   sold: number;
   repairNotes?: string;
@@ -106,10 +126,29 @@ export const CreateCarVehicleType = {
   atv: "atv",
 } as const;
 
-export type CreateCarAtvSubtype =
-  (typeof CreateCarAtvSubtype)[keyof typeof CreateCarAtvSubtype];
+export type CreateCarVehicleSubtype =
+  (typeof CreateCarVehicleSubtype)[keyof typeof CreateCarVehicleSubtype];
 
-export const CreateCarAtvSubtype = {
+export const CreateCarVehicleSubtype = {
+  sedan: "sedan",
+  truck: "truck",
+  suv: "suv",
+  van: "van",
+  coupe: "coupe",
+  wagon: "wagon",
+  convertible: "convertible",
+  cruiser: "cruiser",
+  sport: "sport",
+  touring: "touring",
+  dualsport: "dualsport",
+  standard: "standard",
+  outboard: "outboard",
+  inboard: "inboard",
+  sterndrive: "sterndrive",
+  jetboat: "jetboat",
+  pwc: "pwc",
+  pontoon: "pontoon",
+  sailboat: "sailboat",
   quad: "quad",
   "side-by-side": "side-by-side",
   dirtbike: "dirtbike",
@@ -129,7 +168,7 @@ export interface CreateCar {
   status?: CreateCarStatus;
   carType?: CreateCarCarType;
   vehicleType?: CreateCarVehicleType;
-  atvSubtype?: CreateCarAtvSubtype;
+  vehicleSubtype?: CreateCarVehicleSubtype;
   owner?: string;
   sold?: number;
 }
