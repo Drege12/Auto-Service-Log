@@ -26,7 +26,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 location === "/" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
-              CARS
+              BACK
             </Link>
             <button
               type="button"
