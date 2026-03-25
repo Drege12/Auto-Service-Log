@@ -523,6 +523,9 @@ components:
         carType:
           type: string
           enum: [dealer, personal]
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, boat, atv]
         owner:
           type: string
         sold:
@@ -578,6 +581,9 @@ components:
         carType:
           type: string
           enum: [dealer, personal]
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, boat, atv]
         owner:
           type: string
         sold:

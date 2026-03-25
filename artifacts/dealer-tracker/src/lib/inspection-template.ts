@@ -1,29 +1,20 @@
 import { UpsertInspectionItemStatus } from "@workspace/api-client-react";
 
-export const INSPECTION_CATEGORIES = [
-  "OBDII",
-  "Engine",
-  "Transmission",
-  "Brakes",
-  "Steering",
-  "Suspension",
-  "Tires",
-  "Exterior",
-  "Interior",
-  "Electrical",
-  "Fluids",
-  "Engine Performance",
-  "Diesel Systems",
-  "Hybrid & Electric"
+export type VehicleType = "car" | "motorcycle" | "boat" | "atv";
+
+// ─── CAR / TRUCK ─────────────────────────────────────────────────────────────
+
+export const CAR_CATEGORIES = [
+  "OBDII", "Engine", "Transmission", "Brakes", "Steering", "Suspension",
+  "Tires", "Exterior", "Interior", "Electrical", "Fluids", "Engine Performance",
+  "Diesel Systems", "Hybrid & Electric",
 ];
 
-export const INSPECTION_TEMPLATE = [
-  // OBDII
+export const CAR_TEMPLATE = [
   { category: "OBDII", item: "Scan for codes" },
   { category: "OBDII", item: "Check engine light" },
   { category: "OBDII", item: "Pending codes" },
   { category: "OBDII", item: "Readiness monitors" },
-  // Engine
   { category: "Engine", item: "Oil level" },
   { category: "Engine", item: "Coolant level" },
   { category: "Engine", item: "Air filter" },
@@ -32,18 +23,15 @@ export const INSPECTION_TEMPLATE = [
   { category: "Engine", item: "Spark plugs" },
   { category: "Engine", item: "Fuel delivery (injection or carburetor)" },
   { category: "Engine", item: "Valve cover/gaskets" },
-  // Transmission
   { category: "Transmission", item: "Fluid level" },
   { category: "Transmission", item: "Shift quality" },
   { category: "Transmission", item: "Linkage" },
-  // Brakes
   { category: "Brakes", item: "Front pads thickness" },
   { category: "Brakes", item: "Rear pads thickness" },
   { category: "Brakes", item: "Rotors condition" },
   { category: "Brakes", item: "Brake fluid" },
   { category: "Brakes", item: "Parking brake" },
   { category: "Brakes", item: "Brake lines" },
-  // Steering
   { category: "Steering", item: "Steering wheel (play, binding, tilt)" },
   { category: "Steering", item: "Steering column / u-joints" },
   { category: "Steering", item: "Power steering pump" },
@@ -52,7 +40,6 @@ export const INSPECTION_TEMPLATE = [
   { category: "Steering", item: "Inner tie rods" },
   { category: "Steering", item: "Outer tie rods" },
   { category: "Steering", item: "Steering knuckles" },
-  // Suspension
   { category: "Suspension", item: "Upper control arms" },
   { category: "Suspension", item: "Lower control arms" },
   { category: "Suspension", item: "Upper ball joints" },
@@ -79,7 +66,6 @@ export const INSPECTION_TEMPLATE = [
   { category: "Suspension", item: "Air lines & fittings (if equipped)" },
   { category: "Suspension", item: "Height sensors (if equipped)" },
   { category: "Suspension", item: "Air suspension module (if equipped)" },
-  // Tires
   { category: "Tires", item: "Front left tread" },
   { category: "Tires", item: "Front right tread" },
   { category: "Tires", item: "Rear left tread" },
@@ -87,7 +73,6 @@ export const INSPECTION_TEMPLATE = [
   { category: "Tires", item: "Spare tire" },
   { category: "Tires", item: "Tire pressure" },
   { category: "Tires", item: "Roadside kit (jack, rod, lug wrench)" },
-  // Exterior
   { category: "Exterior", item: "Paint condition" },
   { category: "Exterior", item: "Windshield" },
   { category: "Exterior", item: "Front washer nozzle" },
@@ -98,24 +83,20 @@ export const INSPECTION_TEMPLATE = [
   { category: "Exterior", item: "Wipers" },
   { category: "Exterior", item: "Body damage" },
   { category: "Exterior", item: "Door seals" },
-  // Interior
   { category: "Interior", item: "Seat condition" },
   { category: "Interior", item: "Dashboard lights" },
   { category: "Interior", item: "A/C and heat" },
   { category: "Interior", item: "Radio/infotainment" },
   { category: "Interior", item: "Windows" },
   { category: "Interior", item: "Seatbelts" },
-  // Electrical
   { category: "Electrical", item: "Battery condition" },
   { category: "Electrical", item: "Alternator output" },
   { category: "Electrical", item: "Fuses" },
   { category: "Electrical", item: "Horn" },
   { category: "Electrical", item: "Misc. electrical (shorts, bad grounds)" },
-  // Fluids
   { category: "Fluids", item: "Power steering fluid" },
   { category: "Fluids", item: "Windshield washer fluid" },
   { category: "Fluids", item: "Differential fluid" },
-  // Engine Performance
   { category: "Engine Performance", item: "Engine tune / calibration" },
   { category: "Engine Performance", item: "Spark plugs & ignition system" },
   { category: "Engine Performance", item: "Throttle body & response" },
@@ -140,7 +121,6 @@ export const INSPECTION_TEMPLATE = [
   { category: "Engine Performance", item: "Nitrous bottle pressure (if equipped)" },
   { category: "Engine Performance", item: "Performance exhaust / headers (if equipped)" },
   { category: "Engine Performance", item: "Cold air / short ram intake (if equipped)" },
-  // Diesel Systems
   { category: "Diesel Systems", item: "Glow plugs" },
   { category: "Diesel Systems", item: "Glow plug controller / relay" },
   { category: "Diesel Systems", item: "Diesel fuel injectors" },
@@ -163,7 +143,6 @@ export const INSPECTION_TEMPLATE = [
   { category: "Diesel Systems", item: "DEF quality sensor (if equipped)" },
   { category: "Diesel Systems", item: "DEF fluid heater (if equipped)" },
   { category: "Diesel Systems", item: "Exhaust brake / Jake brake (if equipped)" },
-  // Hybrid & Electric
   { category: "Hybrid & Electric", item: "High voltage (HV) battery pack" },
   { category: "Hybrid & Electric", item: "HV battery state of health" },
   { category: "Hybrid & Electric", item: "HV battery cooling system" },
@@ -186,10 +165,251 @@ export const INSPECTION_TEMPLATE = [
   { category: "Hybrid & Electric", item: "Range / state of charge display" },
 ];
 
-export function buildDefaultInspection() {
-  return INSPECTION_TEMPLATE.map(t => ({
+// ─── MOTORCYCLE ──────────────────────────────────────────────────────────────
+
+export const MOTORCYCLE_CATEGORIES = [
+  "Engine", "Drivetrain", "Brakes", "Suspension", "Tires & Wheels",
+  "Controls", "Electrical", "Frame & Body", "Fluids",
+];
+
+export const MOTORCYCLE_TEMPLATE = [
+  { category: "Engine", item: "Oil level & condition" },
+  { category: "Engine", item: "Coolant level (liquid-cooled)" },
+  { category: "Engine", item: "Air filter" },
+  { category: "Engine", item: "Spark plug(s)" },
+  { category: "Engine", item: "Fuel delivery (carb or injection)" },
+  { category: "Engine", item: "Fuel filter" },
+  { category: "Engine", item: "Idle speed & throttle response" },
+  { category: "Engine", item: "Exhaust / muffler condition" },
+  { category: "Engine", item: "Engine mounts" },
+  { category: "Engine", item: "Radiator & hoses (liquid-cooled)" },
+  { category: "Drivetrain", item: "Chain condition & tension" },
+  { category: "Drivetrain", item: "Chain lubrication" },
+  { category: "Drivetrain", item: "Sprockets (front & rear)" },
+  { category: "Drivetrain", item: "Drive belt condition (belt drive)" },
+  { category: "Drivetrain", item: "Drive shaft (shaft drive)" },
+  { category: "Drivetrain", item: "Clutch adjustment & feel" },
+  { category: "Drivetrain", item: "Transmission shift quality" },
+  { category: "Brakes", item: "Front brake pad thickness" },
+  { category: "Brakes", item: "Rear brake pad thickness" },
+  { category: "Brakes", item: "Front rotor condition" },
+  { category: "Brakes", item: "Rear rotor / drum condition" },
+  { category: "Brakes", item: "Brake fluid level" },
+  { category: "Brakes", item: "Brake lines & hoses" },
+  { category: "Brakes", item: "Front brake lever feel" },
+  { category: "Brakes", item: "Rear brake pedal feel" },
+  { category: "Brakes", item: "ABS self-test (if equipped)" },
+  { category: "Suspension", item: "Front forks — oil seals (leaks)" },
+  { category: "Suspension", item: "Front forks — travel & damping" },
+  { category: "Suspension", item: "Rear shock(s) — condition" },
+  { category: "Suspension", item: "Rear shock(s) — linkage & bearings" },
+  { category: "Suspension", item: "Steering head bearings" },
+  { category: "Suspension", item: "Swingarm pivot bearings" },
+  { category: "Tires & Wheels", item: "Front tire tread depth" },
+  { category: "Tires & Wheels", item: "Rear tire tread depth" },
+  { category: "Tires & Wheels", item: "Front tire pressure" },
+  { category: "Tires & Wheels", item: "Rear tire pressure" },
+  { category: "Tires & Wheels", item: "Tire sidewall condition" },
+  { category: "Tires & Wheels", item: "Front wheel bearing" },
+  { category: "Tires & Wheels", item: "Rear wheel bearing" },
+  { category: "Tires & Wheels", item: "Wheel rim condition" },
+  { category: "Tires & Wheels", item: "Spokes (if applicable)" },
+  { category: "Controls", item: "Throttle — free play & return" },
+  { category: "Controls", item: "Clutch lever — cable / hydraulic" },
+  { category: "Controls", item: "Handlebars — tightness & alignment" },
+  { category: "Controls", item: "Mirrors" },
+  { category: "Controls", item: "Switches (starter, kill, lights)" },
+  { category: "Controls", item: "Footpegs & mounts" },
+  { category: "Controls", item: "Side stand & spring" },
+  { category: "Controls", item: "Center stand (if equipped)" },
+  { category: "Electrical", item: "Battery condition & voltage" },
+  { category: "Electrical", item: "Charging system output" },
+  { category: "Electrical", item: "Headlight" },
+  { category: "Electrical", item: "Taillight / brake light" },
+  { category: "Electrical", item: "Turn signals (front & rear)" },
+  { category: "Electrical", item: "Gauge cluster / warning lights" },
+  { category: "Electrical", item: "Horn" },
+  { category: "Electrical", item: "Fuses" },
+  { category: "Frame & Body", item: "Frame / chassis — cracks or damage" },
+  { category: "Frame & Body", item: "Fairings / bodywork condition" },
+  { category: "Frame & Body", item: "Fuel tank — leaks, dents" },
+  { category: "Frame & Body", item: "Seat condition" },
+  { category: "Frame & Body", item: "Handguards (if equipped)" },
+  { category: "Frame & Body", item: "Skid plate (if equipped)" },
+  { category: "Fluids", item: "Engine oil" },
+  { category: "Fluids", item: "Coolant (if liquid-cooled)" },
+  { category: "Fluids", item: "Brake fluid (front)" },
+  { category: "Fluids", item: "Brake fluid (rear)" },
+  { category: "Fluids", item: "Fork oil (check for leaks)" },
+];
+
+// ─── BOAT ─────────────────────────────────────────────────────────────────────
+
+export const BOAT_CATEGORIES = [
+  "Engine / Drive", "Fuel System", "Electrical", "Hull & Deck",
+  "Steering & Controls", "Safety Equipment", "Trailer",
+];
+
+export const BOAT_TEMPLATE = [
+  { category: "Engine / Drive", item: "Engine oil level & condition" },
+  { category: "Engine / Drive", item: "Coolant level (freshwater-cooled)" },
+  { category: "Engine / Drive", item: "Impeller (raw water pump)" },
+  { category: "Engine / Drive", item: "Thermostat" },
+  { category: "Engine / Drive", item: "Belts & pulleys" },
+  { category: "Engine / Drive", item: "Spark plugs / glow plugs" },
+  { category: "Engine / Drive", item: "Air filter" },
+  { category: "Engine / Drive", item: "Engine mounts" },
+  { category: "Engine / Drive", item: "Exhaust manifold / risers" },
+  { category: "Engine / Drive", item: "Gear oil — lower unit / sterndrive" },
+  { category: "Engine / Drive", item: "Prop — condition, pitch, cavitation plate" },
+  { category: "Engine / Drive", item: "Trim & tilt system" },
+  { category: "Engine / Drive", item: "Bellows — transom, U-joint, shift (sterndrive)" },
+  { category: "Engine / Drive", item: "Outboard motor mount & clamps" },
+  { category: "Fuel System", item: "Fuel tank — leaks or damage" },
+  { category: "Fuel System", item: "Fuel lines & fittings" },
+  { category: "Fuel System", item: "Fuel filter / water separator" },
+  { category: "Fuel System", item: "Primer bulb & connectors (outboard)" },
+  { category: "Fuel System", item: "Carburetor or fuel injection" },
+  { category: "Fuel System", item: "Fuel vent" },
+  { category: "Electrical", item: "Battery condition & charge" },
+  { category: "Electrical", item: "Bilge pump — operation & float switch" },
+  { category: "Electrical", item: "Bilge blower" },
+  { category: "Electrical", item: "Navigation lights (bow, stern, all-round)" },
+  { category: "Electrical", item: "Gauges — fuel, speed, tach, temp" },
+  { category: "Electrical", item: "Ignition / key switch" },
+  { category: "Electrical", item: "VHF / radio (if equipped)" },
+  { category: "Electrical", item: "Depth finder / fishfinder (if equipped)" },
+  { category: "Electrical", item: "Fuses & wiring" },
+  { category: "Hull & Deck", item: "Hull — above waterline condition" },
+  { category: "Hull & Deck", item: "Hull — below waterline / keel" },
+  { category: "Hull & Deck", item: "Transom condition" },
+  { category: "Hull & Deck", item: "Stringers & floor (soft spots)" },
+  { category: "Hull & Deck", item: "Deck hardware — cleats, rails, hatches" },
+  { category: "Hull & Deck", item: "Hatches & seals" },
+  { category: "Hull & Deck", item: "Drain plug" },
+  { category: "Hull & Deck", item: "Livewell / baitwell (if equipped)" },
+  { category: "Hull & Deck", item: "Windshield & wiper" },
+  { category: "Hull & Deck", item: "Upholstery & seating" },
+  { category: "Steering & Controls", item: "Steering wheel / helm" },
+  { category: "Steering & Controls", item: "Steering cable or hydraulic lines" },
+  { category: "Steering & Controls", item: "Throttle & shift control" },
+  { category: "Steering & Controls", item: "Control cables & linkages" },
+  { category: "Steering & Controls", item: "Anchor & rode" },
+  { category: "Safety Equipment", item: "Life jackets / PFDs (count & condition)" },
+  { category: "Safety Equipment", item: "Fire extinguisher (charged & accessible)" },
+  { category: "Safety Equipment", item: "Throwable PFD" },
+  { category: "Safety Equipment", item: "Visual distress signals / flares" },
+  { category: "Safety Equipment", item: "Sound signaling device" },
+  { category: "Safety Equipment", item: "First aid kit" },
+  { category: "Safety Equipment", item: "Registration / documentation aboard" },
+  { category: "Trailer", item: "Coupler & ball hitch" },
+  { category: "Trailer", item: "Safety chains" },
+  { category: "Trailer", item: "Trailer lights (brake, turn, running)" },
+  { category: "Trailer", item: "Trailer tires & pressure" },
+  { category: "Trailer", item: "Wheel bearings / Bearing Buddies" },
+  { category: "Trailer", item: "Winch & strap" },
+  { category: "Trailer", item: "Bunks or rollers" },
+  { category: "Trailer", item: "Frame — rust, cracks, damage" },
+];
+
+// ─── ATV / UTV ────────────────────────────────────────────────────────────────
+
+export const ATV_CATEGORIES = [
+  "Engine", "Drivetrain", "Brakes", "Suspension", "Tires & Wheels",
+  "Electrical", "Frame & Body", "Fluids",
+];
+
+export const ATV_TEMPLATE = [
+  { category: "Engine", item: "Oil level & condition" },
+  { category: "Engine", item: "Coolant level (liquid-cooled)" },
+  { category: "Engine", item: "Air filter" },
+  { category: "Engine", item: "Spark plug(s)" },
+  { category: "Engine", item: "Fuel delivery (carb or injection)" },
+  { category: "Engine", item: "Fuel filter" },
+  { category: "Engine", item: "Idle & throttle response" },
+  { category: "Engine", item: "Exhaust / muffler condition" },
+  { category: "Engine", item: "Engine mounts" },
+  { category: "Engine", item: "Radiator & hoses (liquid-cooled)" },
+  { category: "Drivetrain", item: "CVT belt condition (if CVT)" },
+  { category: "Drivetrain", item: "CVT clutch — primary & secondary" },
+  { category: "Drivetrain", item: "Chain or shaft drive condition" },
+  { category: "Drivetrain", item: "Chain tension & lubrication (if chain)" },
+  { category: "Drivetrain", item: "Front differential / gearbox" },
+  { category: "Drivetrain", item: "Rear differential / gearbox" },
+  { category: "Drivetrain", item: "4WD engagement (if equipped)" },
+  { category: "Drivetrain", item: "Transmission shift quality" },
+  { category: "Brakes", item: "Front brake pads / shoes" },
+  { category: "Brakes", item: "Rear brake pads / shoes" },
+  { category: "Brakes", item: "Rotor / drum condition" },
+  { category: "Brakes", item: "Brake fluid level" },
+  { category: "Brakes", item: "Brake lines & hoses" },
+  { category: "Brakes", item: "Front brake lever feel" },
+  { category: "Brakes", item: "Rear brake pedal feel" },
+  { category: "Brakes", item: "Parking brake (if equipped)" },
+  { category: "Suspension", item: "Front A-arms — condition & bushings" },
+  { category: "Suspension", item: "Rear A-arms / trailing arms" },
+  { category: "Suspension", item: "Ball joints (front & rear)" },
+  { category: "Suspension", item: "Front shocks — travel & leaks" },
+  { category: "Suspension", item: "Rear shocks — travel & leaks" },
+  { category: "Suspension", item: "Tie rods & ends" },
+  { category: "Suspension", item: "Steering knuckles" },
+  { category: "Suspension", item: "Wheel bearings (all four)" },
+  { category: "Tires & Wheels", item: "Front left tire tread & condition" },
+  { category: "Tires & Wheels", item: "Front right tire tread & condition" },
+  { category: "Tires & Wheels", item: "Rear left tire tread & condition" },
+  { category: "Tires & Wheels", item: "Rear right tire tread & condition" },
+  { category: "Tires & Wheels", item: "Tire pressures (all four)" },
+  { category: "Tires & Wheels", item: "Wheel condition & lug nuts" },
+  { category: "Electrical", item: "Battery condition & voltage" },
+  { category: "Electrical", item: "Charging system output" },
+  { category: "Electrical", item: "Headlights & taillights" },
+  { category: "Electrical", item: "Kill switch / ignition" },
+  { category: "Electrical", item: "Instrument cluster / warning lights" },
+  { category: "Electrical", item: "Winch (if equipped)" },
+  { category: "Electrical", item: "Fuses" },
+  { category: "Frame & Body", item: "Frame / chassis — cracks or bends" },
+  { category: "Frame & Body", item: "Skid plates condition" },
+  { category: "Frame & Body", item: "Front & rear racks" },
+  { category: "Frame & Body", item: "Fuel tank — leaks or damage" },
+  { category: "Frame & Body", item: "Seat & seat latch" },
+  { category: "Frame & Body", item: "Footpegs / floorboards" },
+  { category: "Frame & Body", item: "Handlebars & steering stem" },
+  { category: "Frame & Body", item: "Tow hitch (if equipped)" },
+  { category: "Frame & Body", item: "Grab bar / roll cage (UTV)" },
+  { category: "Fluids", item: "Engine oil" },
+  { category: "Fluids", item: "Coolant (if liquid-cooled)" },
+  { category: "Fluids", item: "Brake fluid" },
+  { category: "Fluids", item: "Differential / gearbox oil (front & rear)" },
+  { category: "Fluids", item: "CVT housing (clean, dry)" },
+];
+
+// ─── Lookup helpers ───────────────────────────────────────────────────────────
+
+export const INSPECTION_CATEGORIES = CAR_CATEGORIES;
+export const INSPECTION_TEMPLATE = CAR_TEMPLATE;
+
+export function getCategoriesForVehicleType(vehicleType?: string | null) {
+  switch (vehicleType) {
+    case "motorcycle": return MOTORCYCLE_CATEGORIES;
+    case "boat":       return BOAT_CATEGORIES;
+    case "atv":        return ATV_CATEGORIES;
+    default:           return CAR_CATEGORIES;
+  }
+}
+
+export function getTemplateForVehicleType(vehicleType?: string | null) {
+  switch (vehicleType) {
+    case "motorcycle": return MOTORCYCLE_TEMPLATE;
+    case "boat":       return BOAT_TEMPLATE;
+    case "atv":        return ATV_TEMPLATE;
+    default:           return CAR_TEMPLATE;
+  }
+}
+
+export function buildDefaultInspection(vehicleType?: string | null) {
+  return getTemplateForVehicleType(vehicleType).map(t => ({
     ...t,
     status: UpsertInspectionItemStatus.pending,
-    notes: ""
+    notes: "",
   }));
 }

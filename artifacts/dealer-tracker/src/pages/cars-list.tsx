@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListCars, useCreateCar, CreateCarStatus, CreateCarCarType } from "@workspace/api-client-react";
+import { useListCars, useCreateCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,13 @@ const STATUS_OPTIONS = [
 const TYPE_OPTIONS = [
   { value: "dealer", label: "Dealership" },
   { value: "personal", label: "Personal" },
+];
+
+const VEHICLE_TYPE_OPTIONS = [
+  { value: "car",        label: "Car / Truck" },
+  { value: "motorcycle", label: "Motorcycle" },
+  { value: "boat",       label: "Boat" },
+  { value: "atv",        label: "ATV / UTV" },
 ];
 
 type TabType = "all" | "dealer" | "personal";
@@ -50,6 +57,7 @@ const emptyForm = {
   mileage: "",
   status: "",
   carType: "dealer" as "dealer" | "personal",
+  vehicleType: "car" as "car" | "motorcycle" | "boat" | "atv",
   owner: "",
 };
 
@@ -67,6 +75,7 @@ type CarItem = {
   mileage?: number;
   status?: string;
   carType?: string;
+  vehicleType?: string;
   owner?: string;
   sold: number;
 };
@@ -82,6 +91,11 @@ function CarCard({ car }: { car: CarItem }) {
             </div>
             {car.carType === "personal" && (
               <span className="bg-teal-700 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
+            )}
+            {car.vehicleType && car.vehicleType !== "car" && (
+              <span className="bg-slate-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
+                {{ motorcycle: "Motorcycle", boat: "Boat", atv: "ATV/UTV" }[car.vehicleType] ?? car.vehicleType}
+              </span>
             )}
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -194,6 +208,7 @@ export default function CarsList() {
         mileage: mi,
         status: (form.status || undefined) as CreateCarStatus | undefined,
         carType: form.carType as CreateCarCarType,
+        vehicleType: form.vehicleType as CreateCarVehicleType,
         owner: form.carType === "personal" && form.owner.trim() ? form.owner.trim() : undefined,
       }
     }, {
@@ -325,6 +340,27 @@ export default function CarsList() {
                         ? opt.value === "personal"
                           ? "bg-teal-700 text-white border-teal-700"
                           : "bg-black text-white border-black"
+                        : "bg-white text-black border-black"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Vehicle type selector */}
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase block">Vehicle Type</label>
+              <div className="grid grid-cols-2 gap-3">
+                {VEHICLE_TYPE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setField("vehicleType", opt.value as typeof form.vehicleType)}
+                    className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
+                      form.vehicleType === opt.value
+                        ? "bg-black text-white border-black"
                         : "bg-white text-black border-black"
                     }`}
                   >

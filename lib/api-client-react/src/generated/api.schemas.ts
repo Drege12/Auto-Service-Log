@@ -32,6 +32,16 @@ export const CarCarType = {
   personal: "personal",
 } as const;
 
+export type CarVehicleType =
+  (typeof CarVehicleType)[keyof typeof CarVehicleType];
+
+export const CarVehicleType = {
+  car: "car",
+  motorcycle: "motorcycle",
+  boat: "boat",
+  atv: "atv",
+} as const;
+
 export interface Car {
   id: number;
   stockNumber: string;
@@ -45,6 +55,7 @@ export interface Car {
   notes?: string;
   status?: CarStatus;
   carType?: CarCarType;
+  vehicleType?: CarVehicleType;
   owner?: string;
   sold: number;
   repairNotes?: string;
@@ -74,6 +85,16 @@ export const CreateCarCarType = {
   personal: "personal",
 } as const;
 
+export type CreateCarVehicleType =
+  (typeof CreateCarVehicleType)[keyof typeof CreateCarVehicleType];
+
+export const CreateCarVehicleType = {
+  car: "car",
+  motorcycle: "motorcycle",
+  boat: "boat",
+  atv: "atv",
+} as const;
+
 export interface CreateCar {
   stockNumber: string;
   year: number;
@@ -85,6 +106,7 @@ export interface CreateCar {
   notes?: string;
   status?: CreateCarStatus;
   carType?: CreateCarCarType;
+  vehicleType?: CreateCarVehicleType;
   owner?: string;
   sold?: number;
 }

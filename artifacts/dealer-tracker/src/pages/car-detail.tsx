@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useGetCar, useUpdateCar, useDeleteCar, CreateCarStatus, CreateCarCarType } from "@workspace/api-client-react";
+import { useGetCar, useUpdateCar, useDeleteCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -39,6 +39,19 @@ const TYPE_OPTIONS = [
   { value: "personal", label: "Personal" },
 ];
 
+const VEHICLE_TYPE_OPTIONS = [
+  { value: "car",        label: "Car / Truck" },
+  { value: "motorcycle", label: "Motorcycle" },
+  { value: "boat",       label: "Boat" },
+  { value: "atv",        label: "ATV / UTV" },
+];
+
+function vehicleTypeBadge(vt?: string | null) {
+  if (!vt || vt === "car") return null;
+  const labels: Record<string, string> = { motorcycle: "Motorcycle", boat: "Boat", atv: "ATV / UTV" };
+  return <span className="bg-slate-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">{labels[vt] ?? vt}</span>;
+}
+
 const emptyEditForm = {
   stockNumber: "",
   year: "",
@@ -49,6 +62,7 @@ const emptyEditForm = {
   mileage: "",
   status: "",
   carType: "dealer" as "dealer" | "personal",
+  vehicleType: "car" as "car" | "motorcycle" | "boat" | "atv",
   owner: "",
 };
 
@@ -78,6 +92,7 @@ export default function CarDetail() {
         mileage: car.mileage != null ? String(car.mileage) : "",
         status: car.status || "",
         carType: (car.carType === "personal" ? "personal" : "dealer") as "dealer" | "personal",
+        vehicleType: ((car.vehicleType as "car" | "motorcycle" | "boat" | "atv") ?? "car"),
         owner: car.owner || "",
       });
       setEditError("");
@@ -101,6 +116,7 @@ export default function CarDetail() {
       mileage: editForm.mileage.trim() ? parseInt(editForm.mileage.trim(), 10) : undefined,
       status: (editForm.status || null) as unknown as CreateCarStatus | undefined,
       carType: editForm.carType as CreateCarCarType,
+      vehicleType: editForm.vehicleType as CreateCarVehicleType,
       owner: editForm.carType === "personal" && editForm.owner.trim() ? editForm.owner.trim() : undefined,
     };
     updateCar({ carId, data }, {
@@ -164,6 +180,7 @@ export default function CarDetail() {
               {car.carType === "personal" && (
                 <span className="bg-teal-700 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Personal</span>
               )}
+              {vehicleTypeBadge(car.vehicleType)}
             </div>
 
             <div className="flex flex-wrap gap-6 mt-4 font-mono text-xl font-bold">
@@ -225,7 +242,7 @@ export default function CarDetail() {
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
           <TabsContent value="inspection" className="mt-0">
-            <InspectionsTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
+            <InspectionsTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} vehicleType={car.vehicleType} />
           </TabsContent>
           <TabsContent value="maintenance" className="mt-0">
             <MaintenanceTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
@@ -360,6 +377,26 @@ export default function CarDetail() {
                 />
               </div>
             )}
+
+            <div className="space-y-2">
+              <label className="text-lg font-bold uppercase">Vehicle Type</label>
+              <div className="grid grid-cols-2 gap-3">
+                {VEHICLE_TYPE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setEditForm(f => ({ ...f, vehicleType: opt.value as "car" | "motorcycle" | "boat" | "atv" }))}
+                    className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
+                      editForm.vehicleType === opt.value
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-black border-black"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="space-y-2">
               <label className="text-lg font-bold uppercase">Status</label>
