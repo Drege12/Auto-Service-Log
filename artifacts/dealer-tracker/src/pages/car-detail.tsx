@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useGetCar, useUpdateCar, useDeleteCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType, CreateCarAtvSubtype } from "@workspace/api-client-react";
+import { useGetCar, useUpdateCar, useDeleteCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType, CreateCarVehicleSubtype } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -14,7 +14,7 @@ import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
 import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
-import { ATV_SUBTYPES, atvSubtypeLabel } from "@/lib/inspection-template";
+import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
 
 function statusBadge(status?: string | null) {
   switch (status) {
@@ -49,10 +49,10 @@ const VEHICLE_TYPE_OPTIONS = [
 ];
 
 
-function vehicleTypeBadge(vt?: string | null, atvSub?: string | null) {
-  if (!vt || vt === "car") return null;
-  const labels: Record<string, string> = { motorcycle: "Motorcycle", boat: "Boat", atv: "ATV / UTV" };
-  const label = vt === "atv" ? `ATV / ${atvSubtypeLabel(atvSub)}` : (labels[vt] ?? vt);
+function vehicleTypeBadge(vt?: string | null, subtype?: string | null) {
+  if (!vt) return null;
+  const label = vehicleSubtypeLabel(vt, subtype);
+  if (!label) return null;
   return <span className="bg-slate-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">{label}</span>;
 }
 
@@ -67,7 +67,7 @@ const emptyEditForm = {
   status: "",
   carType: "dealer" as "dealer" | "personal",
   vehicleType: "car" as "car" | "motorcycle" | "boat" | "atv",
-  atvSubtype: "quad" as string,
+  vehicleSubtype: "sedan" as string,
   owner: "",
 };
 
@@ -87,6 +87,7 @@ export default function CarDetail() {
 
   const openEditDialog = () => {
     if (car) {
+      const vt = (car.vehicleType as "car" | "motorcycle" | "boat" | "atv") ?? "car";
       setEditForm({
         stockNumber: car.stockNumber,
         year: String(car.year),
@@ -97,8 +98,8 @@ export default function CarDetail() {
         mileage: car.mileage != null ? String(car.mileage) : "",
         status: car.status || "",
         carType: (car.carType === "personal" ? "personal" : "dealer") as "dealer" | "personal",
-        vehicleType: ((car.vehicleType as "car" | "motorcycle" | "boat" | "atv") ?? "car"),
-        atvSubtype: (car as unknown as { atvSubtype?: string }).atvSubtype || "quad",
+        vehicleType: vt,
+        vehicleSubtype: car.vehicleSubtype || getDefaultSubtype(vt),
         owner: car.owner || "",
       });
       setEditError("");
@@ -123,7 +124,7 @@ export default function CarDetail() {
       status: (editForm.status || null) as unknown as CreateCarStatus | undefined,
       carType: editForm.carType as CreateCarCarType,
       vehicleType: editForm.vehicleType as CreateCarVehicleType,
-      atvSubtype: editForm.vehicleType === "atv" ? editForm.atvSubtype as CreateCarAtvSubtype : undefined,
+      vehicleSubtype: editForm.vehicleSubtype as CreateCarVehicleSubtype,
       owner: editForm.carType === "personal" && editForm.owner.trim() ? editForm.owner.trim() : undefined,
     };
     updateCar({ carId, data }, {
@@ -168,7 +169,7 @@ export default function CarDetail() {
         status: (car.status || undefined) as CreateCarStatus | undefined,
         carType: (car.carType || "dealer") as CreateCarCarType,
         vehicleType: (car.vehicleType || "car") as CreateCarVehicleType,
-        atvSubtype: ((car as unknown as { atvSubtype?: string }).atvSubtype || undefined) as CreateCarAtvSubtype | undefined,
+        vehicleSubtype: (car.vehicleSubtype || undefined) as CreateCarVehicleSubtype | undefined,
         owner: car.owner || undefined,
         sold: isSold ? 0 : 1,
       } }, {
@@ -180,6 +181,16 @@ export default function CarDetail() {
       });
     }
   };
+
+  const setEditVehicleType = (vt: string) => {
+    setEditForm(f => ({
+      ...f,
+      vehicleType: vt as typeof f.vehicleType,
+      vehicleSubtype: getDefaultSubtype(vt),
+    }));
+  };
+
+  const editSubtypeOptions = getSubtypesForVehicleType(editForm.vehicleType);
 
   if (isLoading) return <Layout><div className="text-center py-20 text-3xl font-black">Loading vehicle data...</div></Layout>;
   if (isError || !car) return <Layout><div className="text-center py-20 text-3xl font-black text-destructive">Vehicle not found.</div></Layout>;
@@ -205,7 +216,7 @@ export default function CarDetail() {
               {car.carType === "personal" && (
                 <span className="bg-teal-700 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Personal</span>
               )}
-              {vehicleTypeBadge(car.vehicleType, (car as unknown as { atvSubtype?: string }).atvSubtype)}
+              {vehicleTypeBadge(car.vehicleType, car.vehicleSubtype)}
             </div>
 
             <div className="flex flex-wrap gap-6 mt-4 font-mono text-xl font-bold">
@@ -267,7 +278,7 @@ export default function CarDetail() {
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
           <TabsContent value="inspection" className="mt-0">
-            <InspectionsTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} vehicleType={car.vehicleType} atvSubtype={(car as unknown as { atvSubtype?: string }).atvSubtype} />
+            <InspectionsTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} vehicleType={car.vehicleType} vehicleSubtype={car.vehicleSubtype} />
           </TabsContent>
           <TabsContent value="maintenance" className="mt-0">
             <MaintenanceTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
@@ -294,7 +305,6 @@ export default function CarDetail() {
         </div>
       </Tabs>
 
-      {/* Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -411,7 +421,7 @@ export default function CarDetail() {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setEditForm(f => ({ ...f, vehicleType: opt.value as "car" | "motorcycle" | "boat" | "atv" }))}
+                    onClick={() => setEditVehicleType(opt.value)}
                     className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-base transition-colors ${
                       editForm.vehicleType === opt.value
                         ? "bg-black text-white border-black"
@@ -424,27 +434,27 @@ export default function CarDetail() {
               </div>
             </div>
 
-            {editForm.vehicleType === "atv" && (
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">ATV / UTV Type</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {ATV_SUBTYPES.map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setEditForm(f => ({ ...f, atvSubtype: opt.value }))}
-                      className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
-                        editForm.atvSubtype === opt.value
-                          ? "bg-black text-white border-black"
-                          : "bg-white text-black border-black"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+            <div className="space-y-2">
+              <label className="text-lg font-bold uppercase">
+                {editForm.vehicleType === "car" ? "Body Style" : editForm.vehicleType === "motorcycle" ? "Motorcycle Type" : editForm.vehicleType === "boat" ? "Boat Type" : "ATV / UTV Type"}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {editSubtypeOptions.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setEditForm(f => ({ ...f, vehicleSubtype: opt.value }))}
+                    className={`px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
+                      editForm.vehicleSubtype === opt.value
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-black border-black"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
             <div className="space-y-2">
               <label className="text-lg font-bold uppercase">Status</label>
