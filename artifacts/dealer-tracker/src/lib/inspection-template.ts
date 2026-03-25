@@ -2,11 +2,45 @@ import { UpsertInspectionItemStatus } from "@workspace/api-client-react";
 
 export type VehicleType = "car" | "motorcycle" | "boat" | "atv";
 
+// ─── CAR — Shared Diesel items (appended to every car sub-type) ─────────────
+
+export const CAR_DIESEL_ITEMS = [
+  { category: "Diesel", item: "Glow plugs / glow plug controller" },
+  { category: "Diesel", item: "Fuel filter (high-pressure side)" },
+  { category: "Diesel", item: "Fuel water separator / pre-filter" },
+  { category: "Diesel", item: "Injection pump / high-pressure fuel pump" },
+  { category: "Diesel", item: "Injectors condition & leak-off" },
+  { category: "Diesel", item: "Turbocharger condition & boost pressure" },
+  { category: "Diesel", item: "Intercooler / charge air cooler" },
+  { category: "Diesel", item: "Diesel particulate filter (DPF) status" },
+  { category: "Diesel", item: "EGR valve & cooler (diesel)" },
+  { category: "Diesel", item: "DEF / AdBlue level & system (if equipped)" },
+  { category: "Diesel", item: "SCR system & NOx sensors (if equipped)" },
+  { category: "Diesel", item: "Blow-by / crankcase ventilation" },
+];
+
+// ─── CAR — Shared Hybrid / EV items (appended to every car sub-type) ─────────
+
+export const CAR_HYBRID_EV_ITEMS = [
+  { category: "Hybrid / EV", item: "HV battery — state of health & codes" },
+  { category: "Hybrid / EV", item: "12V auxiliary battery" },
+  { category: "Hybrid / EV", item: "HV battery coolant system" },
+  { category: "Hybrid / EV", item: "Electric motor / generator condition" },
+  { category: "Hybrid / EV", item: "Inverter / power control unit (PCU)" },
+  { category: "Hybrid / EV", item: "Regenerative braking system" },
+  { category: "Hybrid / EV", item: "Charging port & inlet condition" },
+  { category: "Hybrid / EV", item: "On-board charger (OBC)" },
+  { category: "Hybrid / EV", item: "HV cables & orange harness condition" },
+  { category: "Hybrid / EV", item: "Battery management system (BMS) faults" },
+  { category: "Hybrid / EV", item: "Cooling fans (inverter / battery)" },
+];
+
 // ─── CAR — Sedan (default) ──────────────────────────────────────────────────
 
 export const CAR_SEDAN_CATEGORIES = [
   "OBDII", "Engine", "Transmission", "Brakes", "Steering", "Suspension",
   "Tires", "Exterior", "Interior", "Electrical", "Fluids", "Engine Performance",
+  "Diesel", "Hybrid / EV",
 ];
 
 export const CAR_SEDAN_TEMPLATE = [
@@ -94,6 +128,8 @@ export const CAR_SEDAN_TEMPLATE = [
   { category: "Engine Performance", item: "Fuel pressure & pump" },
   { category: "Engine Performance", item: "Oxygen sensors (upstream/downstream)" },
   { category: "Engine Performance", item: "EGR valve / system (if equipped)" },
+  ...CAR_DIESEL_ITEMS,
+  ...CAR_HYBRID_EV_ITEMS,
 ];
 
 // ─── CAR — Truck / Pickup ───────────────────────────────────────────────────
@@ -101,7 +137,7 @@ export const CAR_SEDAN_TEMPLATE = [
 export const CAR_TRUCK_CATEGORIES = [
   "OBDII", "Engine", "Transmission", "Brakes", "Steering", "Suspension",
   "Tires", "Exterior", "Interior", "Electrical", "Fluids",
-  "Bed & Towing", "4WD / Drivetrain",
+  "Bed & Towing", "4WD / Drivetrain", "Diesel", "Hybrid / EV",
 ];
 
 export const CAR_TRUCK_TEMPLATE = [
@@ -196,6 +232,8 @@ export const CAR_TRUCK_TEMPLATE = [
   { category: "4WD / Drivetrain", item: "Rear driveshaft & U-joints" },
   { category: "4WD / Drivetrain", item: "Rear differential" },
   { category: "4WD / Drivetrain", item: "Front differential (4WD)" },
+  ...CAR_DIESEL_ITEMS,
+  ...CAR_HYBRID_EV_ITEMS,
 ];
 
 // ─── CAR — SUV / Crossover ──────────────────────────────────────────────────
@@ -203,6 +241,7 @@ export const CAR_TRUCK_TEMPLATE = [
 export const CAR_SUV_CATEGORIES = [
   "OBDII", "Engine", "Transmission", "Brakes", "Steering", "Suspension",
   "Tires", "Exterior", "Interior", "Electrical", "Fluids", "AWD / 4WD System",
+  "Diesel", "Hybrid / EV",
 ];
 
 export const CAR_SUV_TEMPLATE = [
@@ -294,6 +333,8 @@ export const CAR_SUV_TEMPLATE = [
   { category: "AWD / 4WD System", item: "Rear driveshaft & U-joints" },
   { category: "AWD / 4WD System", item: "Front differential" },
   { category: "AWD / 4WD System", item: "Rear differential" },
+  ...CAR_DIESEL_ITEMS,
+  ...CAR_HYBRID_EV_ITEMS,
 ];
 
 // ─── CAR — Van / Minivan ────────────────────────────────────────────────────
@@ -301,6 +342,7 @@ export const CAR_SUV_TEMPLATE = [
 export const CAR_VAN_CATEGORIES = [
   "OBDII", "Engine", "Transmission", "Brakes", "Steering", "Suspension",
   "Tires", "Exterior", "Interior", "Electrical", "Fluids", "Van-Specific",
+  "Diesel", "Hybrid / EV",
 ];
 
 export const CAR_VAN_TEMPLATE = [
@@ -372,6 +414,8 @@ export const CAR_VAN_TEMPLATE = [
   { category: "Van-Specific", item: "Rear cargo area condition" },
   { category: "Van-Specific", item: "Second / third row seats & latches" },
   { category: "Van-Specific", item: "Step stool / running boards" },
+  ...CAR_DIESEL_ITEMS,
+  ...CAR_HYBRID_EV_ITEMS,
 ];
 
 // ─── CAR — Coupe ────────────────────────────────────────────────────────────
@@ -451,6 +495,8 @@ export const CAR_COUPE_TEMPLATE = [
   { category: "Engine Performance", item: "Intercooler / charge air cooler (if equipped)" },
   { category: "Engine Performance", item: "Boost pipes & couplers (if equipped)" },
   { category: "Engine Performance", item: "Performance exhaust / headers (if equipped)" },
+  ...CAR_DIESEL_ITEMS,
+  ...CAR_HYBRID_EV_ITEMS,
 ];
 
 // ─── CAR — Wagon ────────────────────────────────────────────────────────────
@@ -458,6 +504,7 @@ export const CAR_COUPE_TEMPLATE = [
 export const CAR_WAGON_CATEGORIES = [
   "OBDII", "Engine", "Transmission", "Brakes", "Steering", "Suspension",
   "Tires", "Exterior", "Interior", "Electrical", "Fluids",
+  "Engine Performance", "Diesel", "Hybrid / EV",
 ];
 
 export const CAR_WAGON_TEMPLATE = [
@@ -473,7 +520,7 @@ export const CAR_WAGON_TEMPLATE = [
 export const CAR_CONVERTIBLE_CATEGORIES = [
   "OBDII", "Engine", "Transmission", "Brakes", "Steering", "Suspension",
   "Tires", "Exterior", "Interior", "Electrical", "Fluids",
-  "Convertible Top",
+  "Engine Performance", "Convertible Top", "Diesel", "Hybrid / EV",
 ];
 
 export const CAR_CONVERTIBLE_TEMPLATE = [
