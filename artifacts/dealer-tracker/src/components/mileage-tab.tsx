@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Gauge, Plus, Trash2, TrendingUp, Fuel, Printer } from "lucide-react";
 import { printSection } from "@/lib/print-utils";
+import { mileageLabel } from "@/lib/vehicle-labels";
 
 const REASON_OPTIONS = [
   "Road Test / QC",
@@ -59,7 +60,8 @@ const emptyForm = {
 
 type FormState = typeof emptyForm;
 
-export function MileageTab({ carId, carLabel, initialMileage, originalMileage }: { carId: number; carLabel: string; initialMileage?: number; originalMileage?: number }) {
+export function MileageTab({ carId, carLabel, initialMileage, originalMileage, vehicleType }: { carId: number; carLabel: string; initialMileage?: number; originalMileage?: number; vehicleType?: string | null }) {
+  const ml = mileageLabel(vehicleType);
   const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { data: entries = [], isLoading } = useListMileage(carId);
@@ -118,17 +120,17 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage }:
     ? lastOdo - asAcquired
     : null;
 
-  if (isLoading) return <div className="p-12 text-center text-2xl font-bold">Loading mileage log...</div>;
+  if (isLoading) return <div className="p-12 text-center text-2xl font-bold">Loading {ml.logTitle.toLowerCase()}...</div>;
 
   return (
     <div ref={contentRef} className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
         <div>
-          <h2 className="text-2xl font-black uppercase">Mileage Log</h2>
-          <p className="text-gray-600 font-medium mt-1">Track odometer readings and fuel level after each drive.</p>
+          <h2 className="text-2xl font-black uppercase">{ml.logTitle}</h2>
+          <p className="text-gray-600 font-medium mt-1">{ml.subtitle}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => contentRef.current && printSection(`${carLabel} — Mileage Log`, contentRef.current)}>
+          <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => contentRef.current && printSection(`${carLabel} — ${ml.logTitle}`, contentRef.current)}>
             <Printer className="w-5 h-5 mr-2" /> PRINT
           </Button>
           <Button size="lg" onClick={() => { setShowForm(prev => !prev); setError(""); }} className="w-full sm:w-auto">
@@ -142,13 +144,13 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage }:
         {asAcquired !== null && (
           <div className="border-4 border-black bg-white rounded-xl p-5 text-center">
             <div className="text-2xl font-black font-mono">{asAcquired.toLocaleString()}</div>
-            <div className="text-gray-500 font-bold uppercase text-sm mt-1">As Acquired (mi)</div>
+            <div className="text-gray-500 font-bold uppercase text-sm mt-1">{ml.asAcquiredLabel}</div>
           </div>
         )}
         {lastOdo !== null && (
           <div className="border-4 border-black bg-white rounded-xl p-5 text-center">
             <div className="text-2xl font-black font-mono">{lastOdo.toLocaleString()}</div>
-            <div className="text-gray-500 font-bold uppercase text-sm mt-1">Current (mi)</div>
+            <div className="text-gray-500 font-bold uppercase text-sm mt-1">{ml.currentLabel}</div>
           </div>
         )}
         {dealerMiles !== null && (
@@ -157,14 +159,14 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage }:
               <TrendingUp className="w-6 h-6" />
               <span className="text-2xl font-black">+{dealerMiles.toLocaleString()}</span>
             </div>
-            <div className="text-gray-300 font-bold uppercase text-sm mt-1">Dealer Miles Added</div>
+            <div className="text-gray-300 font-bold uppercase text-sm mt-1">{ml.addedLabel}</div>
           </div>
         )}
       </div>
 
       {showForm && (
         <div className="border-4 border-black rounded-xl p-6 bg-white space-y-5">
-          <h3 className="text-xl font-black uppercase">New Odometer Reading</h3>
+          <h3 className="text-xl font-black uppercase">{ml.formTitle}</h3>
 
           {error && (
             <div className="bg-red-100 border-2 border-red-600 text-red-700 font-bold p-3 rounded-lg">{error}</div>
@@ -181,11 +183,11 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage }:
               />
             </div>
             <div className="space-y-1">
-              <label className="text-base font-black uppercase block">Odometer (miles) *</label>
+              <label className="text-base font-black uppercase block">{ml.fieldLabel}</label>
               <Input
                 value={form.odometer}
                 onChange={e => setField("odometer", e.target.value)}
-                placeholder="e.g. 47523"
+                placeholder={ml.placeholder}
                 inputMode="numeric"
                 className="bg-white text-black font-mono"
               />
@@ -261,7 +263,7 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage }:
         <div className="text-center py-16 border-4 border-dashed border-black rounded-3xl bg-gray-100">
           <Gauge className="w-16 h-16 mx-auto mb-4 opacity-50" />
           <h3 className="text-2xl font-black uppercase mb-2">No Readings Yet</h3>
-          <p className="text-lg text-gray-600">Add the first odometer reading to start tracking dealer miles.</p>
+          <p className="text-lg text-gray-600">{ml.emptyMessage}</p>
         </div>
       )}
 
@@ -275,10 +277,10 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage }:
               <div key={entry.id} className="border-4 border-black bg-white rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex-1 space-y-2">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-2xl font-black font-mono">{entry.odometer.toLocaleString()} mi</span>
+                    <span className="text-2xl font-black font-mono">{entry.odometer.toLocaleString()} {ml.unit}</span>
                     {delta !== null && delta > 0 && (
                       <span className="bg-gray-200 text-black font-black text-sm px-2 py-1 rounded">
-                        +{delta.toLocaleString()} mi
+                        +{delta.toLocaleString()} {ml.unit}
                       </span>
                     )}
                     {entry.fuelLevel && (

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Car, Plus, Key, Gauge, Search, User } from "lucide-react";
+import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 
 const STATUS_OPTIONS = [
   { value: "", label: "— No Status —" },
@@ -27,14 +28,6 @@ const VEHICLE_TYPE_OPTIONS = [
   { value: "atv",        label: "ATV / UTV" },
 ];
 
-function vinLabel(vehicleType?: string | null): { label: string; placeholder: string; empty: string } {
-  switch (vehicleType) {
-    case "boat":       return { label: "Hull ID (HIN)", placeholder: "e.g. ABC12345D101", empty: "NO HIN RECORDED" };
-    case "atv":        return { label: "VIN / Serial #", placeholder: "Serial # (may be shorter than 17 digits)", empty: "NO VIN/SERIAL RECORDED" };
-    case "motorcycle": return { label: "VIN", placeholder: "VIN (vintage bikes may be shorter)", empty: "NO VIN RECORDED" };
-    default:           return { label: "VIN", placeholder: "17-character VIN", empty: "NO VIN RECORDED" };
-  }
-}
 
 type TabType = "all" | "dealer" | "personal";
 const TABS: { value: TabType; label: string }[] = [
@@ -132,7 +125,7 @@ function CarCard({ car }: { car: CarItem }) {
           </div>
           <div className="flex items-center gap-3">
             <Gauge className="w-5 h-5 text-gray-500" />
-            <span>{car.mileage ? `${car.mileage.toLocaleString()} mi` : 'UNKNOWN MILEAGE'}</span>
+            <span>{car.mileage ? `${car.mileage.toLocaleString()} ${mileageLabel(car.vehicleType).unit}` : mileageLabel(car.vehicleType).empty}</span>
           </div>
         </div>
       </div>
@@ -423,8 +416,8 @@ export default function CarsList() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-1">
-                <label className="text-base font-black uppercase block">Mileage</label>
-                <Input value={form.mileage} onChange={e => setField("mileage", e.target.value)} placeholder="e.g. 45000" inputMode="numeric" className="bg-white text-black" />
+                <label className="text-base font-black uppercase block">{mileageLabel(form.vehicleType).label}</label>
+                <Input value={form.mileage} onChange={e => setField("mileage", e.target.value)} placeholder={mileageLabel(form.vehicleType).placeholder} inputMode="numeric" className="bg-white text-black" />
               </div>
               <div className="space-y-1">
                 <label className="text-base font-black uppercase block">Color</label>
