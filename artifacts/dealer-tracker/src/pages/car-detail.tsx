@@ -46,6 +46,15 @@ const VEHICLE_TYPE_OPTIONS = [
   { value: "atv",        label: "ATV / UTV" },
 ];
 
+function vinLabel(vehicleType?: string | null): { label: string; placeholder: string; empty: string } {
+  switch (vehicleType) {
+    case "boat":       return { label: "Hull ID (HIN)", placeholder: "e.g. ABC12345D101", empty: "NO HIN" };
+    case "atv":        return { label: "VIN / Serial #", placeholder: "Serial # (may be shorter than 17 digits)", empty: "NO VIN/SERIAL" };
+    case "motorcycle": return { label: "VIN", placeholder: "VIN (vintage bikes may be shorter)", empty: "NO VIN" };
+    default:           return { label: "VIN", placeholder: "17-character VIN", empty: "NO VIN" };
+  }
+}
+
 function vehicleTypeBadge(vt?: string | null) {
   if (!vt || vt === "car") return null;
   const labels: Record<string, string> = { motorcycle: "Motorcycle", boat: "Boat", atv: "ATV / UTV" };
@@ -192,7 +201,7 @@ export default function CarDetail() {
               )}
               <div className="flex items-center gap-2">
                 <Key className="w-6 h-6 text-muted-foreground" />
-                {car.vin || 'NO VIN'}
+                {car.vin || vinLabel(car.vehicleType).empty}
               </div>
               <div className="flex items-center gap-2">
                 <Gauge className="w-6 h-6 text-muted-foreground" />
@@ -286,10 +295,11 @@ export default function CarDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">VIN</label>
+                <label className="text-lg font-bold uppercase">{vinLabel(editForm.vehicleType).label}</label>
                 <Input
                   className="font-mono bg-white text-black"
                   value={editForm.vin}
+                  placeholder={vinLabel(editForm.vehicleType).placeholder}
                   onChange={e => setEditForm(f => ({ ...f, vin: e.target.value }))}
                 />
               </div>
