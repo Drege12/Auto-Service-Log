@@ -1,13 +1,149 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema } from "@workspace/db";
-import { eq, and, max } from "drizzle-orm";
+import { eq, and, max, ne, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 
 const router: IRouter = Router();
 
-router.get("/cars", async (_req, res) => {
+function getMechanicId(req: Request): number | null {
+  const raw = req.headers["x-mechanic-id"];
+  if (!raw) return null;
+  const id = parseInt(String(raw), 10);
+  return isNaN(id) ? null : id;
+}
+
+// ---------------------------------------------------------------------------
+// VIN lookup — find a vehicle with this VIN owned by a DIFFERENT mechanic
+// ---------------------------------------------------------------------------
+router.get("/vin-lookup", async (req, res) => {
   try {
-    const cars = await db.select().from(carsTable).orderBy(carsTable.createdAt);
+    const vin = String(req.query.vin ?? "").trim().toUpperCase();
+    if (!vin) {
+      res.status(400).json({ error: "vin query parameter is required" });
+      return;
+    }
+    const mechanicId = getMechanicId(req);
+
+    const rows = await db
+      .select({
+        id: carsTable.id,
+        year: carsTable.year,
+        make: carsTable.make,
+        model: carsTable.model,
+        color: carsTable.color,
+        mileage: carsTable.mileage,
+        vehicleType: carsTable.vehicleType,
+        vehicleSubtype: carsTable.vehicleSubtype,
+        carType: carsTable.carType,
+        vin: carsTable.vin,
+        mechanicId: carsTable.mechanicId,
+      })
+      .from(carsTable)
+      .where(
+        mechanicId
+          ? and(eq(carsTable.vin, vin), ne(carsTable.mechanicId, mechanicId))
+          : eq(carsTable.vin, vin)
+      );
+
+    if (rows.length === 0) {
+      res.json({ found: false });
+      return;
+    }
+    const car = rows[0];
+    res.json({ found: true, car });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to check VIN" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Import a vehicle (by source car ID) into the current mechanic's account
+// Copies car data + all inspection items, maintenance, mileage, todos
+// ---------------------------------------------------------------------------
+router.post("/cars/:carId/import", async (req, res) => {
+  try {
+    const sourceCarId = parseInt(req.params.carId, 10);
+    const mechanicId = getMechanicId(req);
+    if (!mechanicId) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+    const { stockNumber } = req.body as { stockNumber?: string };
+
+    // Load source car
+    const [source] = await db.select().from(carsTable).where(eq(carsTable.id, sourceCarId));
+    if (!source) {
+      res.status(404).json({ error: "Source vehicle not found" });
+      return;
+    }
+
+    // Create a copy for this mechanic
+    const [newCar] = await db.insert(carsTable).values({
+      mechanicId,
+      stockNumber: stockNumber?.trim() || source.stockNumber,
+      year: source.year,
+      make: source.make,
+      model: source.model,
+      vin: source.vin,
+      color: source.color,
+      mileage: source.mileage,
+      originalMileage: source.originalMileage,
+      status: source.status,
+      notes: source.notes,
+      carType: source.carType as "dealer" | "personal",
+      vehicleType: source.vehicleType as "car" | "motorcycle" | "boat" | "atv",
+      vehicleSubtype: source.vehicleSubtype,
+      owner: source.owner,
+      sold: 0,
+    }).returning();
+
+    // Copy inspection items
+    const inspItems = await db.select().from(inspectionItemsTable).where(eq(inspectionItemsTable.carId, sourceCarId));
+    if (inspItems.length > 0) {
+      await db.insert(inspectionItemsTable).values(
+        inspItems.map(i => ({ carId: newCar.id, category: i.category, item: i.item, status: i.status, notes: i.notes }))
+      );
+    }
+
+    // Copy maintenance entries
+    const maintEntries = await db.select().from(maintenanceEntriesTable).where(eq(maintenanceEntriesTable.carId, sourceCarId));
+    if (maintEntries.length > 0) {
+      await db.insert(maintenanceEntriesTable).values(
+        maintEntries.map(e => ({ carId: newCar.id, date: e.date, description: e.description, technician: e.technician, cost: e.cost, notes: e.notes }))
+      );
+    }
+
+    // Copy mileage entries
+    const mileageEntries = await db.select().from(mileageEntriesTable).where(eq(mileageEntriesTable.carId, sourceCarId));
+    if (mileageEntries.length > 0) {
+      await db.insert(mileageEntriesTable).values(
+        mileageEntries.map(e => ({ carId: newCar.id, date: e.date, odometer: e.odometer, reason: e.reason, technician: e.technician, notes: e.notes, fuelLevel: e.fuelLevel }))
+      );
+    }
+
+    // Copy todos
+    const todos = await db.select().from(todosTable).where(eq(todosTable.carId, sourceCarId));
+    if (todos.length > 0) {
+      await db.insert(todosTable).values(
+        todos.map(t => ({ carId: newCar.id, description: t.description, priority: t.priority as "low" | "medium" | "high", completed: 0, notes: t.notes }))
+      );
+    }
+
+    res.status(201).json(newCar);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to import vehicle" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Cars CRUD — scoped by mechanic
+// ---------------------------------------------------------------------------
+router.get("/cars", async (req, res) => {
+  try {
+    const mechanicId = getMechanicId(req);
+    const cars = mechanicId
+      ? await db.select().from(carsTable).where(eq(carsTable.mechanicId, mechanicId)).orderBy(carsTable.createdAt)
+      : await db.select().from(carsTable).orderBy(carsTable.createdAt);
     res.json(cars);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch cars" });
@@ -16,6 +152,7 @@ router.get("/cars", async (_req, res) => {
 
 router.post("/cars", async (req, res) => {
   try {
+    const mechanicId = getMechanicId(req);
     const parsed = insertCarSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid car data", details: parsed.error.flatten() });
@@ -23,6 +160,7 @@ router.post("/cars", async (req, res) => {
     }
     const [car] = await db.insert(carsTable).values({
       ...parsed.data,
+      mechanicId: mechanicId ?? undefined,
       originalMileage: parsed.data.mileage ?? null,
     }).returning();
     res.status(201).json(car);
@@ -53,8 +191,6 @@ router.put("/cars/:carId", async (req, res) => {
       res.status(400).json({ error: "Invalid car data", details: parsed.error.flatten() });
       return;
     }
-    // If originalMileage has never been set (no log entries yet), lock it in
-    // to the mileage value being saved so the Mileage tab always has a baseline.
     const [existing] = await db.select({ originalMileage: carsTable.originalMileage })
       .from(carsTable).where(eq(carsTable.id, carId));
     const extraFields = existing?.originalMileage === null && parsed.data.mileage != null
@@ -341,8 +477,6 @@ router.post("/cars/:carId/mileage", async (req, res) => {
     }
     const [entry] = await db.insert(mileageEntriesTable).values({ carId, ...parsed.data }).returning();
 
-    // Update the car's current mileage if the new reading is higher,
-    // and capture original_mileage the first time a log entry is added.
     const [currentCar] = await db.select().from(carsTable).where(eq(carsTable.id, carId));
     if (currentCar) {
       const updates: Record<string, number | null> = {};
@@ -370,8 +504,6 @@ router.delete("/cars/:carId/mileage/:entryId", async (req, res) => {
 
     await db.delete(mileageEntriesTable).where(and(eq(mileageEntriesTable.id, entryId), eq(mileageEntriesTable.carId, carId)));
 
-    // After deletion, recalculate the car's current mileage from remaining entries.
-    // This corrects the odometer if the highest (possibly wrong) entry was just removed.
     const [{ maxOdometer }] = await db
       .select({ maxOdometer: max(mileageEntriesTable.odometer) })
       .from(mileageEntriesTable)
@@ -380,7 +512,6 @@ router.delete("/cars/:carId/mileage/:entryId", async (req, res) => {
     if (maxOdometer !== null) {
       await db.update(carsTable).set({ mileage: maxOdometer }).where(eq(carsTable.id, carId));
     } else {
-      // No entries left — fall back to the original intake mileage.
       const [car] = await db.select().from(carsTable).where(eq(carsTable.id, carId));
       if (car) {
         await db.update(carsTable).set({ mileage: car.originalMileage }).where(eq(carsTable.id, carId));

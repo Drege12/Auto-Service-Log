@@ -7,8 +7,23 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+type VinMatch = {
+  id: number;
+  year: number;
+  make: string;
+  model: string;
+  color?: string | null;
+  mileage?: number | null;
+  vehicleType?: string | null;
+  vehicleSubtype?: string | null;
+  carType?: string | null;
+  vin?: string | null;
+};
 
 const STATUS_OPTIONS = [
   { value: "", label: "— No Status —" },
@@ -94,6 +109,63 @@ export default function CarsList() {
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
   const [showSold, setShowSold] = useState(false);
   const [soldCollapsed, setSoldCollapsed] = useState(true);
+
+  const [vinChecking, setVinChecking] = useState(false);
+  const [vinMatch, setVinMatch] = useState<VinMatch | null>(null);
+  const [vinImportOpen, setVinImportOpen] = useState(false);
+  const [vinImportStockNumber, setVinImportStockNumber] = useState("");
+  const [vinImporting, setVinImporting] = useState(false);
+  const [vinImportError, setVinImportError] = useState("");
+
+  const checkVin = async (vin: string) => {
+    const trimmed = vin.trim().toUpperCase();
+    if (trimmed.length < 11) return;
+    setVinChecking(true);
+    try {
+      const res = await fetch(`${BASE}/api/vin-lookup?vin=${encodeURIComponent(trimmed)}`);
+      if (!res.ok) return;
+      const data = await res.json() as { found: boolean; car?: VinMatch };
+      if (data.found && data.car) {
+        setVinMatch(data.car);
+        setVinImportStockNumber(form.stockNumber);
+        setVinImportOpen(true);
+      }
+    } catch {
+      // silent
+    } finally {
+      setVinChecking(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!vinMatch) return;
+    if (!vinImportStockNumber.trim()) {
+      setVinImportError("Enter a stock / ID number.");
+      return;
+    }
+    setVinImportError("");
+    setVinImporting(true);
+    try {
+      const res = await fetch(`${BASE}/api/cars/${vinMatch.id}/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Mechanic-Id": String(JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "") },
+        body: JSON.stringify({ stockNumber: vinImportStockNumber.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setVinImportError(err.error || "Import failed.");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      setVinImportOpen(false);
+      setDialogOpen(false);
+      setVinMatch(null);
+    } catch {
+      setVinImportError("Could not reach the server.");
+    } finally {
+      setVinImporting(false);
+    }
+  };
 
   const toggleFilter = (key: string) => {
     setActiveFilters(prev => {
@@ -435,9 +507,11 @@ export default function CarsList() {
               <Input
                 value={form.vin}
                 onChange={e => setField("vin", e.target.value)}
+                onBlur={e => checkVin(e.target.value)}
                 placeholder={vinLabel(form.vehicleType).placeholder}
                 className="bg-white text-black"
               />
+              {vinChecking && <p className="text-sm font-bold text-gray-500">Checking VIN across accounts...</p>}
             </div>
 
             <div className="space-y-1">
@@ -560,6 +634,50 @@ export default function CarsList() {
               </Button>
             </DialogFooter>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* VIN Import Dialog */}
+      <Dialog open={vinImportOpen} onOpenChange={open => { if (!open) { setVinImportOpen(false); setVinMatch(null); setVinImportError(""); } }}>
+        <DialogContent className="max-w-md bg-white text-black">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
+              <Download className="w-6 h-6" /> Vehicle Found
+            </DialogTitle>
+          </DialogHeader>
+          {vinMatch && (
+            <div className="space-y-5 py-2">
+              <div className="bg-gray-100 border-2 border-black rounded-xl p-4 space-y-1">
+                <p className="text-2xl font-black uppercase">{vinMatch.year} {vinMatch.make} {vinMatch.model}</p>
+                {vinMatch.color && <p className="font-bold text-gray-600 uppercase">{vinMatch.color}</p>}
+                {vinMatch.mileage != null && (
+                  <p className="font-bold text-gray-600">{vinMatch.mileage.toLocaleString()} {mileageLabel(vinMatch.vehicleType ?? undefined).unit}</p>
+                )}
+                {vinMatch.vin && <p className="font-mono text-sm text-gray-500">{vinMatch.vin}</p>}
+              </div>
+              <p className="font-bold text-gray-700">
+                Another mechanic already has this vehicle on file. Would you like to import all its data — including inspections, maintenance history, mileage log, and todos — into your account?
+              </p>
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Your Stock / ID # *</label>
+                <Input
+                  value={vinImportStockNumber}
+                  onChange={e => { setVinImportStockNumber(e.target.value); setVinImportError(""); }}
+                  placeholder="e.g. A1234"
+                  className="bg-white text-black"
+                />
+              </div>
+              {vinImportError && <p className="text-destructive font-bold">{vinImportError}</p>}
+              <DialogFooter>
+                <Button type="button" variant="outline" size="lg" onClick={() => { setVinImportOpen(false); setVinMatch(null); }}>
+                  NO THANKS
+                </Button>
+                <Button type="button" size="lg" disabled={vinImporting} onClick={handleImport}>
+                  {vinImporting ? "IMPORTING..." : "IMPORT VEHICLE"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </Layout>

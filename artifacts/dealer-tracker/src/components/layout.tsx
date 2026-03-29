@@ -1,9 +1,28 @@
 import { Link, useLocation } from "wouter";
 import { Wrench, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { setMechanicId } from "@workspace/api-client-react";
+
+function getMechanicDisplayName(): string {
+  try {
+    const raw = localStorage.getItem("dt_mechanic");
+    if (!raw) return "";
+    const parsed = JSON.parse(raw);
+    return parsed?.displayName || parsed?.username || "";
+  } catch {
+    return "";
+  }
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const displayName = getMechanicDisplayName();
+
+  const handleLogout = () => {
+    localStorage.removeItem("dt_mechanic");
+    setMechanicId(null);
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background selection:bg-primary selection:text-primary-foreground">
@@ -17,10 +36,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               Maintenance Tracker
             </span>
           </Link>
-          
-          <nav className="flex items-center gap-4">
-            <Link 
-              href="/" 
+
+          <nav className="flex items-center gap-3">
+            {displayName && (
+              <span className="text-sm font-black uppercase text-muted-foreground hidden sm:inline-block">
+                {displayName}
+              </span>
+            )}
+            <Link
+              href="/"
               className={cn(
                 "font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center rounded-md",
                 location === "/" ? "bg-black text-white border-black shadow-brutal-sm" : ""
@@ -30,7 +54,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Link>
             <button
               type="button"
-              onClick={() => { localStorage.removeItem("dt_auth"); window.location.reload(); }}
+              onClick={handleLogout}
               className="flex items-center gap-2 font-bold text-base px-4 py-2 border-2 border-black rounded-md hover:bg-black hover:text-white transition-all tap-target"
               title="Log out"
             >
