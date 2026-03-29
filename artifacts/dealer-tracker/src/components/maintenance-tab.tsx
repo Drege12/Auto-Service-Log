@@ -5,16 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, Calendar, User, DollarSign, Printer } from "lucide-react";
+import { Plus, Edit2, Trash2, Calendar, User, DollarSign, Clock, Printer } from "lucide-react";
 import { printSection } from "@/lib/print-utils";
 
-type FormState = { date: string; description: string; technician: string; cost: string; notes: string };
+type FormState = { date: string; description: string; technician: string; hours: string; cost: string; notes: string };
 type FormErrors = Partial<Record<keyof FormState, string>>;
 
 const emptyForm = (): FormState => ({
   date: new Date().toISOString().split("T")[0],
   description: "",
   technician: "",
+  hours: "",
   cost: "",
   notes: "",
 });
@@ -60,6 +61,7 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
       date: entry.date,
       description: entry.description,
       technician: entry.technician || "",
+      hours: entry.hours != null ? String(entry.hours) : "",
       cost: entry.cost != null ? String(entry.cost) : "",
       notes: entry.notes || "",
     });
@@ -76,6 +78,7 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
       date: form.date,
       description: form.description.trim(),
       technician: form.technician.trim() || undefined,
+      hours: form.hours ? Number(form.hours) : undefined,
       cost: form.cost ? Number(form.cost) : undefined,
       notes: form.notes.trim() || undefined,
     };
@@ -133,10 +136,15 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
                   {entry.date}
                 </div>
                 <h3 className="text-2xl font-black uppercase">{entry.description}</h3>
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-3">
                   {entry.technician && (
                     <div className="flex items-center gap-2 font-medium bg-gray-100 px-3 py-1 border-2 border-black rounded-md">
                       <User className="w-4 h-4" /> Tech: {entry.technician}
+                    </div>
+                  )}
+                  {entry.hours != null && (
+                    <div className="flex items-center gap-2 font-medium bg-blue-50 px-3 py-1 border-2 border-blue-800 rounded-md text-blue-900">
+                      <Clock className="w-4 h-4" /> {Number(entry.hours) === 1 ? "1 hr" : `${Number(entry.hours)} hrs`}
                     </div>
                   )}
                   {entry.cost != null && (
@@ -193,10 +201,22 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
               {errors.description && <p className="text-red-600 font-bold">{errors.description}</p>}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div className="space-y-1">
                 <label className="text-base font-black uppercase block">Technician</label>
                 <Input value={form.technician} onChange={e => setField("technician", e.target.value)} placeholder="Name" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block flex items-center gap-1">
+                  <Clock className="w-4 h-4" /> Hours
+                </label>
+                <Input
+                  value={form.hours}
+                  onChange={e => setField("hours", e.target.value)}
+                  placeholder="e.g. 1.5"
+                  inputMode="decimal"
+                  className="bg-white text-black"
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-base font-black uppercase block">Cost ($)</label>

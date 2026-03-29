@@ -228,6 +228,7 @@ export interface MaintenanceEntry {
   date: string;
   description: string;
   technician?: string;
+  hours?: number;
   cost?: number;
   notes?: string;
   createdAt: string;
@@ -237,6 +238,7 @@ export interface CreateMaintenanceEntry {
   date: string;
   description: string;
   technician?: string;
+  hours?: number;
   cost?: number;
   notes?: string;
 }

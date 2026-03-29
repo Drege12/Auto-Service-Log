@@ -115,7 +115,7 @@ router.post("/cars/:carId/import", async (req, res) => {
     const maintEntries = await db.select().from(maintenanceEntriesTable).where(eq(maintenanceEntriesTable.carId, sourceCarId));
     if (maintEntries.length > 0) {
       await db.insert(maintenanceEntriesTable).values(
-        maintEntries.map(e => ({ carId: newCar.id, date: e.date, description: e.description, technician: e.technician, cost: e.cost, notes: e.notes }))
+        maintEntries.map(e => ({ carId: newCar.id, date: e.date, description: e.description, technician: e.technician, hours: e.hours, cost: e.cost, notes: e.notes }))
       );
     }
 
@@ -337,7 +337,11 @@ router.get("/cars/:carId/maintenance", async (req, res) => {
   try {
     const carId = parseInt(req.params.carId, 10);
     const entries = await db.select().from(maintenanceEntriesTable).where(eq(maintenanceEntriesTable.carId, carId));
-    res.json(entries.map(e => ({ ...e, cost: e.cost ? Number(e.cost) : null })));
+    res.json(entries.map(e => ({
+      ...e,
+      hours: e.hours != null ? Number(e.hours) : null,
+      cost: e.cost != null ? Number(e.cost) : null,
+    })));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch maintenance" });
   }
@@ -350,6 +354,7 @@ router.post("/cars/:carId/maintenance", async (req, res) => {
       date: z.string(),
       description: z.string(),
       technician: z.string().optional().nullable(),
+      hours: z.number().optional().nullable(),
       cost: z.number().optional().nullable(),
       notes: z.string().optional().nullable(),
     });
@@ -361,9 +366,14 @@ router.post("/cars/:carId/maintenance", async (req, res) => {
     const [entry] = await db.insert(maintenanceEntriesTable).values({
       carId,
       ...parsed.data,
+      hours: parsed.data.hours?.toString() ?? null,
       cost: parsed.data.cost?.toString() ?? null,
     }).returning();
-    res.status(201).json({ ...entry, cost: entry.cost ? Number(entry.cost) : null });
+    res.status(201).json({
+      ...entry,
+      hours: entry.hours != null ? Number(entry.hours) : null,
+      cost: entry.cost != null ? Number(entry.cost) : null,
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to create maintenance entry" });
   }
@@ -377,6 +387,7 @@ router.put("/cars/:carId/maintenance/:entryId", async (req, res) => {
       date: z.string(),
       description: z.string(),
       technician: z.string().optional().nullable(),
+      hours: z.number().optional().nullable(),
       cost: z.number().optional().nullable(),
       notes: z.string().optional().nullable(),
     });
@@ -386,14 +397,22 @@ router.put("/cars/:carId/maintenance/:entryId", async (req, res) => {
       return;
     }
     const [entry] = await db.update(maintenanceEntriesTable)
-      .set({ ...parsed.data, cost: parsed.data.cost?.toString() ?? null })
+      .set({
+        ...parsed.data,
+        hours: parsed.data.hours?.toString() ?? null,
+        cost: parsed.data.cost?.toString() ?? null,
+      })
       .where(and(eq(maintenanceEntriesTable.id, entryId), eq(maintenanceEntriesTable.carId, carId)))
       .returning();
     if (!entry) {
       res.status(404).json({ error: "Entry not found" });
       return;
     }
-    res.json({ ...entry, cost: entry.cost ? Number(entry.cost) : null });
+    res.json({
+      ...entry,
+      hours: entry.hours != null ? Number(entry.hours) : null,
+      cost: entry.cost != null ? Number(entry.cost) : null,
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to update maintenance entry" });
   }

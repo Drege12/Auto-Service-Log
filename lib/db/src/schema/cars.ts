@@ -66,6 +66,7 @@ export const maintenanceEntriesTable = pgTable("maintenance_entries", {
   date: text("date").notNull(),
   description: text("description").notNull(),
   technician: text("technician"),
+  hours: numeric("hours"),
   cost: numeric("cost"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
