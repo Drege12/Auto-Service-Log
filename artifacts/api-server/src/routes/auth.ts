@@ -82,7 +82,7 @@ router.post("/auth/login", async (req, res) => {
       return;
     }
 
-    res.json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName });
+    res.json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, isAdmin: mechanic.isAdmin === 1 });
   } catch (err) {
     res.status(500).json({ error: "Login failed." });
   }

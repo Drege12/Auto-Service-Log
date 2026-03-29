@@ -3,20 +3,20 @@ import { Wrench, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setMechanicId } from "@workspace/api-client-react";
 
-function getMechanicDisplayName(): string {
+function getMechanicSession(): { displayName: string; isAdmin: boolean } {
   try {
     const raw = localStorage.getItem("dt_mechanic");
-    if (!raw) return "";
+    if (!raw) return { displayName: "", isAdmin: false };
     const parsed = JSON.parse(raw);
-    return parsed?.displayName || parsed?.username || "";
+    return { displayName: parsed?.displayName || parsed?.username || "", isAdmin: parsed?.isAdmin === true };
   } catch {
-    return "";
+    return { displayName: "", isAdmin: false };
   }
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const displayName = getMechanicDisplayName();
+  const { displayName, isAdmin } = getMechanicSession();
 
   const handleLogout = () => {
     localStorage.removeItem("dt_mechanic");
@@ -39,8 +39,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           <nav className="flex items-center gap-3">
             {displayName && (
-              <span className="text-sm font-black uppercase text-muted-foreground hidden sm:inline-block">
-                {displayName}
+              <span className="flex items-center gap-2 hidden sm:flex">
+                {isAdmin && (
+                  <span className="bg-amber-500 text-white font-black px-2 py-0.5 rounded text-xs uppercase tracking-widest">Admin</span>
+                )}
+                <span className="text-sm font-black uppercase text-muted-foreground">{displayName}</span>
               </span>
             )}
             <Link

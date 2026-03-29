@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function getMechanicSession(): { mechanicId: number; username: string; displayName: string } | null {
+function getMechanicSession(): { mechanicId: number; username: string; displayName: string; isAdmin: boolean } | null {
   try {
     const raw = localStorage.getItem("dt_mechanic");
     if (!raw) return null;
@@ -41,7 +41,7 @@ function Router() {
 }
 
 function App() {
-  const [session, setSession] = useState<{ mechanicId: number; username: string; displayName: string } | null>(
+  const [session, setSession] = useState<{ mechanicId: number; username: string; displayName: string; isAdmin: boolean } | null>(
     () => getMechanicSession()
   );
 
@@ -53,8 +53,8 @@ function App() {
     }
   }, [session]);
 
-  const handleLogin = (mechanicId: number, username: string, displayName: string) => {
-    const s = { mechanicId, username, displayName };
+  const handleLogin = (mechanicId: number, username: string, displayName: string, isAdmin: boolean) => {
+    const s = { mechanicId, username, displayName, isAdmin };
     localStorage.setItem("dt_mechanic", JSON.stringify(s));
     setMechanicId(mechanicId);
     setSession(s);

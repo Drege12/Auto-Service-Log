@@ -10,7 +10,7 @@ type Mode = "login" | "register";
 export default function LoginPage({
   onLogin,
 }: {
-  onLogin: (mechanicId: number, username: string, displayName: string) => void;
+  onLogin: (mechanicId: number, username: string, displayName: string, isAdmin: boolean) => void;
 }) {
   const [mode, setMode] = useState<Mode>("login");
 
@@ -45,9 +45,9 @@ export default function LoginPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), password }),
       });
-      const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; error?: string };
       if (res.ok && data.mechanicId) {
-        onLogin(data.mechanicId, data.username!, data.displayName!);
+        onLogin(data.mechanicId, data.username!, data.displayName!, data.isAdmin ?? false);
       } else {
         setError(data.error || "Incorrect username or password.");
       }
@@ -71,9 +71,9 @@ export default function LoginPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim(), shopPassword: shopCode }),
       });
-      const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; error?: string };
       if (res.ok && data.mechanicId) {
-        onLogin(data.mechanicId, data.username!, data.displayName!);
+        onLogin(data.mechanicId, data.username!, data.displayName!, data.isAdmin ?? false);
       } else {
         setError(data.error || "Could not create account.");
       }

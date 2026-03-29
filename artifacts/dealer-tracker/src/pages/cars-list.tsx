@@ -93,11 +93,22 @@ type CarItem = {
   owner?: string;
   sold?: number;
   createdAt?: string;
+  mechanicName?: string | null;
 };
+
+function getIsAdmin(): boolean {
+  try {
+    const raw = localStorage.getItem("dt_mechanic");
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return parsed?.isAdmin === true;
+  } catch { return false; }
+}
 
 export default function CarsList() {
   const queryClient = useQueryClient();
   const { data: cars, isLoading, isError } = useListCars();
+  const isAdmin = getIsAdmin();
   const { mutate: createCar, isPending: isCreating } = useCreateCar();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -281,10 +292,19 @@ export default function CarsList() {
     <Layout>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <h1 className="text-4xl sm:text-5xl font-black uppercase">Vehicles</h1>
-        <Button onClick={openAddDialog} size="lg" className="font-black uppercase text-xl px-6 py-3">
-          <Plus className="w-6 h-6 mr-2" /> Add
-        </Button>
+        {!isAdmin && (
+          <Button onClick={openAddDialog} size="lg" className="font-black uppercase text-xl px-6 py-3">
+            <Plus className="w-6 h-6 mr-2" /> Add
+          </Button>
+        )}
       </div>
+
+      {isAdmin && (
+        <div className="bg-amber-100 border-4 border-amber-600 rounded-2xl px-5 py-3 mb-6 flex items-center gap-3">
+          <span className="bg-amber-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-widest">Admin</span>
+          <span className="font-black text-amber-900 text-lg">Viewing all mechanics' vehicles</span>
+        </div>
+      )}
 
       <div className="flex items-center gap-3 mb-3">
         <div className="relative flex-1">
@@ -361,6 +381,9 @@ export default function CarsList() {
                         {vehicleSubtypeLabel(vt, car.vehicleSubtype) || (vehicleTypeLabels[vt] ?? vt)}
                       </span>
                     ) : null}
+                    {isAdmin && car.mechanicName && (
+                      <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">{car.mechanicName}</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
                     {car.sold
@@ -420,6 +443,9 @@ export default function CarsList() {
                               {vehicleSubtypeLabel(vt, car.vehicleSubtype) || (vehicleTypeLabels[vt] ?? vt)}
                             </span>
                           ) : null}
+                          {isAdmin && car.mechanicName && (
+                            <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">{car.mechanicName}</span>
+                          )}
                         </div>
                         <h2 className="text-2xl sm:text-3xl font-black uppercase leading-tight">
                           {car.year} {car.make} {car.model}
