@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request } from "express";
-import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema } from "@workspace/db";
-import { eq, and, max, ne, isNotNull } from "drizzle-orm";
+import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable } from "@workspace/db";
+import { eq, and, max, ne } from "drizzle-orm";
 import { z } from "zod";
 
 const router: IRouter = Router();
@@ -10,6 +10,12 @@ function getMechanicId(req: Request): number | null {
   if (!raw) return null;
   const id = parseInt(String(raw), 10);
   return isNaN(id) ? null : id;
+}
+
+async function isAdmin(mechanicId: number | null): Promise<boolean> {
+  if (!mechanicId) return false;
+  const [m] = await db.select({ isAdmin: mechanicsTable.isAdmin }).from(mechanicsTable).where(eq(mechanicsTable.id, mechanicId));
+  return m?.isAdmin === 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -141,6 +147,45 @@ router.post("/cars/:carId/import", async (req, res) => {
 router.get("/cars", async (req, res) => {
   try {
     const mechanicId = getMechanicId(req);
+    const admin = await isAdmin(mechanicId);
+
+    if (admin) {
+      const rows = await db
+        .select({
+          id: carsTable.id,
+          mechanicId: carsTable.mechanicId,
+          mechanicName: mechanicsTable.displayName,
+          stockNumber: carsTable.stockNumber,
+          year: carsTable.year,
+          make: carsTable.make,
+          model: carsTable.model,
+          vin: carsTable.vin,
+          color: carsTable.color,
+          mileage: carsTable.mileage,
+          originalMileage: carsTable.originalMileage,
+          status: carsTable.status,
+          notes: carsTable.notes,
+          repairNotes: carsTable.repairNotes,
+          partsCost: carsTable.partsCost,
+          laborHours: carsTable.laborHours,
+          laborRate: carsTable.laborRate,
+          actualRepairNotes: carsTable.actualRepairNotes,
+          actualPartsCost: carsTable.actualPartsCost,
+          actualLaborHours: carsTable.actualLaborHours,
+          carType: carsTable.carType,
+          vehicleType: carsTable.vehicleType,
+          vehicleSubtype: carsTable.vehicleSubtype,
+          owner: carsTable.owner,
+          sold: carsTable.sold,
+          createdAt: carsTable.createdAt,
+        })
+        .from(carsTable)
+        .leftJoin(mechanicsTable, eq(carsTable.mechanicId, mechanicsTable.id))
+        .orderBy(carsTable.createdAt);
+      res.json(rows);
+      return;
+    }
+
     const cars = mechanicId
       ? await db.select().from(carsTable).where(eq(carsTable.mechanicId, mechanicId)).orderBy(carsTable.createdAt)
       : await db.select().from(carsTable).orderBy(carsTable.createdAt);
