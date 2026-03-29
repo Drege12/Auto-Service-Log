@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import CarsList from "@/pages/cars-list";
 import CarDetail from "@/pages/car-detail";
+import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import { setMechanicId } from "@workspace/api-client-react";
@@ -35,6 +36,7 @@ function Router() {
     <Switch>
       <Route path="/" component={CarsList} />
       <Route path="/cars/:id" component={CarDetail} />
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );
