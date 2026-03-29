@@ -17,6 +17,7 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
+let _mechanicId: string | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -39,6 +40,15 @@ export function setBaseUrl(url: string | null): void {
  */
 export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
   _authTokenGetter = getter;
+}
+
+/**
+ * Set the current mechanic's numeric ID.  When set, every request will carry
+ * an `X-Mechanic-Id` header so the API server can scope data to this mechanic.
+ * Pass `null` to clear (e.g. on logout).
+ */
+export function setMechanicId(id: string | number | null): void {
+  _mechanicId = id != null ? String(id) : null;
 }
 
 function isRequest(input: RequestInfo | URL): input is Request {
@@ -353,6 +363,11 @@ export async function customFetch<T = unknown>(
     if (token) {
       headers.set("authorization", `Bearer ${token}`);
     }
+  }
+
+  // Attach mechanic ID header when set.
+  if (_mechanicId && !headers.has("x-mechanic-id")) {
+    headers.set("x-mechanic-id", _mechanicId);
   }
 
   const requestInfo = { method, url: resolveUrl(input) };

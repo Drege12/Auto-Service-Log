@@ -2,8 +2,21 @@ import { pgTable, text, serial, integer, timestamp, numeric } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
+export const mechanicsTable = pgTable("mechanics", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  displayName: text("display_name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMechanicSchema = createInsertSchema(mechanicsTable).omit({ id: true, createdAt: true });
+export type InsertMechanic = z.infer<typeof insertMechanicSchema>;
+export type Mechanic = typeof mechanicsTable.$inferSelect;
+
 export const carsTable = pgTable("cars", {
   id: serial("id").primaryKey(),
+  mechanicId: integer("mechanic_id").references(() => mechanicsTable.id, { onDelete: "set null" }),
   stockNumber: text("stock_number").notNull(),
   year: integer("year").notNull(),
   make: text("make").notNull(),

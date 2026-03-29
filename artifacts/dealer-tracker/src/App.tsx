@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,6 +7,7 @@ import CarsList from "@/pages/cars-list";
 import CarDetail from "@/pages/car-detail";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
+import { setMechanicId } from "@workspace/api-client-react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,6 +17,18 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function getMechanicSession(): { mechanicId: number; username: string; displayName: string } | null {
+  try {
+    const raw = localStorage.getItem("dt_mechanic");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.mechanicId) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 function Router() {
   return (
@@ -28,10 +41,27 @@ function Router() {
 }
 
 function App() {
-  const [authed, setAuthed] = useState(() => localStorage.getItem("dt_auth") === "1");
+  const [session, setSession] = useState<{ mechanicId: number; username: string; displayName: string } | null>(
+    () => getMechanicSession()
+  );
 
-  if (!authed) {
-    return <LoginPage onLogin={() => setAuthed(true)} />;
+  useEffect(() => {
+    if (session) {
+      setMechanicId(session.mechanicId);
+    } else {
+      setMechanicId(null);
+    }
+  }, [session]);
+
+  const handleLogin = (mechanicId: number, username: string, displayName: string) => {
+    const s = { mechanicId, username, displayName };
+    localStorage.setItem("dt_mechanic", JSON.stringify(s));
+    setMechanicId(mechanicId);
+    setSession(s);
+  };
+
+  if (!session) {
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   return (
