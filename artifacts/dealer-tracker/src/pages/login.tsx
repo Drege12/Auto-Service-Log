@@ -47,7 +47,11 @@ export default function LoginPage({
       });
       const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; error?: string };
       if (res.ok && data.mechanicId) {
-        onLogin(data.mechanicId, data.username!, data.displayName!, data.isAdmin ?? false);
+        if (data.isAdmin) {
+          setError("Admin accounts must sign in using the admin portal.");
+          return;
+        }
+        onLogin(data.mechanicId, data.username!, data.displayName!, false);
       } else {
         setError(data.error || "Incorrect username or password.");
       }
