@@ -186,7 +186,7 @@ export default function StatsPage() {
         <p className="text-center font-bold py-12 text-muted-foreground">No maintenance data found.</p>
       )}
 
-      <div id="stats-printable" ref={printRef} className="space-y-4">
+      <div id="stats-printable" className="space-y-4">
         {/* Print header (only visible when printing) */}
         <div className="hidden print:block mb-6">
           <h1 className="text-2xl font-black uppercase">Maintenance Statistics Report</h1>
