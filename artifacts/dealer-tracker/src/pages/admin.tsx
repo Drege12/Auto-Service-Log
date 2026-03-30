@@ -45,6 +45,7 @@ function EditRow({
   onSaved: (updated: Mechanic) => void;
   onCancel: () => void;
 }) {
+  const [username, setUsername] = useState(mechanic.username);
   const [displayName, setDisplayName] = useState(mechanic.displayName);
   const [newPassword, setNewPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(mechanic.isAdmin === 1);
@@ -52,12 +53,13 @@ function EditRow({
   const [error, setError] = useState("");
 
   const save = async () => {
+    if (!username.trim()) { setError("Username cannot be empty."); return; }
     if (!displayName.trim()) { setError("Name cannot be empty."); return; }
     if (newPassword && newPassword.length < 4) { setError("Password must be at least 4 characters."); return; }
     setSaving(true);
     setError("");
     try {
-      const body: Record<string, unknown> = { displayName: displayName.trim(), isAdmin };
+      const body: Record<string, unknown> = { username: username.trim(), displayName: displayName.trim(), isAdmin };
       if (newPassword) body.password = newPassword;
       const res = await fetch(`${BASE}/api/admin/mechanics/${mechanic.id}`, {
         method: "PATCH",
@@ -66,6 +68,19 @@ function EditRow({
       });
       const data = await res.json() as Mechanic & { error?: string };
       if (!res.ok) { setError(data.error || "Save failed."); return; }
+      // If admin changed their own account, update the stored session
+      if (mechanic.id === selfId) {
+        try {
+          const raw = localStorage.getItem("dt_mechanic");
+          if (raw) {
+            const s = JSON.parse(raw);
+            s.username = data.username;
+            s.displayName = data.displayName;
+            s.isAdmin = data.isAdmin === 1;
+            localStorage.setItem("dt_mechanic", JSON.stringify(s));
+          }
+        } catch { /* ignore */ }
+      }
       onSaved(data);
     } catch {
       setError("Could not reach server.");
@@ -82,6 +97,16 @@ function EditRow({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-sm font-black uppercase block">Username</label>
+          <Input
+            value={username}
+            onChange={e => { setUsername(e.target.value.toLowerCase().replace(/\s/g, "")); setError(""); }}
+            placeholder="e.g. mikej"
+            autoCapitalize="none"
+            className="bg-white text-black"
+          />
+        </div>
         <div className="space-y-1">
           <label className="text-sm font-black uppercase block">Display Name</label>
           <Input

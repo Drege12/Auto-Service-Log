@@ -73,7 +73,8 @@ router.patch("/admin/mechanics/:id", async (req, res) => {
   const targetId = parseInt(req.params.id, 10);
   if (isNaN(targetId)) { res.status(400).json({ error: "Invalid mechanic ID." }); return; }
 
-  const { displayName, password, isAdmin } = req.body as {
+  const { username, displayName, password, isAdmin } = req.body as {
+    username?: string;
     displayName?: string;
     password?: string;
     isAdmin?: boolean;
@@ -81,6 +82,9 @@ router.patch("/admin/mechanics/:id", async (req, res) => {
 
   try {
     // Validate first
+    if (username !== undefined && !username.trim()) {
+      res.status(400).json({ error: "Username cannot be empty." }); return;
+    }
     if (displayName !== undefined && !displayName.trim()) {
       res.status(400).json({ error: "Display name cannot be empty." }); return;
     }
@@ -91,11 +95,19 @@ router.patch("/admin/mechanics/:id", async (req, res) => {
       const admins = await db.select({ id: mechanicsTable.id }).from(mechanicsTable).where(eq(mechanicsTable.isAdmin, 1));
       if (admins.length <= 1) { res.status(400).json({ error: "Cannot remove admin from the only admin account." }); return; }
     }
+    if (username !== undefined) {
+      const normalized = username.trim().toLowerCase();
+      const [existing] = await db.select({ id: mechanicsTable.id }).from(mechanicsTable).where(eq(mechanicsTable.username, normalized));
+      if (existing && existing.id !== targetId) {
+        res.status(409).json({ error: "Username already taken." }); return;
+      }
+    }
 
-    const hasChanges = displayName !== undefined || password !== undefined || isAdmin !== undefined;
+    const hasChanges = username !== undefined || displayName !== undefined || password !== undefined || isAdmin !== undefined;
     if (!hasChanges) { res.status(400).json({ error: "Nothing to update." }); return; }
 
-    const setValues: { displayName?: string; passwordHash?: string; isAdmin?: number } = {};
+    const setValues: { username?: string; displayName?: string; passwordHash?: string; isAdmin?: number } = {};
+    if (username !== undefined) setValues.username = username.trim().toLowerCase();
     if (displayName !== undefined) setValues.displayName = displayName.trim();
     if (password !== undefined) setValues.passwordHash = await bcrypt.hash(password, 10);
     if (isAdmin !== undefined) setValues.isAdmin = isAdmin ? 1 : 0;
