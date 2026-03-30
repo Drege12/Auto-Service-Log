@@ -381,7 +381,7 @@ export default function CarsList() {
           { key: "status:in_service", label: "In Service", on: "bg-blue-600 text-white",   off: "bg-white text-black border-2 border-blue-400" },
           { key: "status:ready",      label: "Ready",      on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400" },
           { key: "status:on_hold",    label: "On Hold",    on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
-          { key: "owner:dealer",    label: "Dealer",       on: "bg-black text-white",      off: "bg-white text-black border-2 border-gray-400" },
+          { key: "owner:dealer",    label: "Work",         on: "bg-black text-white",      off: "bg-white text-black border-2 border-gray-400" },
           { key: "owner:personal",  label: "Personal",     on: "bg-teal-700 text-white",   off: "bg-white text-black border-2 border-teal-400" },
         ].map(({ key, label, on, off }) => (
           <button
@@ -629,7 +629,7 @@ export default function CarsList() {
             <div className="space-y-2">
               <label className="text-base font-black uppercase block">Ownership</label>
               <div className="flex gap-3">
-                {[{ value: "dealer", label: "Dealership" }, { value: "personal", label: "Personal" }].map(opt => (
+                {[{ value: "dealer", label: "Work" }, { value: "personal", label: "Personal" }].map(opt => (
                   <button
                     key={opt.value}
                     type="button"
