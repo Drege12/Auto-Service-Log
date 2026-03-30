@@ -22,7 +22,7 @@ function getSession() {
   try {
     const raw = localStorage.getItem("dt_mechanic");
     if (!raw) return null;
-    return JSON.parse(raw) as { mechanicId: number; username: string; displayName: string; isAdmin: boolean };
+    return JSON.parse(raw) as { mechanicId: number; username: string; displayName: string; isAdmin: boolean; adminMode?: boolean };
   } catch { return null; }
 }
 
@@ -293,7 +293,7 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (!session?.isAdmin) { navigate("/"); return; }
+    if (!session?.adminMode) { navigate("/"); return; }
     fetchMechanics();
   }, []);
 
@@ -318,7 +318,7 @@ export default function AdminPage() {
     }
   };
 
-  if (!session?.isAdmin) return null;
+  if (!session?.adminMode) return null;
 
   return (
     <Layout>

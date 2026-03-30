@@ -42,7 +42,7 @@ function getMechanicSession() {
   try {
     const raw = localStorage.getItem("dt_mechanic");
     if (!raw) return null;
-    return JSON.parse(raw) as { mechanicId: number; isAdmin: boolean };
+    return JSON.parse(raw) as { mechanicId: number; isAdmin: boolean; adminMode?: boolean };
   } catch { return null; }
 }
 
@@ -57,7 +57,7 @@ export default function StatsPage() {
   const session = getMechanicSession();
 
   useEffect(() => {
-    if (!session?.isAdmin) { navigate("/"); return; }
+    if (!session?.adminMode) { navigate("/"); return; }
     fetch(`${BASE}/api/admin/stats`, {
       headers: { "X-Mechanic-Id": String(session.mechanicId) },
     })
@@ -120,7 +120,7 @@ export default function StatsPage() {
   const grandTotalHours = filtered.reduce((s, g) => s + g.totalHours, 0);
   const grandTotalCost = filtered.reduce((s, g) => s + g.totalCost, 0);
 
-  if (!session?.isAdmin) return null;
+  if (!session?.adminMode) return null;
 
   return (
     <div>
