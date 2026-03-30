@@ -22,7 +22,15 @@ const queryClient = new QueryClient({
   },
 });
 
-function getMechanicSession(): { mechanicId: number; username: string; displayName: string; isAdmin: boolean; adminMode?: boolean } | null {
+type Session = {
+  mechanicId: number;
+  username: string;
+  displayName: string;
+  isAdmin: boolean;
+  adminMode?: boolean;
+};
+
+function getMechanicSession(): Session | null {
   try {
     const raw = localStorage.getItem("dt_mechanic");
     if (!raw) return null;
@@ -32,12 +40,6 @@ function getMechanicSession(): { mechanicId: number; username: string; displayNa
   } catch {
     return null;
   }
-}
-
-function isAdminLoginRoute(): boolean {
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  const p = window.location.pathname;
-  return p === `${base}/admin-login` || p === "/admin-login";
 }
 
 function Router() {
@@ -54,9 +56,8 @@ function Router() {
 }
 
 function App() {
-  const [session, setSession] = useState<{ mechanicId: number; username: string; displayName: string; isAdmin: boolean } | null>(
-    () => getMechanicSession()
-  );
+  const [session, setSession] = useState<Session | null>(() => getMechanicSession());
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -67,18 +68,35 @@ function App() {
   }, [session]);
 
   const handleLogin = (mechanicId: number, username: string, displayName: string, isAdmin: boolean) => {
-    const s = { mechanicId, username, displayName, isAdmin };
+    const s: Session = { mechanicId, username, displayName, isAdmin, adminMode: false };
     localStorage.setItem("dt_mechanic", JSON.stringify(s));
     setMechanicId(mechanicId);
     setSession(s);
   };
 
-  if (isAdminLoginRoute()) {
-    return <AdminLoginPage />;
-  }
+  const handleAdminLogin = (mechanicId: number, username: string, displayName: string) => {
+    const s: Session = { mechanicId, username, displayName, isAdmin: true, adminMode: true };
+    localStorage.setItem("dt_mechanic", JSON.stringify(s));
+    setMechanicId(mechanicId);
+    setSession(s);
+    setShowAdminLogin(false);
+  };
 
   if (!session) {
-    return <LoginPage onLogin={handleLogin} />;
+    if (showAdminLogin) {
+      return (
+        <AdminLoginPage
+          onLogin={handleAdminLogin}
+          onBack={() => setShowAdminLogin(false)}
+        />
+      );
+    }
+    return (
+      <LoginPage
+        onLogin={handleLogin}
+        onAdminAccess={() => setShowAdminLogin(true)}
+      />
+    );
   }
 
   return (
