@@ -8,6 +8,9 @@ export const mechanicsTable = pgTable("mechanics", {
   passwordHash: text("password_hash").notNull(),
   displayName: text("display_name").notNull(),
   isAdmin: integer("is_admin").notNull().default(0),
+  phone: text("phone"),
+  email: text("email"),
+  contactPublic: integer("contact_public").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

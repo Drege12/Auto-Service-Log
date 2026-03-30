@@ -3,7 +3,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
-import { UserPlus, Pencil, Trash2, Check, X, KeyRound, ShieldCheck, Shield } from "lucide-react";
+import { UserPlus, Pencil, Trash2, Check, X, KeyRound, ShieldCheck, Shield, Phone, Mail, Eye, EyeOff } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -12,6 +12,9 @@ type Mechanic = {
   username: string;
   displayName: string;
   isAdmin: number;
+  phone?: string | null;
+  email?: string | null;
+  contactPublic?: number;
   createdAt: string;
 };
 
@@ -381,6 +384,23 @@ export default function AdminPage() {
                       )}
                     </div>
                     <h2 className="text-2xl font-black uppercase leading-tight">{mechanic.displayName}</h2>
+                    <div className="flex flex-wrap gap-3 mt-1">
+                      {mechanic.phone && (
+                        <span className="flex items-center gap-1 text-sm font-bold text-gray-700">
+                          <Phone className="w-3 h-3" /> {mechanic.phone}
+                        </span>
+                      )}
+                      {mechanic.email && (
+                        <span className="flex items-center gap-1 text-sm font-bold text-gray-700">
+                          <Mail className="w-3 h-3" /> {mechanic.email}
+                        </span>
+                      )}
+                      {(mechanic.phone || mechanic.email) && (
+                        <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded ${mechanic.contactPublic ? "bg-green-100 text-green-800" : "bg-gray-200 text-gray-600"}`}>
+                          {mechanic.contactPublic ? <><Eye className="w-3 h-3" /> Public</> : <><EyeOff className="w-3 h-3" /> Private</>}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground font-bold">
                       Created {new Date(mechanic.createdAt).toLocaleDateString()}
                     </p>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useGetCar, useUpdateCar, useDeleteCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType, CreateCarVehicleSubtype } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,7 +12,7 @@ import { MaintenanceTab } from "@/components/maintenance-tab";
 import { MileageTab } from "@/components/mileage-tab";
 import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
-import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
 
@@ -192,6 +192,28 @@ export default function CarDetail() {
 
   const editSubtypeOptions = getSubtypesForVehicleType(editForm.vehicleType);
 
+  // Mechanic contact info
+  const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+  type ContactInfo = { id: number; displayName: string; phone: string | null; email: string | null; contactPublic: boolean; visible: boolean };
+  const [contact, setContact] = useState<ContactInfo | null>(null);
+
+  const viewerSession = (() => {
+    try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}") as { mechanicId?: number; isAdmin?: boolean }; }
+    catch { return {}; }
+  })();
+
+  useEffect(() => {
+    if (!car?.mechanicId) return;
+    // Only fetch contact if admin or the car belongs to someone else (no-op for own car — they already know their own info)
+    fetch(`${BASE}/api/mechanics/${car.mechanicId}/contact`, {
+      headers: { "X-Mechanic-Id": String(viewerSession.mechanicId ?? "") },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: ContactInfo | null) => setContact(data))
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [car?.mechanicId]);
+
   if (isLoading) return <Layout><div className="text-center py-20 text-3xl font-black">Loading vehicle data...</div></Layout>;
   if (isError || !car) return <Layout><div className="text-center py-20 text-3xl font-black text-destructive">Vehicle not found.</div></Layout>;
 
@@ -266,6 +288,39 @@ export default function CarDetail() {
           </div>
         </div>
       </div>
+
+      {contact && contact.id !== viewerSession.mechanicId && (
+        <div className={`mb-6 rounded-2xl border-4 px-6 py-4 flex flex-wrap items-center gap-4 ${
+          contact.visible
+            ? "bg-blue-50 border-blue-700"
+            : "bg-gray-100 border-gray-400"
+        }`}>
+          <div className="flex items-center gap-2">
+            <User className={`w-5 h-5 ${contact.visible ? "text-blue-800" : "text-gray-500"}`} />
+            <span className={`font-black uppercase text-lg ${contact.visible ? "text-blue-900" : "text-gray-600"}`}>
+              {contact.displayName}
+            </span>
+          </div>
+          {contact.visible && contact.phone && (
+            <a href={`tel:${contact.phone}`} className="flex items-center gap-2 font-bold text-blue-900 underline text-lg">
+              <Phone className="w-5 h-5" /> {contact.phone}
+            </a>
+          )}
+          {contact.visible && contact.email && (
+            <a href={`mailto:${contact.email}`} className="flex items-center gap-2 font-bold text-blue-900 underline text-lg">
+              <Mail className="w-5 h-5" /> {contact.email}
+            </a>
+          )}
+          {contact.visible && !contact.phone && !contact.email && (
+            <span className="font-bold text-blue-700">No contact info on file.</span>
+          )}
+          {!contact.visible && (
+            <span className="flex items-center gap-2 font-bold text-gray-500">
+              <EyeOff className="w-4 h-4" /> Contact info is private
+            </span>
+          )}
+        </div>
+      )}
 
       <Tabs defaultValue="inspection" className="w-full">
         <TabsList className="flex flex-col sm:flex-row h-auto border-b-0 gap-2 sm:gap-4 mb-8">
