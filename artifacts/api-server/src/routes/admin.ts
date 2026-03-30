@@ -22,7 +22,7 @@ router.get("/admin/mechanics", async (req, res) => {
   if (adminId === null) return;
   try {
     const rows = await db
-      .select({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, isAdmin: mechanicsTable.isAdmin, createdAt: mechanicsTable.createdAt })
+      .select({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, isAdmin: mechanicsTable.isAdmin, phone: mechanicsTable.phone, email: mechanicsTable.email, contactPublic: mechanicsTable.contactPublic, createdAt: mechanicsTable.createdAt })
       .from(mechanicsTable)
       .orderBy(mechanicsTable.createdAt);
     res.json(rows);

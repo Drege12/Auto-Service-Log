@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Wrench, LogOut, Users } from "lucide-react";
+import { Wrench, LogOut, Users, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setMechanicId } from "@workspace/api-client-react";
 
@@ -58,6 +58,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="hidden sm:inline">ACCOUNTS</span>
               </Link>
             )}
+            <Link
+              href="/profile"
+              className={cn(
+                "font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                location === "/profile" ? "bg-black text-white border-black shadow-brutal-sm" : ""
+              )}
+            >
+              <UserCircle className="w-5 h-5" />
+              <span className="hidden sm:inline">PROFILE</span>
+            </Link>
             <Link
               href="/"
               className={cn(
