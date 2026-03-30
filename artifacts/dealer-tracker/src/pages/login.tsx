@@ -17,7 +17,6 @@ export default function LoginPage({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [shopCode, setShopCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +25,6 @@ export default function LoginPage({
     setUsername("");
     setPassword("");
     setDisplayName("");
-    setShopCode("");
   };
 
   const switchMode = (m: Mode) => {
@@ -62,14 +60,13 @@ export default function LoginPage({
     if (!username.trim()) { setError("Enter a username."); return; }
     if (!displayName.trim()) { setError("Enter your name."); return; }
     if (password.length < 4) { setError("Password must be at least 4 characters."); return; }
-    if (!shopCode) { setError("Enter the shop access code."); return; }
     setError("");
     setLoading(true);
     try {
       const res = await fetch(`${BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim(), shopPassword: shopCode }),
+        body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim() }),
       });
       const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; error?: string };
       if (res.ok && data.mechanicId) {
@@ -149,23 +146,6 @@ export default function LoginPage({
               className="bg-white text-black text-lg h-12 border-2 border-black"
             />
           </div>
-
-          {mode === "register" && (
-            <div className="space-y-2">
-              <label className="text-base font-black uppercase flex items-center gap-2">
-                <Lock className="w-4 h-4" /> Shop Access Code
-              </label>
-              <Input
-                type="password"
-                value={shopCode}
-                onChange={e => { setShopCode(e.target.value); setError(""); }}
-                onKeyDown={handleKey}
-                placeholder="Ask your shop manager"
-                className="bg-white text-black text-lg h-12 border-2 border-black"
-              />
-              <p className="text-xs text-gray-500 font-medium">The shop access code is set by your manager. It keeps registrations private to your shop.</p>
-            </div>
-          )}
 
           {error && (
             <div className="bg-red-100 border-2 border-red-600 text-red-700 font-bold p-3 rounded-lg text-center">

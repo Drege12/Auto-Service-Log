@@ -6,22 +6,11 @@ import { eq } from "drizzle-orm";
 const router = Router();
 
 router.post("/auth/register", async (req, res) => {
-  const { username, password, displayName, shopPassword } = req.body as {
+  const { username, password, displayName } = req.body as {
     username?: string;
     password?: string;
     displayName?: string;
-    shopPassword?: string;
   };
-
-  const sitePassword = process.env.SITE_PASSWORD;
-  if (!sitePassword) {
-    res.status(500).json({ error: "SITE_PASSWORD is not configured on the server." });
-    return;
-  }
-  if (!shopPassword || shopPassword !== sitePassword) {
-    res.status(401).json({ error: "Incorrect shop access code." });
-    return;
-  }
 
   if (!username || !username.trim()) {
     res.status(400).json({ error: "Username is required." });
