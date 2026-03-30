@@ -20,7 +20,7 @@ function getMechanicSession(): { displayName: string; isAdmin: boolean; adminMod
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { displayName, adminMode } = getMechanicSession();
+  const { displayName, isAdmin, adminMode } = getMechanicSession();
 
   const handleLogout = () => {
     localStorage.removeItem("dt_mechanic");
