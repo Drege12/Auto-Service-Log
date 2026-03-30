@@ -31,7 +31,7 @@ router.get("/admin/mechanics", async (req, res) => {
   }
 });
 
-// Create a new mechanic (admin can create without shop code)
+// Create a new mechanic account
 router.post("/admin/mechanics", async (req, res) => {
   const adminId = await requireAdmin(req, res);
   if (adminId === null) return;
