@@ -10,6 +10,7 @@ import StatsPage from "@/pages/stats";
 import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
+import AdminLoginPage from "@/pages/admin-login";
 import { setMechanicId } from "@workspace/api-client-react";
 
 const queryClient = new QueryClient({
@@ -21,7 +22,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function getMechanicSession(): { mechanicId: number; username: string; displayName: string; isAdmin: boolean } | null {
+function getMechanicSession(): { mechanicId: number; username: string; displayName: string; isAdmin: boolean; adminMode?: boolean } | null {
   try {
     const raw = localStorage.getItem("dt_mechanic");
     if (!raw) return null;
@@ -31,6 +32,12 @@ function getMechanicSession(): { mechanicId: number; username: string; displayNa
   } catch {
     return null;
   }
+}
+
+function isAdminLoginRoute(): boolean {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const p = window.location.pathname;
+  return p === `${base}/admin-login` || p === "/admin-login";
 }
 
 function Router() {
@@ -65,6 +72,10 @@ function App() {
     setMechanicId(mechanicId);
     setSession(s);
   };
+
+  if (isAdminLoginRoute()) {
+    return <AdminLoginPage />;
+  }
 
   if (!session) {
     return <LoginPage onLogin={handleLogin} />;

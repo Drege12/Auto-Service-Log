@@ -3,20 +3,24 @@ import { Wrench, LogOut, Users, UserCircle, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setMechanicId } from "@workspace/api-client-react";
 
-function getMechanicSession(): { displayName: string; isAdmin: boolean } {
+function getMechanicSession(): { displayName: string; isAdmin: boolean; adminMode: boolean } {
   try {
     const raw = localStorage.getItem("dt_mechanic");
-    if (!raw) return { displayName: "", isAdmin: false };
+    if (!raw) return { displayName: "", isAdmin: false, adminMode: false };
     const parsed = JSON.parse(raw);
-    return { displayName: parsed?.displayName || parsed?.username || "", isAdmin: parsed?.isAdmin === true };
+    return {
+      displayName: parsed?.displayName || parsed?.username || "",
+      isAdmin: parsed?.isAdmin === true,
+      adminMode: parsed?.adminMode === true,
+    };
   } catch {
-    return { displayName: "", isAdmin: false };
+    return { displayName: "", isAdmin: false, adminMode: false };
   }
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { displayName, isAdmin } = getMechanicSession();
+  const { displayName, adminMode } = getMechanicSession();
 
   const handleLogout = () => {
     localStorage.removeItem("dt_mechanic");
@@ -46,7 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="text-sm font-black uppercase text-muted-foreground">{displayName}</span>
               </span>
             )}
-            {isAdmin && (
+            {adminMode && (
               <Link
                 href="/admin"
                 className={cn(
@@ -58,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="hidden sm:inline">ACCOUNTS</span>
               </Link>
             )}
-            {isAdmin && (
+            {adminMode && (
               <Link
                 href="/stats"
                 className={cn(
