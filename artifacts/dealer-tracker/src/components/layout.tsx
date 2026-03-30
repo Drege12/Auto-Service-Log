@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Wrench, LogOut, Users, UserCircle } from "lucide-react";
+import { Wrench, LogOut, Users, UserCircle, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setMechanicId } from "@workspace/api-client-react";
 
@@ -56,6 +56,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 <Users className="w-5 h-5" />
                 <span className="hidden sm:inline">ACCOUNTS</span>
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                href="/stats"
+                className={cn(
+                  "font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                  location === "/stats" ? "bg-blue-600 text-white border-blue-600 shadow-brutal-sm" : ""
+                )}
+              >
+                <BarChart2 className="w-5 h-5" />
+                <span className="hidden sm:inline">STATS</span>
               </Link>
             )}
             <Link

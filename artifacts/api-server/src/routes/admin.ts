@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { db, mechanicsTable, carsTable } from "@workspace/db";
-import { eq, ne } from "drizzle-orm";
+import { db, mechanicsTable, carsTable, maintenanceEntriesTable } from "@workspace/db";
+import { eq, ne, count, sum, avg, desc } from "drizzle-orm";
 import type { Request, Response } from "express";
 
 const router = Router();
@@ -127,6 +127,44 @@ router.delete("/admin/mechanics/:id", async (req, res) => {
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: "Failed to delete account." });
+  }
+});
+
+// Maintenance statistics grouped by year/make/model/description
+router.get("/admin/stats", async (req, res) => {
+  const adminId = await requireAdmin(req, res);
+  if (adminId === null) return;
+  try {
+    const rows = await db
+      .select({
+        year: carsTable.year,
+        make: carsTable.make,
+        model: carsTable.model,
+        description: maintenanceEntriesTable.description,
+        entryCount: count(),
+        totalHours: sum(maintenanceEntriesTable.hours),
+        avgHours: avg(maintenanceEntriesTable.hours),
+        totalCost: sum(maintenanceEntriesTable.cost),
+        avgCost: avg(maintenanceEntriesTable.cost),
+      })
+      .from(maintenanceEntriesTable)
+      .innerJoin(carsTable, eq(maintenanceEntriesTable.carId, carsTable.id))
+      .groupBy(carsTable.year, carsTable.make, carsTable.model, maintenanceEntriesTable.description)
+      .orderBy(desc(carsTable.year), carsTable.make, carsTable.model, maintenanceEntriesTable.description);
+
+    res.json(rows.map(r => ({
+      year: r.year,
+      make: r.make,
+      model: r.model,
+      description: r.description,
+      entryCount: Number(r.entryCount),
+      totalHours: r.totalHours != null ? Number(r.totalHours) : null,
+      avgHours: r.avgHours != null ? Number(r.avgHours) : null,
+      totalCost: r.totalCost != null ? Number(r.totalCost) : null,
+      avgCost: r.avgCost != null ? Number(r.avgCost) : null,
+    })));
+  } catch {
+    res.status(500).json({ error: "Failed to fetch statistics." });
   }
 });
 
