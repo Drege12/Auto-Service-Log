@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wrench, Lock, User, ChevronRight } from "lucide-react";
+import { Wrench, Lock, User, ChevronRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -89,10 +89,18 @@ export default function LoginPage({
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-3">
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center gap-4">
             <div className="bg-black text-white p-4 rounded-2xl shadow-brutal">
               <Wrench className="w-12 h-12" />
             </div>
+            <button
+              type="button"
+              onClick={() => window.location.href = `${BASE}/admin-login`}
+              title="Admin access"
+              className="bg-amber-500 text-white p-4 rounded-2xl shadow-brutal hover:bg-amber-600 transition-colors"
+            >
+              <ShieldCheck className="w-12 h-12" />
+            </button>
           </div>
           <h1 className="text-4xl font-black uppercase tracking-tight">Maintenance Tracker</h1>
           <p className="text-gray-500 font-medium">
