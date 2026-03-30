@@ -7,7 +7,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download, UserCheck } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -127,6 +127,59 @@ export default function CarsList() {
   const [vinImportStockNumber, setVinImportStockNumber] = useState("");
   const [vinImporting, setVinImporting] = useState(false);
   const [vinImportError, setVinImportError] = useState("");
+
+  type MechanicOption = { id: number; username: string; displayName: string };
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [reassignCarId, setReassignCarId] = useState<number | null>(null);
+  const [reassignCarLabel, setReassignCarLabel] = useState("");
+  const [mechanicOptions, setMechanicOptions] = useState<MechanicOption[]>([]);
+  const [selectedMechanicId, setSelectedMechanicId] = useState<number | null>(null);
+  const [reassigning, setReassigning] = useState(false);
+  const [reassignError, setReassignError] = useState("");
+
+  const openReassignDialog = async (e: React.MouseEvent, car: CarItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setReassignCarId(car.id);
+    setReassignCarLabel(`${car.year} ${car.make} ${car.model}`);
+    setSelectedMechanicId(null);
+    setReassignError("");
+    setReassigning(false);
+    try {
+      const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
+      const res = await fetch(`${BASE}/api/admin/mechanics`, { headers: { "X-Mechanic-Id": String(mechanicId) } });
+      const data = await res.json() as MechanicOption[];
+      setMechanicOptions(data);
+    } catch {
+      setMechanicOptions([]);
+    }
+    setReassignOpen(true);
+  };
+
+  const handleReassign = async () => {
+    if (!reassignCarId || !selectedMechanicId) return;
+    setReassigning(true);
+    setReassignError("");
+    try {
+      const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
+      const res = await fetch(`${BASE}/api/admin/cars/${reassignCarId}/reassign`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-Mechanic-Id": String(mechanicId) },
+        body: JSON.stringify({ mechanicId: selectedMechanicId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setReassignError(err.error || "Reassign failed.");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      setReassignOpen(false);
+    } catch {
+      setReassignError("Could not reach the server.");
+    } finally {
+      setReassigning(false);
+    }
+  };
 
   const checkVin = async (vin: string) => {
     const trimmed = vin.trim().toUpperCase();
@@ -381,8 +434,19 @@ export default function CarsList() {
                         {vehicleSubtypeLabel(vt, car.vehicleSubtype) || (vehicleTypeLabels[vt] ?? vt)}
                       </span>
                     ) : null}
-                    {isAdmin && car.mechanicName && (
-                      <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">{car.mechanicName}</span>
+                    {isAdmin && (
+                      <>
+                        {car.mechanicName && (
+                          <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">{car.mechanicName}</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={e => openReassignDialog(e, car)}
+                          className="flex items-center gap-1 bg-white text-black font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-black"
+                        >
+                          <UserCheck className="w-3 h-3" /> Reassign
+                        </button>
+                      </>
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -443,8 +507,19 @@ export default function CarsList() {
                               {vehicleSubtypeLabel(vt, car.vehicleSubtype) || (vehicleTypeLabels[vt] ?? vt)}
                             </span>
                           ) : null}
-                          {isAdmin && car.mechanicName && (
-                            <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">{car.mechanicName}</span>
+                          {isAdmin && (
+                            <>
+                              {car.mechanicName && (
+                                <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">{car.mechanicName}</span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={e => openReassignDialog(e, car)}
+                                className="flex items-center gap-1 bg-white text-black font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-black"
+                              >
+                                <UserCheck className="w-3 h-3" /> Reassign
+                              </button>
+                            </>
                           )}
                         </div>
                         <h2 className="text-2xl sm:text-3xl font-black uppercase leading-tight">
@@ -704,6 +779,51 @@ export default function CarsList() {
               </DialogFooter>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reassign car dialog */}
+      <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
+        <DialogContent className="bg-white text-black">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
+              <UserCheck className="w-6 h-6" /> Reassign Vehicle
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 py-2">
+            <p className="font-bold text-gray-700 text-lg">{reassignCarLabel}</p>
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Assign To</label>
+              {mechanicOptions.length === 0 ? (
+                <p className="text-gray-500 font-bold">Loading accounts...</p>
+              ) : (
+                <div className="space-y-2">
+                  {mechanicOptions.map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedMechanicId(m.id)}
+                      className={`w-full px-4 py-3 rounded-xl border-4 font-black uppercase text-left transition-colors ${
+                        selectedMechanicId === m.id
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-black border-black"
+                      }`}
+                    >
+                      {m.displayName}
+                      <span className="ml-2 font-mono text-sm opacity-60">@{m.username}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {reassignError && <p className="text-red-600 font-bold">{reassignError}</p>}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" size="lg" onClick={() => setReassignOpen(false)}>CANCEL</Button>
+            <Button type="button" size="lg" disabled={!selectedMechanicId || reassigning} onClick={handleReassign}>
+              {reassigning ? "SAVING..." : "REASSIGN"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>

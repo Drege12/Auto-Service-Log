@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { db, mechanicsTable } from "@workspace/db";
+import { db, mechanicsTable, carsTable } from "@workspace/db";
 import { eq, ne } from "drizzle-orm";
 import type { Request, Response } from "express";
 
@@ -127,6 +127,35 @@ router.delete("/admin/mechanics/:id", async (req, res) => {
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: "Failed to delete account." });
+  }
+});
+
+// Reassign a car to a different mechanic
+router.patch("/admin/cars/:carId/reassign", async (req, res) => {
+  const adminId = await requireAdmin(req, res);
+  if (adminId === null) return;
+
+  const carId = parseInt(req.params.carId, 10);
+  if (isNaN(carId)) { res.status(400).json({ error: "Invalid car ID." }); return; }
+
+  const { mechanicId } = req.body as { mechanicId?: number };
+  if (!mechanicId || isNaN(Number(mechanicId))) {
+    res.status(400).json({ error: "mechanicId is required." }); return;
+  }
+
+  try {
+    const [mechanic] = await db.select({ id: mechanicsTable.id }).from(mechanicsTable).where(eq(mechanicsTable.id, Number(mechanicId)));
+    if (!mechanic) { res.status(404).json({ error: "Mechanic not found." }); return; }
+
+    const [updated] = await db.update(carsTable)
+      .set({ mechanicId: Number(mechanicId) })
+      .where(eq(carsTable.id, carId))
+      .returning({ id: carsTable.id });
+
+    if (!updated) { res.status(404).json({ error: "Car not found." }); return; }
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Failed to reassign car." });
   }
 });
 
