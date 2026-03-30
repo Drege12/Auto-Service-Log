@@ -37,7 +37,7 @@ const STATUS_OPTIONS = [
 ];
 
 const TYPE_OPTIONS = [
-  { value: "dealer", label: "Dealership" },
+  { value: "dealer", label: "Work" },
   { value: "personal", label: "Personal" },
 ];
 
