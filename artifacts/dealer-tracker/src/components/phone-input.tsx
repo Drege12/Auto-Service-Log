@@ -116,12 +116,12 @@ export function PhoneInput({ value, onChange, className = "" }: PhoneInputProps)
   };
 
   return (
-    <div className={`flex gap-2 ${className}`}>
+    <div className={`flex items-stretch border-2 border-black rounded-md overflow-hidden bg-white focus-within:ring-2 focus-within:ring-black ${className}`}>
       <select
         value={country.code}
         onChange={e => handleCountryChange(e.target.value)}
-        className="shrink-0 bg-white text-black border-2 border-input rounded-md px-2 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-ring h-10"
-        style={{ minWidth: "4.5rem" }}
+        className="shrink-0 bg-white text-black border-0 border-r-2 border-black px-2 text-base font-medium focus:outline-none cursor-pointer"
+        style={{ minWidth: "5rem" }}
       >
         {COUNTRIES.map(c => (
           <option key={c.code} value={c.code}>
@@ -135,7 +135,7 @@ export function PhoneInput({ value, onChange, className = "" }: PhoneInputProps)
         value={formatted}
         onChange={e => handleInput(e.target.value)}
         placeholder={country.pattern.replace(/#/g, "0")}
-        className={`flex-1 bg-white text-black border-2 border-input rounded-md px-3 py-2 text-lg h-10 focus:outline-none focus:ring-2 focus:ring-ring`}
+        className="flex-1 bg-white text-black border-0 px-3 py-2 text-lg focus:outline-none min-w-0"
       />
     </div>
   );
