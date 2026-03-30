@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/phone-input";
 import { Phone, Mail, Eye, EyeOff, User } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -121,12 +122,9 @@ export default function ProfilePage() {
                 <label className="text-base font-black uppercase flex items-center gap-2 block">
                   <Phone className="w-4 h-4" /> Phone
                 </label>
-                <Input
+                <PhoneInput
                   value={phone}
-                  onChange={e => { setPhone(e.target.value); setSaveSuccess(false); }}
-                  placeholder="e.g. 555-867-5309"
-                  inputMode="tel"
-                  className="bg-white text-black text-lg"
+                  onChange={val => { setPhone(val); setSaveSuccess(false); }}
                 />
               </div>
 
