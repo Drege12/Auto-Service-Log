@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { ShieldCheck, Lock, User } from "lucide-react";
+import { ShieldCheck, Lock, User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { setMechanicId } from "@workspace/api-client-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-export default function AdminLoginPage() {
+export default function AdminLoginPage({
+  onLogin,
+  onBack,
+}: {
+  onLogin: (mechanicId: number, username: string, displayName: string) => void;
+  onBack: () => void;
+}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,16 +43,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      const session = {
-        mechanicId: data.mechanicId,
-        username: data.username!,
-        displayName: data.displayName!,
-        isAdmin: true,
-        adminMode: true,
-      };
-      localStorage.setItem("dt_mechanic", JSON.stringify(session));
-      setMechanicId(data.mechanicId);
-      window.location.replace(`${BASE}/admin`);
+      onLogin(data.mechanicId, data.username!, data.displayName!);
     } catch {
       setError("Could not reach the server. Try again.");
     } finally {
@@ -118,6 +114,16 @@ export default function AdminLoginPage() {
           >
             {loading ? "PLEASE WAIT..." : "SIGN IN AS ADMIN"}
           </Button>
+
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              className="text-sm font-bold underline text-gray-600 flex items-center gap-1 mx-auto"
+              onClick={onBack}
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to mechanic login
+            </button>
+          </div>
         </div>
       </div>
     </div>

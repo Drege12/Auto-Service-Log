@@ -9,8 +9,10 @@ type Mode = "login" | "register";
 
 export default function LoginPage({
   onLogin,
+  onAdminAccess,
 }: {
   onLogin: (mechanicId: number, username: string, displayName: string, isAdmin: boolean) => void;
+  onAdminAccess: () => void;
 }) {
   const [mode, setMode] = useState<Mode>("login");
 
@@ -95,7 +97,7 @@ export default function LoginPage({
             </div>
             <button
               type="button"
-              onClick={() => window.location.href = `${BASE}/admin-login`}
+              onClick={onAdminAccess}
               title="Admin access"
               className="bg-amber-500 text-white p-4 rounded-2xl shadow-brutal hover:bg-amber-600 transition-colors"
             >
