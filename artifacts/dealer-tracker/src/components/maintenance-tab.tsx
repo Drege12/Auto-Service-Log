@@ -1,20 +1,39 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useListMaintenance, useCreateMaintenance, useUpdateMaintenance, useDeleteMaintenance, MaintenanceEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, Calendar, User, DollarSign, Clock, Printer } from "lucide-react";
+import { Plus, Edit2, Trash2, Calendar, User, DollarSign, Clock, Printer, Phone, Mail } from "lucide-react";
 import { printSection } from "@/lib/print-utils";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function getSession(): { mechanicId: number; displayName: string } | null {
+  try {
+    const raw = localStorage.getItem("dt_mechanic");
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    return { mechanicId: Number(p.mechanicId), displayName: p.displayName || p.username || "" };
+  } catch { return null; }
+}
+
+interface MechanicContact {
+  id: number;
+  displayName: string;
+  phone: string | null;
+  email: string | null;
+  visible: boolean;
+}
 
 type FormState = { date: string; description: string; technician: string; hours: string; cost: string; notes: string };
 type FormErrors = Partial<Record<keyof FormState, string>>;
 
-const emptyForm = (): FormState => ({
+const emptyForm = (techName = ""): FormState => ({
   date: new Date().toISOString().split("T")[0],
   description: "",
-  technician: "",
+  technician: techName,
   hours: "",
   cost: "",
   notes: "",
@@ -28,11 +47,26 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
   const { mutate: updateEntry, isPending: isUpdating } = useUpdateMaintenance();
   const { mutate: deleteEntry } = useDeleteMaintenance();
 
+  const session = getSession();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<MaintenanceEntry | null>(null);
-  const [form, setForm] = useState<FormState>(emptyForm());
+  const [form, setForm] = useState<FormState>(emptyForm(session?.displayName ?? ""));
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
+
+  const [mechanics, setMechanics] = useState<{ id: number; displayName: string }[]>([]);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [contactInfo, setContactInfo] = useState<MechanicContact | null>(null);
+  const [contactLoading, setContactLoading] = useState(false);
+
+  useEffect(() => {
+    if (!session) return;
+    fetch(`${BASE}/api/admin/mechanics`, { headers: { "X-Mechanic-Id": String(session.mechanicId) } })
+      .then(r => r.ok ? r.json() : [])
+      .then((list: { id: number; displayName: string }[]) => setMechanics(list))
+      .catch(() => {});
+  }, []);
 
   const setField = (field: keyof FormState, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -49,11 +83,28 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
 
   const openNewDialog = () => {
     setEditingEntry(null);
-    setForm(emptyForm());
+    setForm(emptyForm(session?.displayName ?? ""));
     setErrors({});
     setSubmitError("");
     setDialogOpen(true);
   };
+
+  const openContactDialog = (techName: string) => {
+    const match = mechanics.find(m => m.displayName.toLowerCase() === techName.toLowerCase());
+    if (!match || !session) return;
+    setContactInfo(null);
+    setContactLoading(true);
+    setContactDialogOpen(true);
+    fetch(`${BASE}/api/mechanics/${match.id}/contact`, {
+      headers: { "X-Mechanic-Id": String(session.mechanicId) },
+    })
+      .then(r => r.json())
+      .then((data: MechanicContact) => { setContactInfo(data); setContactLoading(false); })
+      .catch(() => setContactLoading(false));
+  };
+
+  const techHasProfile = (name: string) =>
+    mechanics.some(m => m.displayName.toLowerCase() === name.toLowerCase());
 
   const openEditDialog = (entry: MaintenanceEntry) => {
     setEditingEntry(entry);
@@ -138,9 +189,19 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
                 <h3 className="text-2xl font-black uppercase">{entry.description}</h3>
                 <div className="flex flex-wrap gap-3">
                   {entry.technician && (
-                    <div className="flex items-center gap-2 font-medium bg-gray-100 px-3 py-1 border-2 border-black rounded-md">
-                      <User className="w-4 h-4" /> Tech: {entry.technician}
-                    </div>
+                    techHasProfile(entry.technician) ? (
+                      <button
+                        type="button"
+                        onClick={() => openContactDialog(entry.technician!)}
+                        className="flex items-center gap-2 font-medium bg-gray-100 px-3 py-1 border-2 border-black rounded-md hover:bg-black hover:text-white transition-colors underline underline-offset-2"
+                      >
+                        <User className="w-4 h-4" /> Tech: {entry.technician}
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 font-medium bg-gray-100 px-3 py-1 border-2 border-black rounded-md">
+                        <User className="w-4 h-4" /> Tech: {entry.technician}
+                      </div>
+                    )
                   )}
                   {entry.hours != null && (
                     <div className="flex items-center gap-2 font-medium bg-blue-50 px-3 py-1 border-2 border-blue-800 rounded-md text-blue-900">
@@ -235,6 +296,50 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
             <Button type="button" size="lg" disabled={isCreating || isUpdating} onClick={handleSubmit}>
               {isCreating || isUpdating ? "SAVING..." : "SAVE ENTRY"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
+              <User className="w-6 h-6" /> Technician Info
+            </DialogTitle>
+          </DialogHeader>
+          {contactLoading && <p className="py-6 text-center font-bold">Loading…</p>}
+          {!contactLoading && contactInfo && (
+            <div className="space-y-4 mt-2">
+              <p className="text-xl font-black">{contactInfo.displayName}</p>
+              {contactInfo.visible ? (
+                <>
+                  {contactInfo.phone ? (
+                    <a
+                      href={`tel:${contactInfo.phone}`}
+                      className="flex items-center gap-3 bg-gray-100 border-2 border-black rounded-lg px-4 py-3 font-bold text-lg hover:bg-black hover:text-white transition-colors"
+                    >
+                      <Phone className="w-5 h-5" /> {contactInfo.phone}
+                    </a>
+                  ) : null}
+                  {contactInfo.email ? (
+                    <a
+                      href={`mailto:${contactInfo.email}`}
+                      className="flex items-center gap-3 bg-gray-100 border-2 border-black rounded-lg px-4 py-3 font-bold text-lg hover:bg-black hover:text-white transition-colors"
+                    >
+                      <Mail className="w-5 h-5" /> {contactInfo.email}
+                    </a>
+                  ) : null}
+                  {!contactInfo.phone && !contactInfo.email && (
+                    <p className="text-muted-foreground font-medium">No contact details on file.</p>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted-foreground font-medium">This technician has not made their contact info public.</p>
+              )}
+            </div>
+          )}
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={() => setContactDialogOpen(false)}>CLOSE</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
