@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, mechanicsTable, messagesTable } from "@workspace/db";
-import { eq, or, and, desc, sql, isNull } from "drizzle-orm";
+import { eq, or, and, desc, sql, isNull, inArray } from "drizzle-orm";
 import type { Request, Response } from "express";
 
 const router = Router();
@@ -73,7 +73,7 @@ router.get("/messages/inbox", async (req, res) => {
     const mechanics = await db
       .select({ id: mechanicsTable.id, displayName: mechanicsTable.displayName })
       .from(mechanicsTable)
-      .where(sql`${mechanicsTable.id} = ANY(${partnerIds})`);
+      .where(inArray(mechanicsTable.id, partnerIds));
 
     const nameMap = new Map(mechanics.map(m => [m.id, m.displayName]));
 
