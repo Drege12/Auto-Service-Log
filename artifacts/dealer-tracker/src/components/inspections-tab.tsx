@@ -195,9 +195,24 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
         <div>
           <h2 className="text-2xl font-black uppercase">Standard Inspection</h2>
-          <p className="text-gray-600 font-medium mt-1">
-            Failed items are added to Needs Done on save.
-          </p>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            {(() => {
+              const pending = localItems.filter(i => !i.status || i.status === "pending").length;
+              const total = localItems.length;
+              return pending > 0 ? (
+                <span className="bg-yellow-400 text-black text-base font-black px-3 py-1 rounded border-2 border-black">
+                  {pending} of {total} items pending
+                </span>
+              ) : total > 0 ? (
+                <span className="bg-green-600 text-white text-base font-black px-3 py-1 rounded border-2 border-black">
+                  All {total} items reviewed
+                </span>
+              ) : null;
+            })()}
+            <p className="text-gray-600 font-medium">
+              Failed items are added to Needs Done on save.
+            </p>
+          </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button
