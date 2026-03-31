@@ -108,3 +108,14 @@ export const todosTable = pgTable("todos", {
 export const insertTodoSchema = createInsertSchema(todosTable).omit({ id: true, createdAt: true });
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
 export type Todo = typeof todosTable.$inferSelect;
+
+export const messagesTable = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  senderId: integer("sender_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
+  recipientId: integer("recipient_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
+  body: text("body").notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Message = typeof messagesTable.$inferSelect;
