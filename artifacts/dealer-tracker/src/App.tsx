@@ -8,6 +8,7 @@ import CarDetail from "@/pages/car-detail";
 import AdminPage from "@/pages/admin";
 import StatsPage from "@/pages/stats";
 import ProfilePage from "@/pages/profile";
+import MessagesPage from "@/pages/messages";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import AdminLoginPage from "@/pages/admin-login";
@@ -50,6 +51,7 @@ function Router() {
       <Route path="/admin" component={AdminPage} />
       <Route path="/stats" component={StatsPage} />
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/messages" component={MessagesPage} />
       <Route component={NotFound} />
     </Switch>
   );

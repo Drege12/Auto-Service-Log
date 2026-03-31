@@ -1,26 +1,49 @@
 import { Link, useLocation } from "wouter";
-import { Wrench, LogOut, Users, UserCircle, BarChart2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Wrench, LogOut, Users, UserCircle, BarChart2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setMechanicId } from "@workspace/api-client-react";
 
-function getMechanicSession(): { displayName: string; isAdmin: boolean; adminMode: boolean } {
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function getMechanicSession(): { mechanicId: number | null; displayName: string; isAdmin: boolean; adminMode: boolean } {
   try {
     const raw = localStorage.getItem("dt_mechanic");
-    if (!raw) return { displayName: "", isAdmin: false, adminMode: false };
+    if (!raw) return { mechanicId: null, displayName: "", isAdmin: false, adminMode: false };
     const parsed = JSON.parse(raw);
     return {
+      mechanicId: parsed?.mechanicId ?? null,
       displayName: parsed?.displayName || parsed?.username || "",
       isAdmin: parsed?.isAdmin === true,
       adminMode: parsed?.adminMode === true,
     };
   } catch {
-    return { displayName: "", isAdmin: false, adminMode: false };
+    return { mechanicId: null, displayName: "", isAdmin: false, adminMode: false };
   }
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { displayName, isAdmin, adminMode } = getMechanicSession();
+  const { mechanicId, displayName, isAdmin, adminMode } = getMechanicSession();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!mechanicId) return;
+    const fetchUnread = async () => {
+      try {
+        const r = await fetch(`${BASE}/api/messages/unread-count`, {
+          headers: { "X-Mechanic-Id": String(mechanicId) },
+        });
+        if (r.ok) {
+          const data = await r.json();
+          setUnreadCount(data.count ?? 0);
+        }
+      } catch { /* ignore */ }
+    };
+    fetchUnread();
+    const iv = setInterval(fetchUnread, 15000);
+    return () => clearInterval(iv);
+  }, [mechanicId]);
 
   const handleLogout = () => {
     localStorage.removeItem("dt_mechanic");
@@ -74,6 +97,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="hidden sm:inline">STATS</span>
               </Link>
             )}
+            <Link
+              href="/messages"
+              className={cn(
+                "relative font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                location === "/messages" ? "bg-black text-white border-black shadow-brutal-sm" : ""
+              )}
+            >
+              <MessageSquare className="w-5 h-5" />
+              <span className="hidden sm:inline">MESSAGES</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-xs font-black w-5 h-5 rounded-full flex items-center justify-center leading-none">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
             <Link
               href="/profile"
               className={cn(
