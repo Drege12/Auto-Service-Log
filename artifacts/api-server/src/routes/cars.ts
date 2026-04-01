@@ -29,6 +29,12 @@ router.get("/vin-lookup", async (req, res) => {
       return;
     }
     const mechanicId = getMechanicId(req);
+    const vehicleTypeFilter = String(req.query.vehicleType ?? "").trim().toLowerCase() || null;
+
+    const baseConditions = [
+      eq(carsTable.vin, vin),
+      ...(vehicleTypeFilter ? [eq(carsTable.vehicleType, vehicleTypeFilter)] : []),
+    ];
 
     const rows = await db
       .select({
@@ -50,11 +56,11 @@ router.get("/vin-lookup", async (req, res) => {
       .where(
         mechanicId
           ? and(
-              eq(carsTable.vin, vin),
+              ...baseConditions,
               ne(carsTable.mechanicId, mechanicId),
               or(isNull(carsTable.linkedMechanicId), ne(carsTable.linkedMechanicId, mechanicId))
             )
-          : eq(carsTable.vin, vin)
+          : and(...baseConditions)
       );
 
     if (rows.length === 0) {
