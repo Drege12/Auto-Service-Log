@@ -59,7 +59,7 @@ export function InspectionsTab({
         const driverItems = inspectionItems.filter(i =>
           DRIVER_INSPECTION_CATEGORIES.includes(i.category || "")
         );
-        const items = driverItems.length === 0 ? buildDefaultDriverInspection(vehicleType) : driverItems;
+        const items = driverItems.length === 0 ? buildDefaultDriverInspection(vehicleType, vehicleSubtype) : driverItems;
         setLocalItems(items);
         serverStateRef.current = items;
       } else {
