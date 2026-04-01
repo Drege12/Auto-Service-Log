@@ -15,7 +15,7 @@ import {
   DRIVER_INSPECTION_CATEGORIES,
   buildDefaultDriverInspection,
 } from "@/lib/inspection-template";
-import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, ChevronDown, ChevronRight, Printer, Car } from "lucide-react";
+import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, ChevronDown, ChevronRight, Printer, Car, Eye } from "lucide-react";
 import { printInspection } from "@/lib/print-utils";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -43,6 +43,8 @@ export function InspectionsTab({
   const [isDirty, setIsDirty] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [driverReviewItems, setDriverReviewItems] = useState<Partial<InspectionItem>[]>([]);
+  const [driverReviewOpen, setDriverReviewOpen] = useState<Set<string>>(new Set());
 
   // Holds all items from the server (both driver and mechanic) so saves don't clobber the other role
   const allServerItemsRef = useRef<Partial<InspectionItem>[]>([]);
@@ -68,6 +70,12 @@ export function InspectionsTab({
           : mechanicItems;
         setLocalItems(items);
         serverStateRef.current = items;
+
+        // Populate driver review panel — only items the driver actually filled in
+        const driverItems = inspectionItems.filter(i =>
+          DRIVER_INSPECTION_CATEGORIES.includes(i.category || "")
+        );
+        setDriverReviewItems(driverItems);
       }
       setIsDirty(false);
     }
@@ -82,6 +90,24 @@ export function InspectionsTab({
       next.has(category) ? next.delete(category) : next.add(category);
       return next;
     });
+  };
+
+  const toggleDriverSection = (category: string) => {
+    setDriverReviewOpen(prev => {
+      const next = new Set(prev);
+      next.has(category) ? next.delete(category) : next.add(category);
+      return next;
+    });
+  };
+
+  const driverStatusBadge = (status?: string | null) => {
+    switch (status) {
+      case "pass":     return <span className="bg-green-600 text-white font-black px-3 py-1 rounded text-sm uppercase">Pass</span>;
+      case "fail":     return <span className="bg-red-600 text-white font-black px-3 py-1 rounded text-sm uppercase">Fail</span>;
+      case "advisory": return <span className="bg-orange-500 text-white font-black px-3 py-1 rounded text-sm uppercase">Advisory</span>;
+      case "na":       return <span className="bg-blue-500 text-white font-black px-3 py-1 rounded text-sm uppercase">N/A</span>;
+      default:         return <span className="bg-gray-300 text-black font-black px-3 py-1 rounded text-sm uppercase">Pending</span>;
+    }
   };
 
   const handleStatusChange = (index: number, status: UpsertInspectionItemStatus) => {
@@ -295,6 +321,88 @@ export function InspectionsTab({
       {savedMessage && (
         <div className="bg-black text-white font-bold text-lg p-4 rounded-xl text-center">
           {savedMessage}
+        </div>
+      )}
+
+      {!isDriver && driverReviewItems.length > 0 && (
+        <div className="mt-8 space-y-3">
+          <div className="bg-teal-50 border-4 border-teal-600 rounded-xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h3 className="text-xl font-black uppercase flex items-center gap-2 text-teal-900">
+                <Eye className="w-6 h-6" /> Driver's Check — Review
+              </h3>
+              <p className="text-teal-700 font-bold mt-1">Read-only view of what the operator recorded.</p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {(() => {
+                const fail = driverReviewItems.filter(i => i.status === "fail").length;
+                const advisory = driverReviewItems.filter(i => i.status === "advisory").length;
+                const pass = driverReviewItems.filter(i => i.status === "pass").length;
+                const pending = driverReviewItems.filter(i => !i.status || i.status === "pending").length;
+                return (
+                  <>
+                    {fail > 0 && <span className="bg-red-600 text-white font-black px-3 py-1 rounded text-sm">{fail} FAIL</span>}
+                    {advisory > 0 && <span className="bg-orange-500 text-white font-black px-3 py-1 rounded text-sm">{advisory} ADVISORY</span>}
+                    {pass > 0 && <span className="bg-green-600 text-white font-black px-3 py-1 rounded text-sm">{pass} PASS</span>}
+                    {pending > 0 && <span className="bg-gray-300 text-black font-black px-3 py-1 rounded text-sm">{pending} PENDING</span>}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {DRIVER_INSPECTION_CATEGORIES.map(category => {
+            const categoryItems = driverReviewItems.filter(i => i.category === category);
+            if (categoryItems.length === 0) return null;
+
+            const isOpen = driverReviewOpen.has(category);
+            const hasFail = categoryItems.some(i => i.status === "fail");
+            const hasAdvisory = categoryItems.some(i => i.status === "advisory");
+            const borderColor = hasFail ? "border-red-600" : hasAdvisory ? "border-orange-500" : "border-teal-600";
+
+            return (
+              <div key={category} className={`border-4 rounded-xl overflow-hidden ${borderColor}`}>
+                <button
+                  type="button"
+                  onClick={() => toggleDriverSection(category)}
+                  className={`w-full flex items-center justify-between gap-4 p-5 text-left font-black uppercase text-xl ${
+                    hasFail ? "bg-red-50" : hasAdvisory ? "bg-orange-50" : isOpen ? "bg-teal-50" : "bg-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-2xl">{category}</span>
+                    <CategorySummary items={categoryItems} />
+                  </div>
+                  {isOpen ? <ChevronDown className="w-8 h-8 flex-shrink-0" /> : <ChevronRight className="w-8 h-8 flex-shrink-0" />}
+                </button>
+
+                {isOpen && (
+                  <div className="divide-y-2 divide-black border-t-4 border-teal-600">
+                    {categoryItems.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex flex-col sm:flex-row sm:items-start gap-4 p-5 ${
+                          item.status === "fail" ? "bg-red-50" : item.status === "advisory" ? "bg-orange-50" : item.status === "pass" ? "bg-green-50" : "bg-white"
+                        }`}
+                      >
+                        <div className="flex-1 flex flex-col gap-2">
+                          <span className="text-lg font-bold">{item.item}</span>
+                          {item.notes && (
+                            <p className="text-base font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg px-3 py-2">
+                              {item.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex-shrink-0">
+                          {driverStatusBadge(item.status)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
