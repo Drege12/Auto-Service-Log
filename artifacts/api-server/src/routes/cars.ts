@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request } from "express";
-import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable } from "@workspace/db";
-import { eq, and, max, ne, or, isNull } from "drizzle-orm";
+import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable, vehicleNotificationsTable } from "@workspace/db";
+import { eq, and, max, ne, or, isNull, gt } from "drizzle-orm";
 import { z } from "zod";
 
 const router: IRouter = Router();
@@ -16,6 +16,50 @@ async function isAdmin(mechanicId: number | null): Promise<boolean> {
   if (!mechanicId) return false;
   const [m] = await db.select({ isAdmin: mechanicsTable.isAdmin }).from(mechanicsTable).where(eq(mechanicsTable.id, mechanicId));
   return m?.isAdmin === 1;
+}
+
+// ---------------------------------------------------------------------------
+// Notification helper — fire-and-forget, never throws
+// ---------------------------------------------------------------------------
+async function notifyLinkedParty(
+  carId: number,
+  actorId: number | null,
+  type: string,
+  message: string,
+  dedupMinutes = 0,
+): Promise<void> {
+  try {
+    const [car] = await db
+      .select({ mechanicId: carsTable.mechanicId, linkedMechanicId: carsTable.linkedMechanicId })
+      .from(carsTable)
+      .where(eq(carsTable.id, carId));
+
+    if (!car || !car.linkedMechanicId || !car.mechanicId) return;
+
+    const recipientId = actorId === car.mechanicId ? car.linkedMechanicId : car.mechanicId;
+    if (!recipientId || recipientId === actorId) return;
+
+    if (dedupMinutes > 0) {
+      const since = new Date(Date.now() - dedupMinutes * 60 * 1000);
+      const existing = await db
+        .select({ id: vehicleNotificationsTable.id })
+        .from(vehicleNotificationsTable)
+        .where(
+          and(
+            eq(vehicleNotificationsTable.carId, carId),
+            eq(vehicleNotificationsTable.recipientId, recipientId),
+            eq(vehicleNotificationsTable.type, type),
+            gt(vehicleNotificationsTable.createdAt, since),
+          )
+        )
+        .limit(1);
+      if (existing.length > 0) return;
+    }
+
+    await db.insert(vehicleNotificationsTable).values({ recipientId, actorId, carId, type, message });
+  } catch {
+    // Notification failures must never break the main route
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -294,6 +338,7 @@ router.post("/cars/:carId/link", async (req, res) => {
     }
     const [updated] = await db.update(carsTable).set({ linkedMechanicId: mechanicId }).where(eq(carsTable.id, carId)).returning();
     res.json(updated);
+    void notifyLinkedParty(carId, mechanicId, "linked", "A mechanic linked your vehicle to their account");
   } catch (err) {
     res.status(500).json({ error: "Failed to link vehicle" });
   }
@@ -356,6 +401,7 @@ router.patch("/cars/:carId/notes", async (req, res) => {
       .returning();
     if (!car) { res.status(404).json({ error: "Car not found" }); return; }
     res.json({ notes: car.notes });
+    if (notes?.trim()) void notifyLinkedParty(carId, getMechanicId(req), "notes_updated", "Vehicle notes were updated", 15);
   } catch {
     res.status(500).json({ error: "Failed to save notes" });
   }
@@ -434,6 +480,7 @@ router.post("/cars/:carId/inspection", async (req, res) => {
       }))
     ).returning();
     res.json(inserted);
+    void notifyLinkedParty(carId, getMechanicId(req), "inspection_saved", "Inspection checklist updated", 30);
   } catch (err) {
     res.status(500).json({ error: "Failed to save inspection" });
   }
@@ -480,6 +527,7 @@ router.post("/cars/:carId/maintenance", async (req, res) => {
       hours: entry.hours != null ? Number(entry.hours) : null,
       cost: entry.cost != null ? Number(entry.cost) : null,
     });
+    void notifyLinkedParty(carId, getMechanicId(req), "maintenance_added", `New maintenance entry: ${parsed.data.description}`);
   } catch (err) {
     res.status(500).json({ error: "Failed to create maintenance entry" });
   }
@@ -567,6 +615,7 @@ router.post("/cars/:carId/todos", async (req, res) => {
       notes: parsed.data.notes ?? null,
     }).returning();
     res.status(201).json({ ...todo, completed: todo.completed === 1 });
+    void notifyLinkedParty(carId, getMechanicId(req), "todo_added", `New task added: ${parsed.data.description}`);
   } catch (err) {
     res.status(500).json({ error: "Failed to create todo" });
   }
@@ -662,6 +711,7 @@ router.post("/cars/:carId/mileage", async (req, res) => {
     }
 
     res.status(201).json(entry);
+    void notifyLinkedParty(carId, getMechanicId(req), "mileage_added", `Mileage logged: ${parsed.data.odometer.toLocaleString()} (${parsed.data.reason})`);
   } catch (err) {
     res.status(500).json({ error: "Failed to create mileage entry" });
   }

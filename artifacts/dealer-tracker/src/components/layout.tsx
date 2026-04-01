@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { Wrench, LogOut, Users, UserCircle, BarChart2, MessageSquare } from "lucide-react";
+import { Wrench, LogOut, Users, UserCircle, BarChart2, MessageSquare, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setMechanicId } from "@workspace/api-client-react";
 
@@ -28,6 +28,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { mechanicId, displayName, isAdmin, adminMode, role } = getMechanicSession();
   const isDriver = role === "driver";
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
   useEffect(() => {
     if (!mechanicId) return;
@@ -42,9 +43,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }
       } catch { /* ignore */ }
     };
+    const fetchNotifCount = async () => {
+      try {
+        const r = await fetch(`${BASE}/api/notifications/unread-count`, {
+          headers: { "X-Mechanic-Id": String(mechanicId) },
+        });
+        if (r.ok) {
+          const data = await r.json();
+          setUnreadNotifCount(data.count ?? 0);
+        }
+      } catch { /* ignore */ }
+    };
     fetchUnread();
-    const iv = setInterval(fetchUnread, 15000);
-    return () => clearInterval(iv);
+    fetchNotifCount();
+    const iv1 = setInterval(fetchUnread, 15000);
+    const iv2 = setInterval(fetchNotifCount, 15000);
+    return () => { clearInterval(iv1); clearInterval(iv2); };
   }, [mechanicId]);
 
   const handleLogout = () => {
@@ -102,6 +116,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="hidden sm:inline">STATS</span>
               </Link>
             )}
+            <Link
+              href="/notifications"
+              className={cn(
+                "relative font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                location === "/notifications" ? "bg-black text-white border-black shadow-brutal-sm" : ""
+              )}
+            >
+              <Bell className="w-5 h-5" />
+              <span className="hidden sm:inline">ALERTS</span>
+              {unreadNotifCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-xs font-black w-5 h-5 rounded-full flex items-center justify-center leading-none">
+                  {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
+                </span>
+              )}
+            </Link>
             <Link
               href="/messages"
               className={cn(
