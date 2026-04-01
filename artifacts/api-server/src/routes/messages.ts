@@ -94,7 +94,7 @@ router.get("/messages/inbox", async (req, res) => {
   }
 });
 
-// GET /api/messages/unread-count — total unread messages for badge
+// GET /api/messages/unread-count — total unread DMs for badge (groups counted separately)
 router.get("/messages/unread-count", async (req, res) => {
   const me = getMechanicId(req);
   if (!me) { res.status(401).json({ error: "Not authenticated." }); return; }

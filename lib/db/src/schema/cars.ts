@@ -123,6 +123,35 @@ export const messagesTable = pgTable("messages", {
 
 export type Message = typeof messagesTable.$inferSelect;
 
+export const groupsTable = pgTable("groups", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  createdBy: integer("created_by").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Group = typeof groupsTable.$inferSelect;
+
+export const groupMembersTable = pgTable("group_members", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").notNull().references(() => groupsTable.id, { onDelete: "cascade" }),
+  mechanicId: integer("mechanic_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
+  lastReadAt: timestamp("last_read_at"),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+});
+
+export type GroupMember = typeof groupMembersTable.$inferSelect;
+
+export const groupMessagesTable = pgTable("group_messages", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").notNull().references(() => groupsTable.id, { onDelete: "cascade" }),
+  senderId: integer("sender_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type GroupMessage = typeof groupMessagesTable.$inferSelect;
+
 export const vehicleNotificationsTable = pgTable("vehicle_notifications", {
   id: serial("id").primaryKey(),
   recipientId: integer("recipient_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),

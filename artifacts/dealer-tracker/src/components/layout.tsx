@@ -34,13 +34,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
     if (!mechanicId) return;
     const fetchUnread = async () => {
       try {
-        const r = await fetch(`${BASE}/api/messages/unread-count`, {
-          headers: { "X-Mechanic-Id": String(mechanicId) },
-        });
-        if (r.ok) {
-          const data = await r.json();
-          setUnreadCount(data.count ?? 0);
-        }
+        const headers = { "X-Mechanic-Id": String(mechanicId) };
+        const [dmRes, groupRes] = await Promise.all([
+          fetch(`${BASE}/api/messages/unread-count`, { headers }),
+          fetch(`${BASE}/api/groups/unread-count`, { headers }),
+        ]);
+        const dmCount = dmRes.ok ? ((await dmRes.json()).count ?? 0) : 0;
+        const groupCount = groupRes.ok ? ((await groupRes.json()).count ?? 0) : 0;
+        setUnreadCount(dmCount + groupCount);
       } catch { /* ignore */ }
     };
     const fetchNotifCount = async () => {
