@@ -150,10 +150,15 @@ export default function MessagesPage() {
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
 
-  // ── Contact info modal ───────────────────────────────────────────────────
+  // ── Contact info modal (DM) ──────────────────────────────────────────────
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [fetchingContact, setFetchingContact] = useState(false);
+
+  // ── Group members modal ──────────────────────────────────────────────────
+  const [showGroupMembersModal, setShowGroupMembersModal] = useState(false);
+  const [groupMembersContact, setGroupMembersContact] = useState<ContactInfo[]>([]);
+  const [fetchingGroupMembers, setFetchingGroupMembers] = useState(false);
 
   // ── Suggestion search ────────────────────────────────────────────────────
   const [suggestions, setSuggestions] = useState<Suggestions>({ defaults: [], search: [] });
@@ -228,6 +233,22 @@ export default function MessagesPage() {
     } catch { /* ignore */ }
     setFetchingContact(false);
     setShowContactModal(true);
+  };
+
+  const fetchGroupMembersContact = async (members: GroupMember[]) => {
+    setFetchingGroupMembers(true);
+    setGroupMembersContact([]);
+    setShowGroupMembersModal(true);
+    try {
+      const results = await Promise.all(
+        members.map(async m => {
+          const r = await fetch(`${BASE}/api/mechanics/${m.id}/contact`, { headers: authHeaders() });
+          return r.ok ? (await r.json()) as ContactInfo : null;
+        })
+      );
+      setGroupMembersContact(results.filter(Boolean) as ContactInfo[]);
+    } catch { /* ignore */ }
+    setFetchingGroupMembers(false);
   };
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -529,15 +550,22 @@ export default function MessagesPage() {
             >
               <ArrowLeft className="w-5 h-5" />BACK
             </button>
-            <div className="flex-1 min-w-0">
+            <button
+              type="button"
+              onClick={() => fetchGroupMembersContact(activeGroupMembers)}
+              disabled={fetchingGroupMembers}
+              className="flex-1 min-w-0 text-left group"
+            >
               <h2 className="text-xl font-black uppercase truncate flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-600 shrink-0" />
-                {activeGroupName}
+                <span className="underline decoration-dashed underline-offset-4 group-hover:decoration-solid">
+                  {activeGroupName}
+                </span>
               </h2>
               <p className="text-sm font-medium text-blue-700 truncate mt-0.5">
-                {activeGroupMembers.length} members · {otherMembers.map(m => m.displayName).join(", ")}
+                {fetchingGroupMembers ? "Loading..." : `${activeGroupMembers.length} members — tap to view`}
               </p>
-            </div>
+            </button>
             {isConfirmingLeave ? (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-sm font-black text-red-600 uppercase">Leave?</span>
@@ -580,6 +608,75 @@ export default function MessagesPage() {
 
           <ComposeBox onSend={handleSendGroup} />
         </div>
+
+        {/* Group members modal */}
+        {showGroupMembersModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setShowGroupMembersModal(false)}>
+            <div className="bg-white border-4 border-black rounded-2xl shadow-brutal w-full max-w-sm p-6 space-y-4 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between gap-3 shrink-0">
+                <h2 className="text-xl font-black uppercase flex items-center gap-2">
+                  <Users className="w-6 h-6 text-blue-600" />
+                  {activeGroupName}
+                </h2>
+                <button type="button" onClick={() => setShowGroupMembersModal(false)}
+                  className="border-2 border-black rounded-lg p-2 bg-white hover:bg-gray-100">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm font-black uppercase text-gray-500 shrink-0">{activeGroupMembers.length} members</p>
+
+              <div className="overflow-y-auto space-y-4 flex-1">
+                {fetchingGroupMembers && (
+                  <div className="text-center py-6 text-gray-400 font-bold">Loading contact info...</div>
+                )}
+                {!fetchingGroupMembers && groupMembersContact.map(c => (
+                  <div key={c.id} className="border-4 border-black rounded-xl p-4 space-y-3 bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-black text-white rounded-xl p-2 shrink-0">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <p className="text-lg font-black uppercase leading-tight">{c.displayName}</p>
+                      {c.id === myId && (
+                        <span className="text-xs font-black uppercase bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full ml-auto shrink-0">YOU</span>
+                      )}
+                    </div>
+                    {c.visible ? (
+                      <div className="space-y-2">
+                        {c.phone ? (
+                          <a href={`tel:${c.phone}`} className="flex items-center gap-3 border-2 border-black rounded-lg p-3 bg-white hover:bg-gray-50">
+                            <Phone className="w-5 h-5 shrink-0" />
+                            <div><p className="text-xs font-black uppercase text-gray-500">Phone</p><p className="text-base font-black">{c.phone}</p></div>
+                          </a>
+                        ) : (
+                          <div className="flex items-center gap-3 border-2 border-gray-200 rounded-lg p-3 bg-gray-100">
+                            <Phone className="w-5 h-5 shrink-0 text-gray-400" /><p className="text-sm font-bold text-gray-400">No phone on file</p>
+                          </div>
+                        )}
+                        {c.email ? (
+                          <a href={`mailto:${c.email}`} className="flex items-center gap-3 border-2 border-black rounded-lg p-3 bg-white hover:bg-gray-50">
+                            <Mail className="w-5 h-5 shrink-0" />
+                            <div><p className="text-xs font-black uppercase text-gray-500">Email</p><p className="text-base font-black break-all">{c.email}</p></div>
+                          </a>
+                        ) : (
+                          <div className="flex items-center gap-3 border-2 border-gray-200 rounded-lg p-3 bg-gray-100">
+                            <Mail className="w-5 h-5 shrink-0 text-gray-400" /><p className="text-sm font-bold text-gray-400">No email on file</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm font-bold text-gray-400 italic px-1">Contact info is private</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button type="button" onClick={() => setShowGroupMembersModal(false)}
+                className="w-full py-3 font-black uppercase text-base border-4 border-black rounded-xl bg-black text-white hover:bg-gray-900 shrink-0">
+                CLOSE
+              </button>
+            </div>
+          </div>
+        )}
       </Layout>
     );
   }
