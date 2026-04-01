@@ -32,6 +32,14 @@ const STATUS_OPTIONS = [
   { value: "on_hold", label: "On Hold" },
 ];
 
+const PERSONAL_STATUS_OPTIONS = [
+  { value: "", label: "— No Status —" },
+  { value: "ready", label: "Ready" },
+  { value: "service_due", label: "Service Due" },
+  { value: "runs_rough", label: "Runs Rough" },
+  { value: "needs_repair", label: "Needs Repair" },
+];
+
 const VEHICLE_TYPE_OPTIONS = [
   { value: "car",        label: "Car / Truck" },
   { value: "motorcycle", label: "Motorcycle" },
@@ -47,8 +55,26 @@ function statusBadge(status?: string | null) {
       return <span className="bg-green-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Ready</span>;
     case "on_hold":
       return <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">On Hold</span>;
+    case "service_due":
+      return <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Service Due</span>;
+    case "runs_rough":
+      return <span className="bg-orange-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Runs Rough</span>;
+    case "needs_repair":
+      return <span className="bg-red-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Needs Repair</span>;
     default:
       return null;
+  }
+}
+
+function statusActiveColor(value: string): string {
+  switch (value) {
+    case "in_service": return "bg-blue-600 text-white border-blue-600";
+    case "ready":      return "bg-green-600 text-white border-green-600";
+    case "on_hold":    return "bg-amber-500 text-white border-amber-500";
+    case "service_due": return "bg-amber-500 text-white border-amber-500";
+    case "runs_rough":  return "bg-orange-600 text-white border-orange-600";
+    case "needs_repair": return "bg-red-600 text-white border-red-600";
+    default:           return "bg-black text-white border-black";
   }
 }
 
@@ -335,7 +361,7 @@ export default function CarsList() {
       result = result.filter(c => typeFilters.includes(c.vehicleType || "car"));
     }
 
-    const statusFilters = ["in_service", "ready", "on_hold"].filter(s => activeFilters.has(`status:${s}`));
+    const statusFilters = ["in_service", "ready", "on_hold", "service_due", "runs_rough", "needs_repair"].filter(s => activeFilters.has(`status:${s}`));
     if (statusFilters.length > 0) {
       result = result.filter(c => statusFilters.includes(c.status || ""));
     }
@@ -393,9 +419,12 @@ export default function CarsList() {
           { key: "type:motorcycle", label: "Motorcycle",   on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
           { key: "type:boat",       label: "Boat",         on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
           { key: "type:atv",        label: "ATV / UTV",    on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
-          { key: "status:in_service", label: "In Service", on: "bg-blue-600 text-white",   off: "bg-white text-black border-2 border-blue-400" },
-          { key: "status:ready",      label: "Ready",      on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400" },
-          { key: "status:on_hold",    label: "On Hold",    on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
+          { key: "status:in_service",   label: "In Service",   on: "bg-blue-600 text-white",   off: "bg-white text-black border-2 border-blue-400" },
+          { key: "status:ready",        label: "Ready",        on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400" },
+          { key: "status:on_hold",      label: "On Hold",      on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
+          { key: "status:service_due",  label: "Service Due",  on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
+          { key: "status:runs_rough",   label: "Runs Rough",   on: "bg-orange-600 text-white", off: "bg-white text-black border-2 border-orange-400" },
+          { key: "status:needs_repair", label: "Needs Repair", on: "bg-red-600 text-white",    off: "bg-white text-black border-2 border-red-400" },
           { key: "owner:dealer",    label: "Work",         on: "bg-black text-white",      off: "bg-white text-black border-2 border-gray-400" },
           { key: "owner:personal",  label: "Personal",     on: "bg-teal-700 text-white",   off: "bg-white text-black border-2 border-teal-400" },
         ].map(({ key, label, on, off }) => (
@@ -731,20 +760,14 @@ export default function CarsList() {
             <div className="space-y-2">
               <label className="text-base font-black uppercase block">Status</label>
               <div className="flex flex-wrap gap-3">
-                {STATUS_OPTIONS.map(opt => (
+                {(form.carType === "personal" ? PERSONAL_STATUS_OPTIONS : STATUS_OPTIONS).map(opt => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setField("status", opt.value)}
                     className={`px-4 py-2 rounded-lg border-4 font-black uppercase text-sm transition-colors ${
                       form.status === opt.value
-                        ? opt.value === "in_service"
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : opt.value === "ready"
-                          ? "bg-green-600 text-white border-green-600"
-                          : opt.value === "on_hold"
-                          ? "bg-amber-500 text-white border-amber-500"
-                          : "bg-black text-white border-black"
+                        ? statusActiveColor(opt.value)
                         : "bg-white text-black border-black"
                     }`}
                   >
