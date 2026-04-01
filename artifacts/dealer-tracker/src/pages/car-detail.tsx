@@ -198,7 +198,7 @@ export default function CarDetail() {
   const [contact, setContact] = useState<ContactInfo | null>(null);
 
   const viewerSession = (() => {
-    try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}") as { mechanicId?: number; isAdmin?: boolean }; }
+    try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}") as { mechanicId?: number; isAdmin?: boolean; role?: string }; }
     catch { return {}; }
   })();
 
@@ -333,7 +333,7 @@ export default function CarDetail() {
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
           <TabsContent value="inspection" className="mt-0">
-            <InspectionsTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} vehicleType={car.vehicleType} vehicleSubtype={car.vehicleSubtype} />
+            <InspectionsTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} vehicleType={car.vehicleType} vehicleSubtype={car.vehicleSubtype} userRole={viewerSession.role} />
           </TabsContent>
           <TabsContent value="maintenance" className="mt-0">
             <MaintenanceTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />

@@ -29,6 +29,7 @@ type Session = {
   displayName: string;
   isAdmin: boolean;
   adminMode?: boolean;
+  role?: string;
 };
 
 function getMechanicSession(): Session | null {
@@ -69,8 +70,8 @@ function App() {
     }
   }, [session]);
 
-  const handleLogin = (mechanicId: number, username: string, displayName: string, isAdmin: boolean) => {
-    const s: Session = { mechanicId, username, displayName, isAdmin, adminMode: false };
+  const handleLogin = (mechanicId: number, username: string, displayName: string, isAdmin: boolean, role?: string) => {
+    const s: Session = { mechanicId, username, displayName, isAdmin, adminMode: false, role: role ?? "mechanic" };
     localStorage.setItem("dt_mechanic", JSON.stringify(s));
     setMechanicId(mechanicId);
     setSession(s);

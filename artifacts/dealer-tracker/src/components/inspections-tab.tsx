@@ -9,32 +9,69 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { getCategoriesForVehicleType, buildDefaultInspection } from "@/lib/inspection-template";
-import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, ChevronDown, ChevronRight, Printer } from "lucide-react";
+import {
+  getCategoriesForVehicleType,
+  buildDefaultInspection,
+  DRIVER_INSPECTION_CATEGORIES,
+  buildDefaultDriverInspection,
+} from "@/lib/inspection-template";
+import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, ChevronDown, ChevronRight, Printer, Car } from "lucide-react";
 import { printInspection } from "@/lib/print-utils";
 import { Textarea } from "@/components/ui/textarea";
 
-export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }: { carId: number; carLabel: string; vehicleType?: string | null; vehicleSubtype?: string | null }) {
+export function InspectionsTab({
+  carId,
+  carLabel,
+  vehicleType,
+  vehicleSubtype,
+  userRole,
+}: {
+  carId: number;
+  carLabel: string;
+  vehicleType?: string | null;
+  vehicleSubtype?: string | null;
+  userRole?: string;
+}) {
   const queryClient = useQueryClient();
   const { data: inspectionItems, isLoading, isError } = useGetInspection(carId);
   const { mutate: upsertInspection, isPending } = useUpsertInspection();
   const { mutate: createTodo } = useCreateTodo();
+
+  const isDriver = userRole === "driver";
 
   const [localItems, setLocalItems] = useState<Partial<InspectionItem>[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
+  // Holds all items from the server (both driver and mechanic) so saves don't clobber the other role
+  const allServerItemsRef = useRef<Partial<InspectionItem>[]>([]);
   const serverStateRef = useRef<Partial<InspectionItem>[]>([]);
 
   useEffect(() => {
     if (inspectionItems) {
-      const items = inspectionItems.length === 0 ? buildDefaultInspection(vehicleType, vehicleSubtype) : inspectionItems;
-      setLocalItems(items);
-      serverStateRef.current = items;
+      allServerItemsRef.current = inspectionItems;
+
+      if (isDriver) {
+        const driverItems = inspectionItems.filter(i =>
+          DRIVER_INSPECTION_CATEGORIES.includes(i.category || "")
+        );
+        const items = driverItems.length === 0 ? buildDefaultDriverInspection() : driverItems;
+        setLocalItems(items);
+        serverStateRef.current = items;
+      } else {
+        const mechanicItems = inspectionItems.filter(i =>
+          !DRIVER_INSPECTION_CATEGORIES.includes(i.category || "")
+        );
+        const items = mechanicItems.length === 0
+          ? buildDefaultInspection(vehicleType, vehicleSubtype)
+          : mechanicItems;
+        setLocalItems(items);
+        serverStateRef.current = items;
+      }
       setIsDirty(false);
     }
-  }, [inspectionItems]);
+  }, [inspectionItems, isDriver]);
 
   if (isLoading) return <div className="p-12 text-center text-2xl font-bold">Loading inspection...</div>;
   if (isError) return <div className="p-12 text-center text-2xl font-bold text-red-600">Error loading inspection.</div>;
@@ -64,7 +101,12 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
   };
 
   const handleSave = () => {
-    const payload = localItems.map(item => ({
+    // Preserve the other role's items so they aren't deleted on save
+    const otherRoleItems = isDriver
+      ? allServerItemsRef.current.filter(i => !DRIVER_INSPECTION_CATEGORIES.includes(i.category || ""))
+      : allServerItemsRef.current.filter(i => DRIVER_INSPECTION_CATEGORIES.includes(i.category || ""));
+
+    const payload = [...localItems, ...otherRoleItems].map(item => ({
       id: item.id,
       category: item.category || "Unknown",
       item: item.item || "Unknown",
@@ -82,6 +124,7 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
 
     upsertInspection({ carId, data: payload }, {
       onSuccess: () => {
+        allServerItemsRef.current = [...localItems, ...otherRoleItems];
         serverStateRef.current = localItems.map(item => ({ ...item }));
         setIsDirty(false);
 
@@ -190,11 +233,20 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
     );
   };
 
+  const displayCategories = isDriver
+    ? DRIVER_INSPECTION_CATEGORIES
+    : getCategoriesForVehicleType(vehicleType, vehicleSubtype);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-100 p-6 rounded-xl border-4 border-black shadow-brutal">
+      <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 rounded-xl border-4 shadow-brutal ${
+        isDriver ? "bg-teal-50 border-teal-600" : "bg-gray-100 border-black"
+      }`}>
         <div>
-          <h2 className="text-2xl font-black uppercase">Standard Inspection</h2>
+          <h2 className="text-2xl font-black uppercase flex items-center gap-3">
+            {isDriver && <Car className="w-7 h-7 text-teal-700" />}
+            {isDriver ? "Driver Check" : "Standard Inspection"}
+          </h2>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             {(() => {
               const pending = localItems.filter(i => !i.status || i.status === "pending").length;
@@ -209,26 +261,30 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
                 </span>
               ) : null;
             })()}
-            <p className="text-gray-600 font-medium">
-              Failed items are added to Needs Done on save.
+            <p className={`font-medium ${isDriver ? "text-teal-700" : "text-gray-600"}`}>
+              {isDriver
+                ? "Pre-drive, while driving, and post-drive checks."
+                : "Failed items are added to Needs Done on save."}
             </p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="w-full sm:w-auto"
-            onClick={() => printInspection(`${carLabel} — Inspection`, localItems.map(i => ({ category: i.category || "", item: i.item || "", status: i.status || "pending", notes: i.notes })), getCategoriesForVehicleType(vehicleType, vehicleSubtype))}
-          >
-            <Printer className="w-5 h-5 mr-2" /> PRINT
-          </Button>
+          {!isDriver && (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => printInspection(`${carLabel} — Inspection`, localItems.map(i => ({ category: i.category || "", item: i.item || "", status: i.status || "pending", notes: i.notes })), getCategoriesForVehicleType(vehicleType, vehicleSubtype))}
+            >
+              <Printer className="w-5 h-5 mr-2" /> PRINT
+            </Button>
+          )}
           <Button
             size="lg"
             onClick={handleSave}
             disabled={!isDirty || isPending}
-            className="w-full sm:w-auto"
+            className={`w-full sm:w-auto ${isDriver ? "bg-teal-600 hover:bg-teal-700 text-white border-teal-600" : ""}`}
           >
             <Save className="w-6 h-6 mr-2" />
             {isPending ? "SAVING..." : "SAVE CHANGES"}
@@ -243,7 +299,7 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
       )}
 
       <div className="space-y-3">
-        {getCategoriesForVehicleType(vehicleType, vehicleSubtype).map(category => {
+        {displayCategories.map(category => {
           const categoryItems = localItems
             .map((item, index) => ({ item, index }))
             .filter(x => x.item.category === category);
@@ -253,6 +309,7 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
           const isOpen = openSections.has(category);
           const hasFail = categoryItems.some(x => x.item.status === "fail");
           const hasAdvisory = categoryItems.some(x => x.item.status === "advisory");
+
           const naButtonLabel: Record<string, string> = {
             "Diesel": "NOT A DIESEL",
             "Hybrid / EV": "NOT A HYBRID/EV",
@@ -281,10 +338,16 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
             setSavedMessage("");
           };
 
+          const borderColor = hasFail
+            ? "border-red-600"
+            : hasAdvisory
+            ? "border-orange-500"
+            : isDriver
+            ? "border-teal-600"
+            : "border-black";
+
           return (
-            <div key={category} className={`border-4 rounded-xl overflow-hidden ${
-              hasFail ? "border-red-600" : hasAdvisory ? "border-orange-500" : "border-black"
-            }`}>
+            <div key={category} className={`border-4 rounded-xl overflow-hidden ${borderColor}`}>
               <button
                 type="button"
                 onClick={() => toggleSection(category)}
@@ -294,7 +357,7 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
                     : hasAdvisory
                     ? "bg-orange-50"
                     : isOpen
-                    ? "bg-gray-100"
+                    ? isDriver ? "bg-teal-50" : "bg-gray-100"
                     : "bg-white"
                 }`}
               >
@@ -386,11 +449,11 @@ export function InspectionsTab({ carId, carLabel, vehicleType, vehicleSubtype }:
                         <div className="xl:w-1/3 flex flex-col justify-end gap-1">
                           {isFail && (
                             <p className="text-sm font-bold text-red-600 uppercase">
-                              Notes → Diagnose description
+                              Notes → added to Needs Done
                             </p>
                           )}
                           <Textarea
-                            placeholder={isFail ? "What was found? (added to Needs Done)" : "Add notes..."}
+                            placeholder={isFail ? "What was found?" : "Add notes..."}
                             value={item.notes || ""}
                             onChange={e => handleNotesChange(index, e.target.value)}
                             rows={3}
