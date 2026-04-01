@@ -273,7 +273,7 @@ export default function CarsList() {
 
   const validate = () => {
     const newErrors: FormErrors = {};
-    if (!form.stockNumber.trim()) newErrors.stockNumber = "Required";
+    if (!isDriver && !form.stockNumber.trim()) newErrors.stockNumber = "Required";
     if (!form.year.trim() || isNaN(Number(form.year))) newErrors.year = "Required";
     if (!form.make.trim()) newErrors.make = "Required";
     if (!form.model.trim()) newErrors.model = "Required";
@@ -286,9 +286,12 @@ export default function CarsList() {
     if (!validate()) return;
     const yr = Number(form.year);
     const mi = form.mileage ? Number(form.mileage) : undefined;
+    const stockNumber = isDriver && !form.stockNumber.trim()
+      ? `DRV-${Date.now()}`
+      : form.stockNumber.trim();
     createCar({
       data: {
-        stockNumber: form.stockNumber.trim(),
+        stockNumber,
         year: yr,
         make: form.make.trim(),
         model: form.model.trim(),
@@ -560,16 +563,18 @@ export default function CarsList() {
             <DialogTitle className="text-3xl font-black uppercase">Add Vehicle</DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-4">
-            <div className="space-y-1">
-              <label className="text-base font-black uppercase block">Stock / ID *</label>
-              <Input
-                value={form.stockNumber}
-                onChange={e => setField("stockNumber", e.target.value)}
-                placeholder="e.g. A1234"
-                className="bg-white text-black"
-              />
-              {errors.stockNumber && <p className="text-destructive font-bold text-sm">{errors.stockNumber}</p>}
-            </div>
+            {!isDriver && (
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Stock / ID *</label>
+                <Input
+                  value={form.stockNumber}
+                  onChange={e => setField("stockNumber", e.target.value)}
+                  placeholder="e.g. A1234"
+                  className="bg-white text-black"
+                />
+                {errors.stockNumber && <p className="text-destructive font-bold text-sm">{errors.stockNumber}</p>}
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
