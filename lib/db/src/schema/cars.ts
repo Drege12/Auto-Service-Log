@@ -22,6 +22,7 @@ export type Mechanic = typeof mechanicsTable.$inferSelect;
 export const carsTable = pgTable("cars", {
   id: serial("id").primaryKey(),
   mechanicId: integer("mechanic_id").references(() => mechanicsTable.id, { onDelete: "set null" }),
+  linkedMechanicId: integer("linked_mechanic_id").references(() => mechanicsTable.id, { onDelete: "set null" }),
   stockNumber: text("stock_number").notNull(),
   year: integer("year").notNull(),
   make: text("make").notNull(),
