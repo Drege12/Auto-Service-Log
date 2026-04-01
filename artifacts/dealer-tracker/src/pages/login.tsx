@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wrench, Lock, User, ChevronRight, ShieldCheck } from "lucide-react";
+import { Wrench, Lock, User, ChevronRight, ShieldCheck, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,6 +19,7 @@ export default function LoginPage({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [role, setRole] = useState<"mechanic" | "driver">("mechanic");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,6 +28,7 @@ export default function LoginPage({
     setUsername("");
     setPassword("");
     setDisplayName("");
+    setRole("mechanic");
   };
 
   const switchMode = (m: Mode) => {
@@ -72,7 +74,7 @@ export default function LoginPage({
       const res = await fetch(`${BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim() }),
+        body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim(), role }),
       });
       const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; role?: string; error?: string };
       if (res.ok && data.mechanicId) {
@@ -110,7 +112,7 @@ export default function LoginPage({
           </div>
           <h1 className="text-4xl font-black uppercase tracking-tight">Maintenance Tracker</h1>
           <p className="text-gray-500 font-medium">
-            {mode === "login" ? "Sign in to your account." : "Create a new mechanic account."}
+            {mode === "login" ? "Sign in to your account." : "Create a new account."}
           </p>
         </div>
 
@@ -161,6 +163,43 @@ export default function LoginPage({
             />
           </div>
 
+          {mode === "register" && (
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase block">I am a...</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRole("mechanic")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-4 font-black uppercase transition-colors ${
+                    role === "mechanic"
+                      ? "border-black bg-black text-white"
+                      : "border-gray-300 bg-white text-black"
+                  }`}
+                >
+                  <Wrench className="w-8 h-8" />
+                  <span className="text-sm">Mechanic</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("driver")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-4 font-black uppercase transition-colors ${
+                    role === "driver"
+                      ? "border-teal-600 bg-teal-600 text-white"
+                      : "border-gray-300 bg-white text-black"
+                  }`}
+                >
+                  <Car className="w-8 h-8" />
+                  <span className="text-sm">Driver</span>
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 font-medium">
+                {role === "driver"
+                  ? "Drivers see simplified pre/during/post-drive checklists."
+                  : "Mechanics see the full technical inspection checklist."}
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-100 border-2 border-red-600 text-red-700 font-bold p-3 rounded-lg text-center">
               {error}
@@ -184,7 +223,7 @@ export default function LoginPage({
                 className="text-sm font-bold underline text-gray-600 flex items-center gap-1 mx-auto"
                 onClick={() => switchMode("register")}
               >
-                New mechanic? Create an account <ChevronRight className="w-4 h-4" />
+                New here? Create an account <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
               <button

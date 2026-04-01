@@ -6,10 +6,11 @@ import { eq } from "drizzle-orm";
 const router = Router();
 
 router.post("/auth/register", async (req, res) => {
-  const { username, password, displayName } = req.body as {
+  const { username, password, displayName, role } = req.body as {
     username?: string;
     password?: string;
     displayName?: string;
+    role?: string;
   };
 
   if (!username || !username.trim()) {
@@ -39,9 +40,10 @@ router.post("/auth/register", async (req, res) => {
       username: username.trim().toLowerCase(),
       passwordHash,
       displayName: displayName.trim(),
-    }).returning({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName });
+      role: role === "driver" ? "driver" : "mechanic",
+    }).returning({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, role: mechanicsTable.role });
 
-    res.status(201).json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName });
+    res.status(201).json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, role: mechanic.role ?? "mechanic" });
   } catch (err) {
     res.status(500).json({ error: "Failed to create account." });
   }
