@@ -170,6 +170,7 @@ export default function CarsList() {
 
   const [linkVinOpen, setLinkVinOpen] = useState(false);
   const [linkVin, setLinkVin] = useState("");
+  const [linkVehicleType, setLinkVehicleType] = useState("");
   const [linkSearching, setLinkSearching] = useState(false);
   const [linkMatch, setLinkMatch] = useState<VinMatch | null>(null);
   const [linkSearchError, setLinkSearchError] = useState("");
@@ -233,12 +234,14 @@ export default function CarsList() {
   const searchLinkVin = async () => {
     const trimmed = linkVin.trim().toUpperCase();
     if (trimmed.length < 11) { setLinkSearchError("Enter at least 11 characters of the VIN."); return; }
+    if (!linkVehicleType) { setLinkSearchError("Select a vehicle type first."); return; }
     setLinkSearching(true);
     setLinkMatch(null);
     setLinkSearchError("");
     try {
       const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
-      const res = await fetch(`${BASE}/api/vin-lookup?vin=${encodeURIComponent(trimmed)}`, {
+      const params = new URLSearchParams({ vin: trimmed, vehicleType: linkVehicleType });
+      const res = await fetch(`${BASE}/api/vin-lookup?${params}`, {
         headers: { "X-Mechanic-Id": String(mechanicId) },
       });
       if (!res.ok) throw new Error();
@@ -246,7 +249,8 @@ export default function CarsList() {
       if (data.found && data.car) {
         setLinkMatch(data.car);
       } else {
-        setLinkSearchError("No vehicle found with that VIN, or you are already linked to it.");
+        const typeLabel = linkVehicleType === "motorcycle" ? "motorcycle" : linkVehicleType === "boat" ? "boat" : linkVehicleType === "atv" ? "ATV/off-road vehicle" : "car/truck";
+        setLinkSearchError(`No ${typeLabel} found with that VIN, or you are already linked to it.`);
       }
     } catch {
       setLinkSearchError("Could not reach the server.");
@@ -989,7 +993,7 @@ export default function CarsList() {
         </DialogContent>
       </Dialog>
       {/* Link by VIN dialog */}
-      <Dialog open={linkVinOpen} onOpenChange={open => { setLinkVinOpen(open); if (!open) { setLinkMatch(null); setLinkSearchError(""); } }}>
+      <Dialog open={linkVinOpen} onOpenChange={open => { setLinkVinOpen(open); if (!open) { setLinkMatch(null); setLinkSearchError(""); setLinkVehicleType(""); setLinkVin(""); } }}>
         <DialogContent className="bg-white text-black">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
@@ -998,6 +1002,32 @@ export default function CarsList() {
           </DialogHeader>
           <div className="space-y-5 py-2">
             <p className="text-gray-600 font-bold">Enter the VIN of a vehicle already registered by a client. It will appear in your list so you can track service history, inspections, and maintenance for them.</p>
+
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase block">Vehicle Type</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: "car",        label: "Car / Truck" },
+                  { value: "motorcycle", label: "Motorcycle" },
+                  { value: "boat",       label: "Boat" },
+                  { value: "atv",        label: "ATV / Off-Road" },
+                ].map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => { setLinkVehicleType(value); setLinkMatch(null); setLinkSearchError(""); }}
+                    className={`py-3 px-4 border-2 rounded-lg font-black uppercase text-base ${
+                      linkVehicleType === value
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-black border-gray-300 hover:border-black"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-base font-black uppercase block">VIN</label>
               <div className="flex gap-2">
@@ -1011,12 +1041,15 @@ export default function CarsList() {
                 <Button
                   type="button"
                   onClick={searchLinkVin}
-                  disabled={linkSearching || linkVin.trim().length < 11}
+                  disabled={linkSearching || linkVin.trim().length < 11 || !linkVehicleType}
                   className="font-black uppercase"
                 >
                   {linkSearching ? "..." : "Search"}
                 </Button>
               </div>
+              {!linkVehicleType && linkVin.trim().length >= 11 && (
+                <p className="text-amber-600 font-bold text-sm">Select a vehicle type above to search.</p>
+              )}
               {linkSearchError && <p className="text-red-600 font-bold text-sm">{linkSearchError}</p>}
             </div>
 
