@@ -2167,12 +2167,210 @@ const DRIVER_ATV_TEMPLATE = [
   { category: "Post-Drive", item: "Clean mud from cooling vents and radiator" },
 ];
 
-export function getDriverTemplateForVehicleType(vehicleType?: string | null) {
+// ── Boat: Sailboat ────────────────────────────────────────────────────────────
+const DRIVER_BOAT_SAILBOAT_TEMPLATE = [
+  { category: "Pre-Launch", item: "Hull — inspect for cracks, damage, and through-hull fittings secure" },
+  { category: "Pre-Launch", item: "Keel — secure, no visible cracks or rust weeping" },
+  { category: "Pre-Launch", item: "Rudder — moves freely, no play in pintles and gudgeons" },
+  { category: "Pre-Launch", item: "Mast — inspect for corrosion, cracks, and spreaders secure" },
+  { category: "Pre-Launch", item: "Standing rigging (shrouds/stays) — no fraying, broken strands, or loose toggles" },
+  { category: "Pre-Launch", item: "Running rigging (halyards/sheets) — free-running, not chafing, clear of tangles" },
+  { category: "Pre-Launch", item: "Sails — inspect for tears, UV damage, or loose stitching" },
+  { category: "Pre-Launch", item: "Boom — secure, mainsheet and vang properly attached" },
+  { category: "Pre-Launch", item: "Winches — clean and functioning smoothly" },
+  { category: "Pre-Launch", item: "Bilge — test pump operation; minimal water present" },
+  { category: "Pre-Launch", item: "Navigation lights — working (red/green/white)" },
+  { category: "Pre-Launch", item: "Life jackets — present and accessible for all on board" },
+  { category: "Pre-Launch", item: "Safety gear — flares, horn, throwable PFD, and first aid kit" },
+  { category: "Pre-Launch", item: "Anchor and dock lines — aboard and ready" },
+  { category: "Underway", item: "Sail trim — adjusted for wind angle and conditions" },
+  { category: "Underway", item: "Standing rigging — watch for unusual sounds or vibration under load" },
+  { category: "Underway", item: "Running rigging — check for chafe against spreaders or shrouds" },
+  { category: "Underway", item: "Boom — watch for accidental jibe in shifting winds" },
+  { category: "Underway", item: "Bilge — check for water accumulation" },
+  { category: "Underway", item: "Weather — monitor for changing conditions" },
+  { category: "Post-Use", item: "Furl or drop sails and bag/stow properly" },
+  { category: "Post-Use", item: "Rinse sails with fresh water if sailed in saltwater" },
+  { category: "Post-Use", item: "Coil and stow all halyards and sheets" },
+  { category: "Post-Use", item: "Secure boom with topping lift, vang, or crutch" },
+  { category: "Post-Use", item: "Inspect rigging for chafe or damage found underway" },
+  { category: "Post-Use", item: "Rinse deck and cockpit; drain any standing water" },
+  { category: "Post-Use", item: "Log distance sailed and any issues noted" },
+];
+
+// ── Boat: PWC (Jet Ski / Personal Watercraft) ─────────────────────────────────
+const DRIVER_BOAT_PWC_TEMPLATE = [
+  { category: "Pre-Launch", item: "Hull — inspect for cracks or impact damage" },
+  { category: "Pre-Launch", item: "Engine oil level (4-stroke models)" },
+  { category: "Pre-Launch", item: "Fuel level and fuel cap — securely closed" },
+  { category: "Pre-Launch", item: "Intake grate — clear of debris, weeds, and rope" },
+  { category: "Pre-Launch", item: "Kill switch lanyard — attached to rider before starting" },
+  { category: "Pre-Launch", item: "Life jacket — worn by all riders" },
+  { category: "Pre-Launch", item: "Battery — fully charged; no corrosion on terminals" },
+  { category: "Pre-Launch", item: "Bilge drain plug — installed before launching" },
+  { category: "Underway", item: "Engine temperature — no overheat indicator illuminated" },
+  { category: "Underway", item: "Jet pump — no unusual grinding or rattling sounds" },
+  { category: "Underway", item: "Fuel gauge — monitor burn rate" },
+  { category: "Underway", item: "Steering — responsive left and right at all speeds" },
+  { category: "Post-Use", item: "Flush engine with fresh water (run on flush port 60–90 sec)" },
+  { category: "Post-Use", item: "Remove bilge drain plug — drain fully before trailering" },
+  { category: "Post-Use", item: "Rinse hull and seat with fresh water" },
+  { category: "Post-Use", item: "Check intake/impeller tunnel for wrapped rope or debris" },
+  { category: "Post-Use", item: "Fuel level — note remaining for next session" },
+  { category: "Post-Use", item: "Store upright; never lay on side" },
+];
+
+// ── Motorcycle: Dual Sport ─────────────────────────────────────────────────────
+const DRIVER_MC_DUALSPORT_TEMPLATE = [
+  { category: "Pre-Ride", item: "Tires — pressure AND inspect sidewalls for cuts (off-road wear is harder to spot)" },
+  { category: "Pre-Ride", item: "Chain — tension and lubrication (critical on off-road sections)" },
+  { category: "Pre-Ride", item: "Engine oil level — check before ride" },
+  { category: "Pre-Ride", item: "Fuel level — carry extra if going remote" },
+  { category: "Pre-Ride", item: "Spoke tension — check for loose or broken spokes" },
+  { category: "Pre-Ride", item: "Suspension — check sag settings and inspect for fork/shock oil leaks" },
+  { category: "Pre-Ride", item: "Front and rear brakes — firm lever and pedal feel" },
+  { category: "Pre-Ride", item: "Throttle — smooth operation and full snap-back" },
+  { category: "Pre-Ride", item: "Hand guards — secure and undamaged" },
+  { category: "Pre-Ride", item: "Skid plate — secure, no missing hardware" },
+  { category: "Pre-Ride", item: "Lights — headlight, taillight, and turn signals (for road sections)" },
+  { category: "Pre-Ride", item: "Kill switch — confirm functional" },
+  { category: "While Riding", item: "Engine temperature — in normal range" },
+  { category: "While Riding", item: "Brakes — note any change in feel between dirt and pavement" },
+  { category: "While Riding", item: "Chain — listen for slap or tight spots over rough terrain" },
+  { category: "While Riding", item: "Handling — watch for changes after hard off-road sections" },
+  { category: "While Riding", item: "Warning lights — any illuminated" },
+  { category: "Post-Ride", item: "Chain — clean and re-lube (especially after mud or water crossings)" },
+  { category: "Post-Ride", item: "Spoke tension — check after rough sections" },
+  { category: "Post-Ride", item: "Air filter — inspect and clean if dusty conditions" },
+  { category: "Post-Ride", item: "Tire inspection — remove thorns or embedded debris" },
+  { category: "Post-Ride", item: "Check for loose fasteners — vibration loosens hardware off-road" },
+  { category: "Post-Ride", item: "Warning lights — note any that appeared" },
+];
+
+// ── Motorcycle: Sport Bike ─────────────────────────────────────────────────────
+const DRIVER_MC_SPORT_TEMPLATE = [
+  { category: "Pre-Ride", item: "Tires — check cold pressure (sport bikes run higher pressures) and inspect for cuts" },
+  { category: "Pre-Ride", item: "Chain — tension and lubrication (check regularly; wears faster under hard acceleration)" },
+  { category: "Pre-Ride", item: "Engine oil level" },
+  { category: "Pre-Ride", item: "Coolant level — check reservoir" },
+  { category: "Pre-Ride", item: "Brake fluid — check both front and rear master cylinders" },
+  { category: "Pre-Ride", item: "Brake pads — visual check through caliper window" },
+  { category: "Pre-Ride", item: "Throttle — full snap-back (critical at high speed)" },
+  { category: "Pre-Ride", item: "Front and rear brakes — firm lever and pedal feel" },
+  { category: "Pre-Ride", item: "Levers — clean, proper free play adjustment" },
+  { category: "Pre-Ride", item: "Lights — headlight, taillight, and turn signals" },
+  { category: "Pre-Ride", item: "Kill switch — confirm functional" },
+  { category: "While Riding", item: "Brakes — progressive feel and consistent; watch for fade" },
+  { category: "While Riding", item: "Front end — no shimmy or wobble at speed" },
+  { category: "While Riding", item: "Suspension — proper damping feel over bumps" },
+  { category: "While Riding", item: "Engine temperature — in normal range" },
+  { category: "While Riding", item: "Dashboard warning lights — any illuminated" },
+  { category: "Post-Ride", item: "Chain — inspect for wear or tight links after spirited riding" },
+  { category: "Post-Ride", item: "Tire wear — check rear especially (wears faster on sport bikes)" },
+  { category: "Post-Ride", item: "Brake pad wear — check visually" },
+  { category: "Post-Ride", item: "New fluid spots — check under bike" },
+  { category: "Post-Ride", item: "Warning lights — note any that appeared" },
+];
+
+// ── ATV: Side-by-Side / UTV ───────────────────────────────────────────────────
+const DRIVER_ATV_SXS_TEMPLATE = [
+  { category: "Pre-Drive", item: "Tires — all four: check pressure and inspect for damage" },
+  { category: "Pre-Drive", item: "Engine oil level" },
+  { category: "Pre-Drive", item: "Fuel level — sufficient for planned use" },
+  { category: "Pre-Drive", item: "Seatbelts — present and latch correctly for all seats" },
+  { category: "Pre-Drive", item: "Doors/nets — properly latched or secured" },
+  { category: "Pre-Drive", item: "Roll cage — inspect for cracks, bends, or loose mounting" },
+  { category: "Pre-Drive", item: "Steering — full range of motion, no binding" },
+  { category: "Pre-Drive", item: "Brakes — pedal feel firm" },
+  { category: "Pre-Drive", item: "Throttle — smooth and full snap-back" },
+  { category: "Pre-Drive", item: "Lights — headlights, taillights, and work lights if equipped" },
+  { category: "Pre-Drive", item: "CVT air intake — unobstructed (check if muddy)" },
+  { category: "Pre-Drive", item: "Loose items in cab — secured before moving" },
+  { category: "While Driving", item: "Brakes — responsive on all terrain" },
+  { category: "While Driving", item: "Engine temperature — in normal range" },
+  { category: "While Driving", item: "Unusual sounds — grinding, knocking, or rattling" },
+  { category: "While Driving", item: "Stability — no excessive body roll or unexpected handling" },
+  { category: "While Driving", item: "All occupants — seatbelts fastened while moving" },
+  { category: "Post-Drive", item: "Fluid leaks — check under vehicle after ride" },
+  { category: "Post-Drive", item: "Tire condition — inspect all four for punctures or debris" },
+  { category: "Post-Drive", item: "Seatbelt latches — wipe clean; check for mud buildup" },
+  { category: "Post-Drive", item: "Clean mud from radiator, vents, and CVT intake" },
+  { category: "Post-Drive", item: "Roll cage mounting — check bolts after hard terrain" },
+];
+
+// ── ATV: Snowmobile ───────────────────────────────────────────────────────────
+const DRIVER_ATV_SNOWMOBILE_TEMPLATE = [
+  { category: "Pre-Drive", item: "Track — check tension and inspect for damaged or missing cleats/studs" },
+  { category: "Pre-Drive", item: "Skis — inspect ski carbides for wear; no cracks in ski body" },
+  { category: "Pre-Drive", item: "Engine oil — check level (4-stroke) or pre-mix (2-stroke)" },
+  { category: "Pre-Drive", item: "Fuel level — sufficient for planned route; cold weather increases consumption" },
+  { category: "Pre-Drive", item: "Chaincase oil level — check sight glass or dipstick" },
+  { category: "Pre-Drive", item: "Throttle — smooth operation and full snap-back" },
+  { category: "Pre-Drive", item: "Brake lever — firm feel; test before moving" },
+  { category: "Pre-Drive", item: "Kill switch lanyard — attached to rider" },
+  { category: "Pre-Drive", item: "Headlight and taillight — operational" },
+  { category: "Pre-Drive", item: "Drive belt — visual check for cracking, fraying, or glazing" },
+  { category: "Pre-Drive", item: "Clutch — confirm smooth engagement when revved" },
+  { category: "While Driving", item: "Engine temperature — in normal operating range" },
+  { category: "While Driving", item: "Track — listen for unusual sounds (loose rivets, damaged cleat)" },
+  { category: "While Driving", item: "Brakes — responsive, test before steep descents" },
+  { category: "While Driving", item: "Ski steering — no excessive pulling or resistance" },
+  { category: "While Driving", item: "Warning lights — any illuminated" },
+  { category: "Post-Drive", item: "Allow engine to idle briefly before shutdown (turbo models: 1–2 min)" },
+  { category: "Post-Drive", item: "Track — inspect for damaged cleats, missing studs, or cracks after ride" },
+  { category: "Post-Drive", item: "Drive belt — inspect for wear, cracking, or glazing" },
+  { category: "Post-Drive", item: "Chaincase — check for oil seepage around cover" },
+  { category: "Post-Drive", item: "Clear snow and ice from air intake and cooling vents" },
+  { category: "Post-Drive", item: "Fuel level — note remaining; refuel if storing overnight in cold" },
+];
+
+// ── ATV: Dirtbike ─────────────────────────────────────────────────────────────
+const DRIVER_ATV_DIRTBIKE_TEMPLATE = [
+  { category: "Pre-Drive", item: "Tires — check pressure and inspect for cuts or punctures in sidewalls" },
+  { category: "Pre-Drive", item: "Chain — tension and lubrication" },
+  { category: "Pre-Drive", item: "Engine oil (4-stroke) or pre-mix fuel level (2-stroke)" },
+  { category: "Pre-Drive", item: "Fuel level" },
+  { category: "Pre-Drive", item: "Spoke tension — check for loose or broken spokes" },
+  { category: "Pre-Drive", item: "Suspension — inspect fork seals and shock for oil leaks; check sag" },
+  { category: "Pre-Drive", item: "Front and rear brakes — firm lever and pedal feel" },
+  { category: "Pre-Drive", item: "Throttle — smooth and full snap-back" },
+  { category: "Pre-Drive", item: "Air filter — clean and properly oiled before every ride" },
+  { category: "Pre-Drive", item: "Skid plate — secure, no missing mounting hardware" },
+  { category: "Pre-Drive", item: "Kill switch — confirm functional" },
+  { category: "While Driving", item: "Brakes — responsive on all terrain" },
+  { category: "While Driving", item: "Engine temperature (water-cooled models) — in normal range" },
+  { category: "While Driving", item: "Chain sounds — listen for slap or tight spots" },
+  { category: "While Driving", item: "Handling — note any unexpected behavior over obstacles" },
+  { category: "Post-Drive", item: "Chain — clean and re-lube after every muddy or wet ride" },
+  { category: "Post-Drive", item: "Air filter — inspect and clean if dusty or muddy" },
+  { category: "Post-Drive", item: "Tire inspection — remove thorns or embedded debris" },
+  { category: "Post-Drive", item: "Spoke tension — recheck after rough riding" },
+  { category: "Post-Drive", item: "Wash mud from radiator fins and engine cases" },
+];
+
+export function getDriverTemplateForVehicleType(vehicleType?: string | null, subtype?: string | null) {
   switch (vehicleType) {
-    case "motorcycle": return DRIVER_MOTORCYCLE_TEMPLATE;
-    case "boat":       return DRIVER_BOAT_TEMPLATE;
-    case "atv":        return DRIVER_ATV_TEMPLATE;
-    default:           return DRIVER_CAR_TEMPLATE;
+    case "motorcycle":
+      switch (subtype) {
+        case "dualsport": return DRIVER_MC_DUALSPORT_TEMPLATE;
+        case "sport":     return DRIVER_MC_SPORT_TEMPLATE;
+        default:          return DRIVER_MOTORCYCLE_TEMPLATE;
+      }
+    case "boat":
+      switch (subtype) {
+        case "sailboat": return DRIVER_BOAT_SAILBOAT_TEMPLATE;
+        case "pwc":      return DRIVER_BOAT_PWC_TEMPLATE;
+        default:         return DRIVER_BOAT_TEMPLATE;
+      }
+    case "atv":
+      switch (subtype) {
+        case "side-by-side": return DRIVER_ATV_SXS_TEMPLATE;
+        case "snowmobile":   return DRIVER_ATV_SNOWMOBILE_TEMPLATE;
+        case "dirtbike":     return DRIVER_ATV_DIRTBIKE_TEMPLATE;
+        default:             return DRIVER_ATV_TEMPLATE;
+      }
+    default:
+      return DRIVER_CAR_TEMPLATE;
   }
 }
 
@@ -2185,8 +2383,8 @@ export function getDriverCategoriesForVehicleType(vehicleType?: string | null): 
   }
 }
 
-export function buildDefaultDriverInspection(vehicleType?: string | null) {
-  return getDriverTemplateForVehicleType(vehicleType).map(t => ({
+export function buildDefaultDriverInspection(vehicleType?: string | null, subtype?: string | null) {
+  return getDriverTemplateForVehicleType(vehicleType, subtype).map(t => ({
     ...t,
     status: UpsertInspectionItemStatus.pending,
     notes: "",
