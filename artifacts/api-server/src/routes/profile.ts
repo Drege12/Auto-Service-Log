@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, mechanicsTable, carsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and, isNotNull, inArray, ne } from "drizzle-orm";
 import type { Request, Response } from "express";
 
 const router = Router();
@@ -24,9 +24,11 @@ router.get("/profile", async (req, res) => {
         username: mechanicsTable.username,
         displayName: mechanicsTable.displayName,
         isAdmin: mechanicsTable.isAdmin,
+        role: mechanicsTable.role,
         phone: mechanicsTable.phone,
         email: mechanicsTable.email,
         contactPublic: mechanicsTable.contactPublic,
+        shopCode: mechanicsTable.shopCode,
       })
       .from(mechanicsTable)
       .where(eq(mechanicsTable.id, mechanicId));
@@ -38,22 +40,29 @@ router.get("/profile", async (req, res) => {
   }
 });
 
-// PATCH /api/profile — update own contact info + privacy
+// PATCH /api/profile — update own contact info + privacy + shop code
 router.patch("/profile", async (req, res) => {
   const mechanicId = getMechanicId(req);
   if (!mechanicId) { res.status(401).json({ error: "Not authenticated." }); return; }
 
-  const { phone, email, contactPublic } = req.body as {
+  const { phone, email, contactPublic, shopCode } = req.body as {
     phone?: string;
     email?: string;
     contactPublic?: boolean;
+    shopCode?: string;
   };
 
   try {
-    const setValues: { phone?: string | null; email?: string | null; contactPublic?: number } = {};
+    const setValues: {
+      phone?: string | null;
+      email?: string | null;
+      contactPublic?: number;
+      shopCode?: string | null;
+    } = {};
     if (phone !== undefined) setValues.phone = phone.trim() || null;
     if (email !== undefined) setValues.email = email.trim() || null;
     if (contactPublic !== undefined) setValues.contactPublic = contactPublic ? 1 : 0;
+    if (shopCode !== undefined) setValues.shopCode = shopCode.trim().toUpperCase() || null;
 
     if (Object.keys(setValues).length === 0) {
       res.status(400).json({ error: "Nothing to update." }); return;
@@ -68,15 +77,104 @@ router.patch("/profile", async (req, res) => {
         username: mechanicsTable.username,
         displayName: mechanicsTable.displayName,
         isAdmin: mechanicsTable.isAdmin,
+        role: mechanicsTable.role,
         phone: mechanicsTable.phone,
         email: mechanicsTable.email,
         contactPublic: mechanicsTable.contactPublic,
+        shopCode: mechanicsTable.shopCode,
       });
 
     if (!updated) { res.status(404).json({ error: "Account not found." }); return; }
     res.json({ ...updated, contactPublic: updated.contactPublic === 1 });
   } catch {
     res.status(500).json({ error: "Failed to save profile." });
+  }
+});
+
+// GET /api/mechanics/suggestions — smart default + search for new messages
+// Mechanics: defaults = clients (linked operators) + same-shop-code colleagues
+// Operators/Drivers: defaults = their linked mechanics
+// ?q=xxx searches all non-admin users
+router.get("/mechanics/suggestions", async (req, res) => {
+  const me = getMechanicId(req);
+  if (!me) { res.status(401).json({ error: "Not authenticated." }); return; }
+
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+
+  try {
+    const [caller] = await db
+      .select({ role: mechanicsTable.role, shopCode: mechanicsTable.shopCode })
+      .from(mechanicsTable)
+      .where(eq(mechanicsTable.id, me));
+
+    if (!caller) { res.status(404).json({ error: "Not found." }); return; }
+
+    type SuggestionUser = { id: number; displayName: string; username: string; tag: string };
+    let defaults: SuggestionUser[] = [];
+
+    if (caller.role === "mechanic") {
+      // Clients = operators/drivers whose cars I manage (linkedMechanicId = their account, mechanicId = me)
+      const linkedRows = await db
+        .select({ linkedId: carsTable.linkedMechanicId })
+        .from(carsTable)
+        .where(and(eq(carsTable.mechanicId, me), isNotNull(carsTable.linkedMechanicId)));
+
+      const clientIds = [...new Set(linkedRows.map(r => r.linkedId!))];
+      if (clientIds.length > 0) {
+        const clients = await db
+          .select({ id: mechanicsTable.id, displayName: mechanicsTable.displayName, username: mechanicsTable.username })
+          .from(mechanicsTable)
+          .where(inArray(mechanicsTable.id, clientIds));
+        defaults.push(...clients.map(c => ({ ...c, tag: "client" })));
+      }
+
+      // Shop colleagues = others with same shop code
+      if (caller.shopCode) {
+        const existingIds = new Set(defaults.map(d => d.id));
+        existingIds.add(me);
+        const colleagues = await db
+          .select({ id: mechanicsTable.id, displayName: mechanicsTable.displayName, username: mechanicsTable.username })
+          .from(mechanicsTable)
+          .where(and(
+            eq(mechanicsTable.shopCode, caller.shopCode),
+            ne(mechanicsTable.id, me),
+          ));
+        defaults.push(...colleagues.filter(c => !existingIds.has(c.id)).map(c => ({ ...c, tag: "shop" })));
+      }
+    } else {
+      // Operator/driver: mechanics who manage my linked vehicles
+      const linkedRows = await db
+        .select({ mechId: carsTable.mechanicId })
+        .from(carsTable)
+        .where(and(eq(carsTable.linkedMechanicId, me), isNotNull(carsTable.mechanicId)));
+
+      const mechIds = [...new Set(linkedRows.map(r => r.mechId!))];
+      if (mechIds.length > 0) {
+        const mechs = await db
+          .select({ id: mechanicsTable.id, displayName: mechanicsTable.displayName, username: mechanicsTable.username })
+          .from(mechanicsTable)
+          .where(inArray(mechanicsTable.id, mechIds));
+        defaults.push(...mechs.map(m => ({ ...m, tag: "mechanic" })));
+      }
+    }
+
+    // Search results (all non-admin users, excluding self)
+    let search: SuggestionUser[] = [];
+    if (q) {
+      const all = await db
+        .select({ id: mechanicsTable.id, displayName: mechanicsTable.displayName, username: mechanicsTable.username })
+        .from(mechanicsTable)
+        .where(and(eq(mechanicsTable.isAdmin, 0), ne(mechanicsTable.id, me)));
+
+      const ql = q.toLowerCase();
+      search = all
+        .filter(m => m.displayName.toLowerCase().includes(ql) || m.username.toLowerCase().includes(ql))
+        .map(m => ({ ...m, tag: "result" }));
+    }
+
+    res.json({ defaults, search });
+  } catch {
+    res.status(500).json({ error: "Failed to load suggestions." });
   }
 });
 

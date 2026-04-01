@@ -3,7 +3,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/phone-input";
-import { Phone, Mail, Eye, EyeOff, User } from "lucide-react";
+import { Phone, Mail, Eye, EyeOff, User, Hash } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -12,16 +12,18 @@ type Profile = {
   username: string;
   displayName: string;
   isAdmin: number;
+  role: string;
   phone: string | null;
   email: string | null;
   contactPublic: boolean;
+  shopCode: string | null;
 };
 
 function getSession() {
   try {
     const raw = localStorage.getItem("dt_mechanic");
     if (!raw) return null;
-    return JSON.parse(raw) as { mechanicId: number; username: string; displayName: string; isAdmin: boolean };
+    return JSON.parse(raw) as { mechanicId: number; username: string; displayName: string; isAdmin: boolean; role?: string };
   } catch { return null; }
 }
 
@@ -40,6 +42,7 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [contactPublic, setContactPublic] = useState(false);
+  const [shopCode, setShopCode] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -54,6 +57,7 @@ export default function ProfilePage() {
         setPhone(data.phone || "");
         setEmail(data.email || "");
         setContactPublic(data.contactPublic);
+        setShopCode(data.shopCode || "");
         setLoading(false);
       })
       .catch(() => {
@@ -67,10 +71,13 @@ export default function ProfilePage() {
     setSaveError("");
     setSaveSuccess(false);
     try {
+      const body: Record<string, unknown> = { phone: phone.trim(), email: email.trim(), contactPublic };
+      if (profile?.role === "mechanic") body.shopCode = shopCode.trim().toUpperCase();
+
       const res = await fetch(`${BASE}/api/profile`, {
         method: "PATCH",
         headers: authHeaders(),
-        body: JSON.stringify({ phone: phone.trim(), email: email.trim(), contactPublic }),
+        body: JSON.stringify(body),
       });
       const data = await res.json() as Profile & { error?: string };
       if (!res.ok) { setSaveError(data.error || "Save failed."); return; }
@@ -78,6 +85,7 @@ export default function ProfilePage() {
       setPhone(data.phone || "");
       setEmail(data.email || "");
       setContactPublic(data.contactPublic);
+      setShopCode(data.shopCode || "");
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch {
@@ -86,6 +94,8 @@ export default function ProfilePage() {
       setSaving(false);
     }
   };
+
+  const isMechanic = profile?.role === "mechanic" || session?.role === "mechanic" || (!session?.role && !profile?.role);
 
   return (
     <Layout>
@@ -109,13 +119,16 @@ export default function ProfilePage() {
                 {profile.isAdmin === 1 && (
                   <span className="ml-auto bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-widest">Admin</span>
                 )}
+                {profile.role === "driver" && (
+                  <span className="ml-auto bg-teal-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-widest">Driver</span>
+                )}
               </div>
             </div>
 
             <div className="bg-white border-4 border-black rounded-2xl p-6 space-y-6">
               <h2 className="text-2xl font-black uppercase">Contact Information</h2>
               <p className="text-base font-bold text-gray-600">
-                This information lets other mechanics reach you when you are working on a vehicle.
+                This information lets others reach you when you are working on a vehicle.
               </p>
 
               <div className="space-y-1">
@@ -140,6 +153,24 @@ export default function ProfilePage() {
                   className="bg-white text-black text-lg"
                 />
               </div>
+
+              {isMechanic && (
+                <div className="space-y-1">
+                  <label className="text-base font-black uppercase flex items-center gap-2 block">
+                    <Hash className="w-4 h-4" /> Shop Code
+                  </label>
+                  <Input
+                    value={shopCode}
+                    onChange={e => { setShopCode(e.target.value.toUpperCase()); setSaveSuccess(false); }}
+                    placeholder="e.g. MAINST"
+                    maxLength={16}
+                    className="bg-white text-black text-lg font-mono uppercase"
+                  />
+                  <p className="text-sm text-gray-500 font-medium mt-1">
+                    Mechanics with the same code will appear in each other's default message search.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <label className="text-base font-black uppercase block">Visibility</label>

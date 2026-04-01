@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ArrowLeft, Send, ChevronRight, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MessageSquare, ArrowLeft, Send, ChevronRight, Trash2, Search, Users, Wrench, Hash } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -9,7 +10,7 @@ function getSession() {
   try {
     const raw = localStorage.getItem("dt_mechanic");
     if (!raw) return null;
-    return JSON.parse(raw) as { mechanicId: number; displayName: string };
+    return JSON.parse(raw) as { mechanicId: number; displayName: string; role?: string };
   } catch { return null; }
 }
 
@@ -36,10 +37,16 @@ type Message = {
   createdAt: string;
 };
 
-type Mechanic = {
+type SuggestionUser = {
   id: number;
   displayName: string;
   username: string;
+  tag: string; // "client" | "shop" | "mechanic" | "result"
+};
+
+type Suggestions = {
+  defaults: SuggestionUser[];
+  search: SuggestionUser[];
 };
 
 function formatTime(iso: string): string {
@@ -53,6 +60,24 @@ function formatTime(iso: string): string {
     " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function tagLabel(tag: string): string {
+  switch (tag) {
+    case "client": return "CLIENT";
+    case "shop": return "SAME SHOP";
+    case "mechanic": return "YOUR MECHANIC";
+    default: return "";
+  }
+}
+
+function tagColor(tag: string): string {
+  switch (tag) {
+    case "client": return "bg-teal-100 text-teal-800 border-teal-400";
+    case "shop": return "bg-blue-100 text-blue-800 border-blue-400";
+    case "mechanic": return "bg-purple-100 text-purple-800 border-purple-400";
+    default: return "";
+  }
+}
+
 export default function MessagesPage() {
   const session = getSession();
   const myId = session?.mechanicId;
@@ -63,12 +88,17 @@ export default function MessagesPage() {
   const [thread, setThread] = useState<Message[]>([]);
   const [newBody, setNewBody] = useState("");
   const [sending, setSending] = useState(false);
-  const [mechanics, setMechanics] = useState<Mechanic[]>([]);
   const [showNewConvo, setShowNewConvo] = useState(false);
   const [loadingThread, setLoadingThread] = useState(false);
   const [confirmDeletePartnerId, setConfirmDeletePartnerId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Suggestions state
+  const [suggestions, setSuggestions] = useState<Suggestions>({ defaults: [], search: [] });
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchInbox = async () => {
     try {
@@ -88,11 +118,14 @@ export default function MessagesPage() {
     setLoadingThread(false);
   };
 
-  const fetchMechanics = async () => {
+  const fetchSuggestions = async (q = "") => {
+    setLoadingSuggestions(true);
     try {
-      const r = await fetch(`${BASE}/api/mechanics/list`, { headers: authHeaders() });
-      if (r.ok) setMechanics(await r.json());
+      const url = q ? `${BASE}/api/mechanics/suggestions?q=${encodeURIComponent(q)}` : `${BASE}/api/mechanics/suggestions`;
+      const r = await fetch(url, { headers: authHeaders() });
+      if (r.ok) setSuggestions(await r.json());
     } catch { /* ignore */ }
+    setLoadingSuggestions(false);
   };
 
   const handleDeleteConversation = async (partnerId: number) => {
@@ -112,13 +145,30 @@ export default function MessagesPage() {
     setConfirmDeletePartnerId(null);
   };
 
-  // Initial load + polling
+  // Initial inbox load + polling
   useEffect(() => {
     fetchInbox();
-    fetchMechanics();
     const iv = setInterval(fetchInbox, 10000);
     return () => clearInterval(iv);
   }, []);
+
+  // Load suggestions when new conversation panel opens
+  useEffect(() => {
+    if (showNewConvo) {
+      setSearchQuery("");
+      fetchSuggestions();
+    }
+  }, [showNewConvo]);
+
+  // Debounced search
+  useEffect(() => {
+    if (!showNewConvo) return;
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      fetchSuggestions(searchQuery);
+    }, 300);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [searchQuery]);
 
   // Poll active thread
   useEffect(() => {
@@ -158,8 +208,6 @@ export default function MessagesPage() {
     } catch { /* ignore */ }
     setSending(false);
   };
-
-  const availableMechanics = mechanics.filter(m => m.id !== myId);
 
   // ── Thread view ──────────────────────────────────────────────────────────
   if (activePartnerId !== null) {
@@ -217,26 +265,20 @@ export default function MessagesPage() {
             {loadingThread && thread.length === 0 && (
               <div className="text-center text-gray-500 font-bold py-8">Loading...</div>
             )}
-            {!loadingThread && thread.length === 0 && (
-              <div className="text-center text-gray-500 font-bold py-8 text-lg">
-                No messages yet. Say hello!
-              </div>
-            )}
             {thread.map(msg => {
               const isMine = msg.senderId === myId;
               return (
                 <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[78%] px-4 py-3 rounded-2xl border-2 border-black shadow-brutal-sm ${
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
                       isMine
-                        ? "bg-black text-white rounded-br-none"
-                        : "bg-white text-black rounded-bl-none"
+                        ? "bg-black text-white rounded-br-sm"
+                        : "bg-white border-2 border-gray-200 text-black rounded-bl-sm"
                     }`}
                   >
-                    <p className="text-base font-medium leading-snug break-words">{msg.body}</p>
-                    <p className={`text-xs mt-1 font-bold ${isMine ? "text-gray-400 text-right" : "text-gray-500"}`}>
+                    <p className="text-base leading-snug break-words">{msg.body}</p>
+                    <p className={`text-xs mt-1.5 ${isMine ? "text-gray-400 text-right" : "text-gray-400"}`}>
                       {formatTime(msg.createdAt)}
-                      {isMine && msg.readAt && " · Read"}
                     </p>
                   </div>
                 </div>
@@ -245,20 +287,17 @@ export default function MessagesPage() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Send bar */}
-          <div className="flex gap-3 items-end border-4 border-black rounded-xl bg-gray-100 p-3 shadow-brutal">
+          {/* Compose */}
+          <div className="flex gap-3 items-end border-t-4 border-black pt-4">
             <textarea
-              className="flex-1 resize-none border-2 border-black rounded-lg p-3 text-base font-medium bg-white text-black min-h-[52px] max-h-32 focus:outline-none focus:ring-2 focus:ring-black"
-              placeholder="Type a message…"
               value={newBody}
-              rows={1}
               onChange={e => setNewBody(e.target.value)}
               onKeyDown={e => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
               }}
+              placeholder="Type a message..."
+              rows={2}
+              className="flex-1 resize-none rounded-xl border-4 border-black p-3 text-base font-medium bg-white text-black focus:outline-none focus:border-gray-500"
             />
             <Button
               type="button"
@@ -278,6 +317,14 @@ export default function MessagesPage() {
 
   // ── New conversation picker ──────────────────────────────────────────────
   if (showNewConvo) {
+    const showingSearch = searchQuery.length > 0;
+    const displayList = showingSearch ? suggestions.search : suggestions.defaults;
+
+    // Group defaults by tag for labelled sections
+    const clientList = suggestions.defaults.filter(u => u.tag === "client");
+    const shopList = suggestions.defaults.filter(u => u.tag === "shop");
+    const mechanicList = suggestions.defaults.filter(u => u.tag === "mechanic");
+
     return (
       <Layout>
         <div className="max-w-xl mx-auto">
@@ -292,27 +339,81 @@ export default function MessagesPage() {
             </button>
             <h1 className="text-2xl font-black uppercase">New Message</h1>
           </div>
-          {availableMechanics.length === 0 ? (
-            <div className="text-center text-gray-500 font-bold py-12 text-lg border-4 border-dashed border-gray-300 rounded-xl">
-              No other mechanics to message.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {availableMechanics.map(m => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => openConversation(m.id, m.displayName)}
-                  className="w-full flex items-center justify-between bg-white border-4 border-black rounded-xl p-5 shadow-brutal hover:bg-black hover:text-white transition-all group"
-                >
-                  <div className="text-left">
-                    <p className="text-xl font-black uppercase">{m.displayName}</p>
-                    <p className="text-sm font-medium text-gray-500 group-hover:text-gray-300">@{m.username}</p>
-                  </div>
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              ))}
-            </div>
+
+          {/* Search input */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            <Input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search by name or username..."
+              className="pl-10 bg-white text-black text-lg border-4 border-black"
+            />
+          </div>
+
+          {loadingSuggestions && (
+            <div className="text-center py-8 text-gray-400 font-bold">Loading...</div>
+          )}
+
+          {!loadingSuggestions && (
+            <>
+              {/* Search results */}
+              {showingSearch && (
+                <>
+                  {displayList.length === 0 ? (
+                    <div className="text-center py-12 border-4 border-dashed border-gray-300 rounded-xl">
+                      <p className="text-lg font-black text-gray-500 uppercase">No results for "{searchQuery}"</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {displayList.map(u => (
+                        <UserRow key={u.id} user={u} onClick={() => openConversation(u.id, u.displayName)} />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Default sections */}
+              {!showingSearch && (
+                <>
+                  {suggestions.defaults.length === 0 ? (
+                    <div className="text-center py-12 border-4 border-dashed border-gray-300 rounded-xl">
+                      <MessageSquare className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                      <p className="text-lg font-black text-gray-500 uppercase">No suggested contacts</p>
+                      <p className="text-gray-400 font-medium mt-2">Use the search bar to find someone to message.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {clientList.length > 0 && (
+                        <Section
+                          icon={<Users className="w-5 h-5" />}
+                          label="Your Clients"
+                          users={clientList}
+                          onSelect={u => openConversation(u.id, u.displayName)}
+                        />
+                      )}
+                      {mechanicList.length > 0 && (
+                        <Section
+                          icon={<Wrench className="w-5 h-5" />}
+                          label="Your Mechanic"
+                          users={mechanicList}
+                          onSelect={u => openConversation(u.id, u.displayName)}
+                        />
+                      )}
+                      {shopList.length > 0 && (
+                        <Section
+                          icon={<Hash className="w-5 h-5" />}
+                          label="Same Shop"
+                          users={shopList}
+                          onSelect={u => openConversation(u.id, u.displayName)}
+                        />
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </>
           )}
         </div>
       </Layout>
@@ -414,5 +515,53 @@ export default function MessagesPage() {
         )}
       </div>
     </Layout>
+  );
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────
+
+function UserRow({ user, onClick }: { user: SuggestionUser; onClick: () => void }) {
+  const label = tagLabel(user.tag);
+  const color = tagColor(user.tag);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-between bg-white border-4 border-black rounded-xl p-4 shadow-brutal hover:bg-black hover:text-white transition-all group"
+    >
+      <div className="text-left flex-1 min-w-0">
+        <p className="text-xl font-black uppercase truncate">{user.displayName}</p>
+        <p className="text-sm font-medium text-gray-500 group-hover:text-gray-300">@{user.username}</p>
+      </div>
+      {label && (
+        <span className={`text-xs font-black uppercase px-2 py-0.5 rounded border ${color} mr-2 shrink-0 group-hover:opacity-0`}>
+          {label}
+        </span>
+      )}
+      <ChevronRight className="w-6 h-6 shrink-0" />
+    </button>
+  );
+}
+
+function Section({
+  icon, label, users, onSelect,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  users: SuggestionUser[];
+  onSelect: (u: SuggestionUser) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-gray-500">{icon}</span>
+        <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">{label}</h2>
+      </div>
+      <div className="space-y-3">
+        {users.map(u => (
+          <UserRow key={u.id} user={u} onClick={() => onSelect(u)} />
+        ))}
+      </div>
+    </div>
   );
 }

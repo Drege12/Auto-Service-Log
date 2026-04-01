@@ -12,6 +12,7 @@ export const mechanicsTable = pgTable("mechanics", {
   phone: text("phone"),
   email: text("email"),
   contactPublic: integer("contact_public").notNull().default(0),
+  shopCode: text("shop_code"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
