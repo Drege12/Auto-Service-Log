@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { Wrench, LogOut, Users, UserCircle, BarChart2, MessageSquare, Bell } from "lucide-react";
+import { Wrench, LogOut, Users, UserCircle, BarChart2, MessageSquare, Bell, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setMechanicId } from "@workspace/api-client-react";
 
@@ -80,9 +80,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <nav className="flex items-center gap-3">
+          <nav className="flex items-center gap-0.5">
             {displayName && (
-              <span className="flex items-center gap-2 hidden sm:flex">
+              <span className="hidden lg:flex items-center gap-2 mr-2">
                 {isAdmin && (
                   <span className="bg-amber-500 text-white font-black px-2 py-0.5 rounded text-xs uppercase tracking-widest">Admin</span>
                 )}
@@ -96,35 +96,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link
                 href="/admin"
                 className={cn(
-                  "font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
                   location === "/admin" ? "bg-amber-500 text-white border-amber-500 shadow-brutal-sm" : ""
                 )}
               >
-                <Users className="w-5 h-5" />
-                <span className="hidden sm:inline">ACCOUNTS</span>
+                <Users className="w-5 h-5 shrink-0" />
+                <span className="hidden md:inline text-sm">ACCOUNTS</span>
               </Link>
             )}
             {adminMode && (
               <Link
                 href="/stats"
                 className={cn(
-                  "font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
                   location === "/stats" ? "bg-blue-600 text-white border-blue-600 shadow-brutal-sm" : ""
                 )}
               >
-                <BarChart2 className="w-5 h-5" />
-                <span className="hidden sm:inline">STATS</span>
+                <BarChart2 className="w-5 h-5 shrink-0" />
+                <span className="hidden md:inline text-sm">STATS</span>
               </Link>
             )}
             <Link
               href="/notifications"
               className={cn(
-                "relative font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                "relative font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
                 location === "/notifications" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
-              <Bell className="w-5 h-5" />
-              <span className="hidden sm:inline">ALERTS</span>
+              <Bell className="w-5 h-5 shrink-0" />
+              <span className="hidden md:inline text-sm">ALERTS</span>
               {unreadNotifCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-xs font-black w-5 h-5 rounded-full flex items-center justify-center leading-none">
                   {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
@@ -134,12 +134,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/messages"
               className={cn(
-                "relative font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                "relative font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
                 location === "/messages" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
-              <MessageSquare className="w-5 h-5" />
-              <span className="hidden sm:inline">MESSAGES</span>
+              <MessageSquare className="w-5 h-5 shrink-0" />
+              <span className="hidden md:inline text-sm">MESSAGES</span>
               {unreadCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-xs font-black w-5 h-5 rounded-full flex items-center justify-center leading-none">
                   {unreadCount > 9 ? "9+" : unreadCount}
@@ -149,30 +149,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/profile"
               className={cn(
-                "font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-2 rounded-md",
+                "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
                 location === "/profile" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
-              <UserCircle className="w-5 h-5" />
-              <span className="hidden sm:inline">PROFILE</span>
+              <UserCircle className="w-5 h-5 shrink-0" />
+              <span className="hidden md:inline text-sm">PROFILE</span>
             </Link>
             <Link
               href="/"
               className={cn(
-                "font-bold text-lg px-4 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center rounded-md",
+                "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
                 location === "/" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
-              BACK
+              <Home className="w-5 h-5 shrink-0" />
+              <span className="hidden md:inline text-sm">BACK</span>
             </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-2 font-bold text-base px-4 py-2 border-2 border-black rounded-md hover:bg-black hover:text-white transition-all tap-target"
+              className="flex items-center gap-1.5 font-bold px-2 py-2 border-2 border-black rounded-md hover:bg-black hover:text-white transition-all tap-target"
               title="Log out"
             >
-              <LogOut className="w-5 h-5" />
-              <span className="hidden sm:inline">LOG OUT</span>
+              <LogOut className="w-5 h-5 shrink-0" />
+              <span className="hidden md:inline text-sm">LOG OUT</span>
             </button>
           </nav>
         </div>
