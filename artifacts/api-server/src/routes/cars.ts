@@ -345,6 +345,22 @@ router.put("/cars/:carId", async (req, res) => {
   }
 });
 
+router.patch("/cars/:carId/notes", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const { notes } = req.body as { notes?: string };
+    const [car] = await db
+      .update(carsTable)
+      .set({ notes: notes ?? null })
+      .where(eq(carsTable.id, carId))
+      .returning();
+    if (!car) { res.status(404).json({ error: "Car not found" }); return; }
+    res.json({ notes: car.notes });
+  } catch {
+    res.status(500).json({ error: "Failed to save notes" });
+  }
+});
+
 router.patch("/cars/:carId/sold", async (req, res) => {
   try {
     const carId = parseInt(req.params.carId, 10);
