@@ -158,6 +158,7 @@ export default function CarsList() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+  const [carView, setCarView] = useState<"all" | "work" | "personal" | "clients">("all");
   const [showSold, setShowSold] = useState(false);
   const [soldCollapsed, setSoldCollapsed] = useState(true);
 
@@ -453,10 +454,9 @@ export default function CarsList() {
       result = result.filter(c => statusFilters.includes(c.status || ""));
     }
 
-    const ownerFilters = ["dealer", "personal"].filter(o => activeFilters.has(`owner:${o}`));
-    if (ownerFilters.length > 0) {
-      result = result.filter(c => ownerFilters.includes(c.carType || "dealer"));
-    }
+    if (carView === "work") result = result.filter(c => (c.carType === "dealer" || !c.carType) && !c.isLinkedCar);
+    else if (carView === "personal") result = result.filter(c => c.carType === "personal" && !c.isLinkedCar);
+    else if (carView === "clients") result = result.filter(c => c.isLinkedCar === true);
 
     return result;
   };
@@ -512,6 +512,27 @@ export default function CarsList() {
         </div>
       </div>
 
+      {/* Work / Personal / Clients slider */}
+      <div className="flex border-4 border-black rounded-xl overflow-hidden mb-4">
+        {([
+          { key: "all",      label: "All" },
+          { key: "work",     label: "Work" },
+          { key: "personal", label: "Personal" },
+          { key: "clients",  label: "Clients" },
+        ] as const).map(({ key, label }, i, arr) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setCarView(key)}
+            className={`flex-1 py-3 font-black uppercase text-base tracking-wide transition-colors tap-target ${
+              i < arr.length - 1 ? "border-r-2 border-black" : ""
+            } ${carView === key ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Filter badges */}
       <div className="flex flex-wrap gap-2 mb-6">
         {[
@@ -519,14 +540,12 @@ export default function CarsList() {
           { key: "type:motorcycle", label: "Motorcycle",   on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
           { key: "type:boat",       label: "Boat",         on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
           { key: "type:atv",        label: "ATV / UTV",    on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
-          { key: "status:in_service",   label: "In Service",   on: "bg-blue-600 text-white",   off: "bg-white text-black border-2 border-blue-400" },
-          { key: "status:ready",        label: "Ready",        on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400" },
-          { key: "status:on_hold",      label: "On Hold",      on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
-          { key: "status:service_due",  label: "Service Due",  on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
+          { key: "status:in_service",      label: "In Service",      on: "bg-blue-600 text-white",   off: "bg-white text-black border-2 border-blue-400" },
+          { key: "status:ready",           label: "Ready",           on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400" },
+          { key: "status:on_hold",         label: "On Hold",         on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
+          { key: "status:service_due",     label: "Service Due",     on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
           { key: "status:needs_attention", label: "Needs Attention", on: "bg-orange-600 text-white", off: "bg-white text-black border-2 border-orange-400" },
           { key: "status:out_of_service",  label: "Out of Service",  on: "bg-red-600 text-white",    off: "bg-white text-black border-2 border-red-400" },
-          { key: "owner:dealer",    label: "Work",         on: "bg-black text-white",      off: "bg-white text-black border-2 border-gray-400" },
-          { key: "owner:personal",  label: "Personal",     on: "bg-teal-700 text-white",   off: "bg-white text-black border-2 border-teal-400" },
         ].map(({ key, label, on, off }) => (
           <button
             key={key}
