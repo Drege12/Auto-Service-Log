@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, ArrowLeft, Send, ChevronRight, Trash2, Search, Users, Wrench, Hash } from "lucide-react";
+import { MessageSquare, ArrowLeft, Send, ChevronRight, Trash2, Search, Users, Wrench, Hash, User, Phone, Mail, X } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -42,6 +42,15 @@ type SuggestionUser = {
   displayName: string;
   username: string;
   tag: string; // "client" | "shop" | "mechanic" | "result"
+};
+
+type ContactInfo = {
+  id: number;
+  displayName: string;
+  phone: string | null;
+  email: string | null;
+  contactPublic: boolean;
+  visible: boolean;
 };
 
 type Suggestions = {
@@ -93,6 +102,9 @@ export default function MessagesPage() {
   const [confirmDeletePartnerId, setConfirmDeletePartnerId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [fetchingContact, setFetchingContact] = useState(false);
 
   // Suggestions state
   const [suggestions, setSuggestions] = useState<Suggestions>({ defaults: [], search: [] });
@@ -182,11 +194,23 @@ export default function MessagesPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [thread]);
 
+  const fetchContact = async (partnerId: number) => {
+    setFetchingContact(true);
+    try {
+      const r = await fetch(`${BASE}/api/mechanics/${partnerId}/contact`, { headers: authHeaders() });
+      if (r.ok) setContactInfo(await r.json());
+    } catch { /* ignore */ }
+    setFetchingContact(false);
+    setShowContactModal(true);
+  };
+
   const openConversation = (partnerId: number, partnerName: string) => {
     setActivePartnerId(partnerId);
     setActivePartnerName(partnerName);
     setNewBody("");
     setConfirmDeletePartnerId(null);
+    setContactInfo(null);
+    setShowContactModal(false);
     fetchThread(partnerId);
     setShowNewConvo(false);
   };
@@ -225,10 +249,19 @@ export default function MessagesPage() {
               <ArrowLeft className="w-5 h-5" />
               BACK
             </button>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-black uppercase truncate">{activePartnerName}</h2>
-              <p className="text-gray-500 text-sm font-medium">Conversation</p>
-            </div>
+            <button
+              type="button"
+              onClick={() => fetchContact(activePartnerId)}
+              disabled={fetchingContact}
+              className="flex-1 min-w-0 text-left group"
+            >
+              <h2 className="text-xl font-black uppercase truncate underline decoration-dashed underline-offset-4 group-hover:decoration-solid">
+                {activePartnerName}
+              </h2>
+              <p className="text-gray-500 text-sm font-medium">
+                {fetchingContact ? "Loading..." : "Tap name to view contact"}
+              </p>
+            </button>
             {isConfirmingDelete ? (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-sm font-black text-red-600 uppercase">Delete all?</span>
@@ -311,6 +344,91 @@ export default function MessagesPage() {
             </Button>
           </div>
         </div>
+
+        {/* Contact info modal */}
+        {showContactModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+            onClick={() => setShowContactModal(false)}
+          >
+            <div
+              className="bg-white border-4 border-black rounded-2xl shadow-brutal w-full max-w-sm p-6 space-y-5"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gray-100 border-2 border-black rounded-xl p-3">
+                    <User className="w-8 h-8" />
+                  </div>
+                  <h2 className="text-2xl font-black uppercase leading-tight">
+                    {contactInfo?.displayName ?? activePartnerName}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(false)}
+                  className="shrink-0 border-2 border-black rounded-lg p-2 bg-white hover:bg-gray-100 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Contact details */}
+              {contactInfo?.visible ? (
+                <div className="space-y-3">
+                  {contactInfo.phone ? (
+                    <a
+                      href={`tel:${contactInfo.phone}`}
+                      className="flex items-center gap-4 border-4 border-black rounded-xl p-4 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Phone className="w-6 h-6 shrink-0" />
+                      <div>
+                        <p className="text-xs font-black uppercase text-gray-500">Phone</p>
+                        <p className="text-xl font-black">{contactInfo.phone}</p>
+                      </div>
+                    </a>
+                  ) : (
+                    <div className="flex items-center gap-4 border-4 border-gray-200 rounded-xl p-4 bg-gray-50">
+                      <Phone className="w-6 h-6 shrink-0 text-gray-400" />
+                      <p className="text-base font-bold text-gray-400">No phone on file</p>
+                    </div>
+                  )}
+                  {contactInfo.email ? (
+                    <a
+                      href={`mailto:${contactInfo.email}`}
+                      className="flex items-center gap-4 border-4 border-black rounded-xl p-4 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <Mail className="w-6 h-6 shrink-0" />
+                      <div>
+                        <p className="text-xs font-black uppercase text-gray-500">Email</p>
+                        <p className="text-xl font-black break-all">{contactInfo.email}</p>
+                      </div>
+                    </a>
+                  ) : (
+                    <div className="flex items-center gap-4 border-4 border-gray-200 rounded-xl p-4 bg-gray-50">
+                      <Mail className="w-6 h-6 shrink-0 text-gray-400" />
+                      <p className="text-base font-bold text-gray-400">No email on file</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="border-4 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                  <p className="text-lg font-black text-gray-500 uppercase">Contact info is private</p>
+                  <p className="text-sm font-medium text-gray-400 mt-1">This user has not made their contact info public.</p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowContactModal(false)}
+                className="w-full py-3 font-black uppercase text-base border-4 border-black rounded-xl bg-black text-white hover:bg-gray-900 transition-all"
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
+        )}
       </Layout>
     );
   }
