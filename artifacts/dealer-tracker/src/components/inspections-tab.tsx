@@ -26,12 +26,14 @@ export function InspectionsTab({
   vehicleType,
   vehicleSubtype,
   userRole,
+  isOwnCar,
 }: {
   carId: number;
   carLabel: string;
   vehicleType?: string | null;
   vehicleSubtype?: string | null;
   userRole?: string;
+  isOwnCar?: boolean;
 }) {
   const queryClient = useQueryClient();
   const { data: inspectionItems, isLoading, isError } = useGetInspection(carId);
@@ -46,6 +48,10 @@ export function InspectionsTab({
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [driverReviewItems, setDriverReviewItems] = useState<Partial<InspectionItem>[]>([]);
   const [driverReviewOpen, setDriverReviewOpen] = useState<Set<string>>(new Set());
+  // Editable driver/operator items for mechanics viewing their own (non-client) cars
+  const [ownDriverItems, setOwnDriverItems] = useState<Partial<InspectionItem>[]>([]);
+  const [ownDriverOpen, setOwnDriverOpen] = useState<Set<string>>(new Set());
+  const [ownDriverSectionOpen, setOwnDriverSectionOpen] = useState(false);
 
   // Holds all items from the server (both driver and mechanic) so saves don't clobber the other role
   const allServerItemsRef = useRef<Partial<InspectionItem>[]>([]);
@@ -72,15 +78,26 @@ export function InspectionsTab({
         setLocalItems(items);
         serverStateRef.current = items;
 
-        // Populate driver review panel — only items the driver actually filled in
-        const driverItems = inspectionItems.filter(i =>
-          DRIVER_INSPECTION_CATEGORIES.includes(i.category || "")
-        );
-        setDriverReviewItems(driverItems);
+        if (isOwnCar) {
+          // For mechanic viewing their own car: load driver items as editable
+          const driverItems = inspectionItems.filter(i =>
+            DRIVER_INSPECTION_CATEGORIES.includes(i.category || "")
+          );
+          const ownItems = driverItems.length === 0
+            ? buildDefaultDriverInspection(vehicleType, vehicleSubtype)
+            : driverItems;
+          setOwnDriverItems(ownItems);
+        } else {
+          // Populate read-only driver review panel (client cars)
+          const driverItems = inspectionItems.filter(i =>
+            DRIVER_INSPECTION_CATEGORIES.includes(i.category || "")
+          );
+          setDriverReviewItems(driverItems);
+        }
       }
       setIsDirty(false);
     }
-  }, [inspectionItems, isDriver]);
+  }, [inspectionItems, isDriver, isOwnCar]);
 
   if (isLoading) return <div className="p-12 text-center text-2xl font-bold">Loading inspection...</div>;
   if (isError) return <div className="p-12 text-center text-2xl font-bold text-red-600">Error loading inspection.</div>;
@@ -127,13 +144,46 @@ export function InspectionsTab({
     setSavedMessage("");
   };
 
-  const handleSave = () => {
-    // Preserve the other role's items so they aren't deleted on save
-    const otherRoleItems = isDriver
-      ? allServerItemsRef.current.filter(i => !DRIVER_INSPECTION_CATEGORIES.includes(i.category || ""))
-      : allServerItemsRef.current.filter(i => DRIVER_INSPECTION_CATEGORIES.includes(i.category || ""));
+  const handleOwnDriverStatusChange = (index: number, status: UpsertInspectionItemStatus) => {
+    const newItems = [...ownDriverItems];
+    newItems[index] = { ...newItems[index], status };
+    setOwnDriverItems(newItems);
+    setIsDirty(true);
+    setSavedMessage("");
+  };
 
-    const payload = [...localItems, ...otherRoleItems].map(item => ({
+  const handleOwnDriverNotesChange = (index: number, notes: string) => {
+    const newItems = [...ownDriverItems];
+    newItems[index] = { ...newItems[index], notes };
+    setOwnDriverItems(newItems);
+    setIsDirty(true);
+    setSavedMessage("");
+  };
+
+  const toggleOwnDriverCategory = (category: string) => {
+    setOwnDriverOpen(prev => {
+      const next = new Set(prev);
+      next.has(category) ? next.delete(category) : next.add(category);
+      return next;
+    });
+  };
+
+  const handleSave = () => {
+    // For mechanic's own car: save both mechanic items and editable driver items together
+    // For client cars: preserve driver items from server (read-only, not edited here)
+    // For drivers: preserve mechanic items from server
+    let otherRoleItems: Partial<InspectionItem>[];
+    if (isOwnCar) {
+      otherRoleItems = []; // ownDriverItems already included below
+    } else if (isDriver) {
+      otherRoleItems = allServerItemsRef.current.filter(i => !DRIVER_INSPECTION_CATEGORIES.includes(i.category || ""));
+    } else {
+      otherRoleItems = allServerItemsRef.current.filter(i => DRIVER_INSPECTION_CATEGORIES.includes(i.category || ""));
+    }
+
+    const ownDriverPayload = isOwnCar ? ownDriverItems : [];
+
+    const payload = [...localItems, ...otherRoleItems, ...ownDriverPayload].map(item => ({
       id: item.id,
       category: item.category || "Unknown",
       item: item.item || "Unknown",
@@ -151,7 +201,7 @@ export function InspectionsTab({
 
     upsertInspection({ carId, data: payload }, {
       onSuccess: () => {
-        allServerItemsRef.current = [...localItems, ...otherRoleItems];
+        allServerItemsRef.current = [...localItems, ...otherRoleItems, ...ownDriverPayload];
         serverStateRef.current = localItems.map(item => ({ ...item }));
         setIsDirty(false);
 
@@ -413,6 +463,162 @@ export function InspectionsTab({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {isOwnCar && !isDriver && ownDriverItems.length > 0 && (
+        <div className="mt-6">
+          {/* Top-level collapsible section header */}
+          <button
+            type="button"
+            onClick={() => setOwnDriverSectionOpen(v => !v)}
+            className="w-full flex items-center justify-between gap-4 p-5 text-left bg-teal-600 text-white rounded-xl font-black uppercase text-xl border-4 border-teal-700 shadow-brutal"
+          >
+            <div className="flex items-center gap-3">
+              <Car className="w-7 h-7" />
+              <span>
+                {vehicleType === "motorcycle" ? "Rider's Check"
+                  : vehicleType === "boat" ? "Operator's Check"
+                  : "Driver's Check"}
+              </span>
+              <span className="text-sm font-bold bg-white text-teal-700 px-2 py-0.5 rounded">
+                {ownDriverItems.filter(i => !i.status || i.status === "pending").length > 0
+                  ? `${ownDriverItems.filter(i => !i.status || i.status === "pending").length} PENDING`
+                  : "ALL REVIEWED"}
+              </span>
+            </div>
+            {ownDriverSectionOpen
+              ? <ChevronDown className="w-8 h-8 flex-shrink-0" />
+              : <ChevronRight className="w-8 h-8 flex-shrink-0" />}
+          </button>
+
+          {ownDriverSectionOpen && (
+            <div className="mt-3 space-y-3 pl-0">
+              <p className="text-teal-700 font-bold text-base px-2">
+                {vehicleType === "motorcycle" ? "Pre-ride, while riding, and post-ride checks."
+                  : vehicleType === "boat" ? "Pre-launch, underway, and post-use checks."
+                  : "Pre-drive, while driving, and post-drive checks."}
+              </p>
+              {getDriverCategoriesForVehicleType(vehicleType).map(category => {
+                const categoryItems = ownDriverItems
+                  .map((item, index) => ({ item, index }))
+                  .filter(x => x.item.category === category);
+                if (categoryItems.length === 0) return null;
+
+                const isOpen = ownDriverOpen.has(category);
+                const hasFail = categoryItems.some(x => x.item.status === "fail");
+                const hasAdvisory = categoryItems.some(x => x.item.status === "advisory");
+                const borderColor = hasFail ? "border-red-600" : hasAdvisory ? "border-orange-500" : "border-teal-600";
+
+                const resetCategoryToPending = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  const newItems = [...ownDriverItems];
+                  categoryItems.forEach(({ index }) => {
+                    newItems[index] = { ...newItems[index], status: UpsertInspectionItemStatus.pending };
+                  });
+                  setOwnDriverItems(newItems);
+                  setIsDirty(true);
+                  setSavedMessage("");
+                };
+
+                return (
+                  <div key={category} className={`border-4 rounded-xl overflow-hidden ${borderColor}`}>
+                    <button
+                      type="button"
+                      onClick={() => toggleOwnDriverCategory(category)}
+                      className={`w-full flex flex-col gap-3 p-5 text-left font-black uppercase text-xl ${
+                        hasFail ? "bg-red-50" : hasAdvisory ? "bg-orange-50" : isOpen ? "bg-teal-50" : "bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-2xl">{category}</span>
+                        {isOpen ? <ChevronDown className="w-8 h-8 flex-shrink-0" /> : <ChevronRight className="w-8 h-8 flex-shrink-0" />}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <CategorySummary items={categoryItems.map(x => x.item)} />
+                        <span
+                          role="button"
+                          onClick={resetCategoryToPending}
+                          className="bg-gray-200 text-black text-sm font-black px-3 py-2 rounded-lg uppercase"
+                        >
+                          Reset
+                        </span>
+                      </div>
+                    </button>
+
+                    {isOpen && (
+                      <div className="divide-y-2 divide-teal-200 border-t-4 border-teal-600">
+                        {categoryItems.map(({ item, index }) => {
+                          const isFail = item.status === "fail";
+                          return (
+                            <div
+                              key={index}
+                              className={`flex flex-col xl:flex-row gap-4 p-6 ${
+                                isFail ? "bg-red-50"
+                                  : item.status === "advisory" ? "bg-orange-50"
+                                  : item.status === "pass" ? "bg-green-50"
+                                  : "bg-white"
+                              }`}
+                            >
+                              <div className="flex-1">
+                                <div className="text-xl font-bold">{item.item}</div>
+                                <div className="mt-4 flex flex-wrap gap-3">
+                                  <StatusButton
+                                    currentStatus={item.status || "pending"}
+                                    targetStatus={UpsertInspectionItemStatus.pass}
+                                    onClick={() => handleOwnDriverStatusChange(index, UpsertInspectionItemStatus.pass)}
+                                    icon={CheckCircle2}
+                                    label="PASS"
+                                  />
+                                  <StatusButton
+                                    currentStatus={item.status || "pending"}
+                                    targetStatus={UpsertInspectionItemStatus.fail}
+                                    onClick={() => handleOwnDriverStatusChange(index, UpsertInspectionItemStatus.fail)}
+                                    icon={AlertCircle}
+                                    label="FAIL"
+                                  />
+                                  <StatusButton
+                                    currentStatus={item.status || "pending"}
+                                    targetStatus={UpsertInspectionItemStatus.advisory}
+                                    onClick={() => handleOwnDriverStatusChange(index, UpsertInspectionItemStatus.advisory)}
+                                    icon={AlertTriangle}
+                                    label="ADVISORY"
+                                  />
+                                  <StatusButton
+                                    currentStatus={item.status || "pending"}
+                                    targetStatus={UpsertInspectionItemStatus.na}
+                                    onClick={() => handleOwnDriverStatusChange(index, UpsertInspectionItemStatus.na)}
+                                    icon={HelpCircle}
+                                    label="N/A"
+                                  />
+                                  <StatusButton
+                                    currentStatus={item.status || "pending"}
+                                    targetStatus={UpsertInspectionItemStatus.pending}
+                                    onClick={() => handleOwnDriverStatusChange(index, UpsertInspectionItemStatus.pending)}
+                                    icon={Clock}
+                                    label="PENDING"
+                                  />
+                                </div>
+                              </div>
+                              <div className="xl:w-1/3 flex flex-col justify-end gap-1">
+                                <Textarea
+                                  placeholder="Add notes..."
+                                  value={item.notes || ""}
+                                  onChange={e => handleOwnDriverNotesChange(index, e.target.value)}
+                                  rows={3}
+                                  className={`w-full ${isFail ? "border-red-600 border-2" : ""}`}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

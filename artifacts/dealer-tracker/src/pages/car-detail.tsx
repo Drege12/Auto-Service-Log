@@ -382,7 +382,14 @@ export default function CarDetail() {
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
           <TabsContent value="inspection" className="mt-0">
-            <InspectionsTab carId={carId} carLabel={carLabel} vehicleType={car.vehicleType} vehicleSubtype={car.vehicleSubtype} userRole={viewerSession.role} />
+            <InspectionsTab
+              carId={carId}
+              carLabel={carLabel}
+              vehicleType={car.vehicleType}
+              vehicleSubtype={car.vehicleSubtype}
+              userRole={viewerSession.role}
+              isOwnCar={!(car as { linkedMechanicId?: number | null }).linkedMechanicId && viewerSession.role !== "driver"}
+            />
           </TabsContent>
           <TabsContent value="maintenance" className="mt-0">
             <MaintenanceTab carId={carId} carLabel={carLabel} />
