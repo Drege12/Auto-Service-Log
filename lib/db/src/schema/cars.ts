@@ -121,3 +121,16 @@ export const messagesTable = pgTable("messages", {
 });
 
 export type Message = typeof messagesTable.$inferSelect;
+
+export const vehicleNotificationsTable = pgTable("vehicle_notifications", {
+  id: serial("id").primaryKey(),
+  recipientId: integer("recipient_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
+  actorId: integer("actor_id").references(() => mechanicsTable.id, { onDelete: "set null" }),
+  carId: integer("car_id").notNull().references(() => carsTable.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  message: text("message").notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type VehicleNotification = typeof vehicleNotificationsTable.$inferSelect;

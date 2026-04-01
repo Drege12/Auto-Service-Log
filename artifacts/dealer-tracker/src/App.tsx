@@ -9,6 +9,7 @@ import AdminPage from "@/pages/admin";
 import StatsPage from "@/pages/stats";
 import ProfilePage from "@/pages/profile";
 import MessagesPage from "@/pages/messages";
+import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import AdminLoginPage from "@/pages/admin-login";
@@ -53,6 +54,7 @@ function Router() {
       <Route path="/stats" component={StatsPage} />
       <Route path="/profile" component={ProfilePage} />
       <Route path="/messages" component={MessagesPage} />
+      <Route path="/notifications" component={NotificationsPage} />
       <Route component={NotFound} />
     </Switch>
   );
