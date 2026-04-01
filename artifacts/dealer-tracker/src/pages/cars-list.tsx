@@ -273,7 +273,7 @@ export default function CarsList() {
 
   const validate = () => {
     const newErrors: FormErrors = {};
-    if (!isDriver && !form.stockNumber.trim()) newErrors.stockNumber = "Required";
+    if (form.carType !== "personal" && !form.stockNumber.trim()) newErrors.stockNumber = "Required";
     if (!form.year.trim() || isNaN(Number(form.year))) newErrors.year = "Required";
     if (!form.make.trim()) newErrors.make = "Required";
     if (!form.model.trim()) newErrors.model = "Required";
@@ -286,8 +286,8 @@ export default function CarsList() {
     if (!validate()) return;
     const yr = Number(form.year);
     const mi = form.mileage ? Number(form.mileage) : undefined;
-    const stockNumber = isDriver && !form.stockNumber.trim()
-      ? `DRV-${Date.now()}`
+    const stockNumber = form.carType === "personal" && !form.stockNumber.trim()
+      ? `PERSONAL-${Date.now()}`
       : form.stockNumber.trim();
     createCar({
       data: {
@@ -438,9 +438,11 @@ export default function CarsList() {
               <div className="flex items-start justify-between flex-wrap gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="bg-secondary text-secondary-foreground font-black px-3 py-1 rounded text-lg tracking-wider">
-                      #{car.stockNumber}
-                    </span>
+                    {car.carType !== "personal" && (
+                      <span className="bg-secondary text-secondary-foreground font-black px-3 py-1 rounded text-lg tracking-wider">
+                        #{car.stockNumber}
+                      </span>
+                    )}
                     {car.carType === "personal" && (
                       <span className="bg-teal-700 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
                     )}
@@ -510,9 +512,11 @@ export default function CarsList() {
                     <div className="flex items-start justify-between flex-wrap gap-2">
                       <div className="space-y-1">
                         <div className="flex items-center gap-3 flex-wrap">
-                          <span className="bg-secondary text-secondary-foreground font-black px-3 py-1 rounded text-lg tracking-wider">
-                            #{car.stockNumber}
-                          </span>
+                          {car.carType !== "personal" && (
+                            <span className="bg-secondary text-secondary-foreground font-black px-3 py-1 rounded text-lg tracking-wider">
+                              #{car.stockNumber}
+                            </span>
+                          )}
                           <span className="bg-gray-500 text-white font-black px-3 py-1 rounded text-sm uppercase">Sold</span>
                           {car.carType === "personal" && (
                             <span className="bg-teal-700 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
@@ -563,7 +567,7 @@ export default function CarsList() {
             <DialogTitle className="text-3xl font-black uppercase">Add Vehicle</DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-4">
-            {!isDriver && (
+            {form.carType !== "personal" && (
               <div className="space-y-1">
                 <label className="text-base font-black uppercase block">Stock / ID *</label>
                 <Input

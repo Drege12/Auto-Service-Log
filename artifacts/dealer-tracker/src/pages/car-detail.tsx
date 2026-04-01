@@ -108,13 +108,16 @@ export default function CarDetail() {
   };
 
   const handleEditSave = () => {
-    if (!editForm.stockNumber.trim()) { setEditError("Stock number is required."); return; }
+    if (editForm.carType !== "personal" && !editForm.stockNumber.trim()) { setEditError("Stock number is required."); return; }
     if (!editForm.year.trim() || isNaN(Number(editForm.year))) { setEditError("A valid year is required."); return; }
     if (!editForm.make.trim()) { setEditError("Make is required."); return; }
     if (!editForm.model.trim()) { setEditError("Model is required."); return; }
     setEditError("");
+    const stockNumber = editForm.carType === "personal" && !editForm.stockNumber.trim()
+      ? `PERSONAL-${Date.now()}`
+      : editForm.stockNumber.trim();
     const data = {
-      stockNumber: editForm.stockNumber.trim(),
+      stockNumber,
       year: parseInt(editForm.year, 10),
       make: editForm.make.trim(),
       model: editForm.model.trim(),
@@ -217,6 +220,11 @@ export default function CarDetail() {
   if (isLoading) return <Layout><div className="text-center py-20 text-3xl font-black">Loading vehicle data...</div></Layout>;
   if (isError || !car) return <Layout><div className="text-center py-20 text-3xl font-black text-destructive">Vehicle not found.</div></Layout>;
 
+  const isPersonal = car.carType === "personal";
+  const carLabel = isPersonal
+    ? `${car.year} ${car.make} ${car.model}`
+    : `${car.year} ${car.make} ${car.model} #${car.stockNumber}`;
+
   return (
     <Layout>
       <div className="mb-8">
@@ -228,9 +236,11 @@ export default function CarDetail() {
         <div className="bg-white border-4 border-black rounded-2xl p-6 sm:p-8 shadow-brutal flex flex-col md:flex-row justify-between gap-6">
           <div className="space-y-4">
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="bg-black text-white font-mono font-bold px-4 py-2 rounded-lg text-2xl shadow-brutal-sm">
-                #{car.stockNumber}
-              </span>
+              {!isPersonal && (
+                <span className="bg-black text-white font-mono font-bold px-4 py-2 rounded-lg text-2xl shadow-brutal-sm">
+                  #{car.stockNumber}
+                </span>
+              )}
               <h1 className="text-4xl sm:text-5xl font-black uppercase">
                 {car.year} {car.make} {car.model}
               </h1>
@@ -333,21 +343,21 @@ export default function CarDetail() {
 
         <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
           <TabsContent value="inspection" className="mt-0">
-            <InspectionsTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} vehicleType={car.vehicleType} vehicleSubtype={car.vehicleSubtype} userRole={viewerSession.role} />
+            <InspectionsTab carId={carId} carLabel={carLabel} vehicleType={car.vehicleType} vehicleSubtype={car.vehicleSubtype} userRole={viewerSession.role} />
           </TabsContent>
           <TabsContent value="maintenance" className="mt-0">
-            <MaintenanceTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
+            <MaintenanceTab carId={carId} carLabel={carLabel} />
           </TabsContent>
           <TabsContent value="todos" className="mt-0">
-            <TodosTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} />
+            <TodosTab carId={carId} carLabel={carLabel} />
           </TabsContent>
           <TabsContent value="mileage" className="mt-0">
-            <MileageTab carId={carId} carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} />
+            <MileageTab carId={carId} carLabel={carLabel} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} />
           </TabsContent>
           <TabsContent value="costs" className="mt-0">
             <CostsTab
               carId={carId}
-              carLabel={`${car.year} ${car.make} ${car.model} #${car.stockNumber}`}
+              carLabel={carLabel}
               repairNotes={car.repairNotes ?? undefined}
               partsCost={car.partsCost ?? undefined}
               laborHours={car.laborHours ?? undefined}
@@ -367,14 +377,16 @@ export default function CarDetail() {
           </DialogHeader>
           <div className="space-y-6 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-lg font-bold uppercase">Stock Number *</label>
-                <Input
-                  className="bg-white text-black"
-                  value={editForm.stockNumber}
-                  onChange={e => setEditForm(f => ({ ...f, stockNumber: e.target.value }))}
-                />
-              </div>
+              {editForm.carType !== "personal" && (
+                <div className="space-y-2">
+                  <label className="text-lg font-bold uppercase">Stock Number *</label>
+                  <Input
+                    className="bg-white text-black"
+                    value={editForm.stockNumber}
+                    onChange={e => setEditForm(f => ({ ...f, stockNumber: e.target.value }))}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="text-lg font-bold uppercase">{vinLabel(editForm.vehicleType).label}</label>
                 <Input
