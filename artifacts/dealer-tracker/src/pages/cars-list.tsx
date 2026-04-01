@@ -7,7 +7,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download, UserCheck } from "lucide-react";
+import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download, UserCheck, Link2, Unlink } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -23,6 +23,8 @@ type VinMatch = {
   vehicleSubtype?: string | null;
   carType?: string | null;
   vin?: string | null;
+  owner?: string | null;
+  ownerDisplayName?: string | null;
 };
 
 const STATUS_OPTIONS = [
@@ -120,6 +122,8 @@ type CarItem = {
   sold?: number;
   createdAt?: string;
   mechanicName?: string | null;
+  isLinkedCar?: boolean;
+  linkedMechanicId?: number | null;
 };
 
 function getIsAdmin(): boolean {
@@ -145,6 +149,7 @@ export default function CarsList() {
 
   const session = getSession();
   const isDriver = session.role === "driver";
+  const isMechanic = !isAdmin && !isDriver;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>({ ...emptyForm });
@@ -162,6 +167,15 @@ export default function CarsList() {
   const [vinImportStockNumber, setVinImportStockNumber] = useState("");
   const [vinImporting, setVinImporting] = useState(false);
   const [vinImportError, setVinImportError] = useState("");
+
+  const [linkVinOpen, setLinkVinOpen] = useState(false);
+  const [linkVin, setLinkVin] = useState("");
+  const [linkSearching, setLinkSearching] = useState(false);
+  const [linkMatch, setLinkMatch] = useState<VinMatch | null>(null);
+  const [linkSearchError, setLinkSearchError] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [unlinkCarId, setUnlinkCarId] = useState<number | null>(null);
+  const [unlinking, setUnlinking] = useState(false);
 
   type MechanicOption = { id: number; username: string; displayName: string };
   const [reassignOpen, setReassignOpen] = useState(false);
@@ -213,6 +227,75 @@ export default function CarsList() {
       setReassignError("Could not reach the server.");
     } finally {
       setReassigning(false);
+    }
+  };
+
+  const searchLinkVin = async () => {
+    const trimmed = linkVin.trim().toUpperCase();
+    if (trimmed.length < 11) { setLinkSearchError("Enter at least 11 characters of the VIN."); return; }
+    setLinkSearching(true);
+    setLinkMatch(null);
+    setLinkSearchError("");
+    try {
+      const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
+      const res = await fetch(`${BASE}/api/vin-lookup?vin=${encodeURIComponent(trimmed)}`, {
+        headers: { "X-Mechanic-Id": String(mechanicId) },
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json() as { found: boolean; car?: VinMatch };
+      if (data.found && data.car) {
+        setLinkMatch(data.car);
+      } else {
+        setLinkSearchError("No vehicle found with that VIN, or you are already linked to it.");
+      }
+    } catch {
+      setLinkSearchError("Could not reach the server.");
+    } finally {
+      setLinkSearching(false);
+    }
+  };
+
+  const handleLink = async () => {
+    if (!linkMatch) return;
+    setLinking(true);
+    setLinkSearchError("");
+    try {
+      const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
+      const res = await fetch(`${BASE}/api/cars/${linkMatch.id}/link`, {
+        method: "POST",
+        headers: { "X-Mechanic-Id": String(mechanicId) },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setLinkSearchError(err.error || "Could not link vehicle.");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      setLinkVinOpen(false);
+      setLinkVin("");
+      setLinkMatch(null);
+    } catch {
+      setLinkSearchError("Could not reach the server.");
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  const handleUnlink = async (carId: number) => {
+    setUnlinkCarId(carId);
+    setUnlinking(true);
+    try {
+      const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
+      await fetch(`${BASE}/api/cars/${carId}/link`, {
+        method: "DELETE",
+        headers: { "X-Mechanic-Id": String(mechanicId) },
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+    } catch {
+      // silent
+    } finally {
+      setUnlinking(false);
+      setUnlinkCarId(null);
     }
   };
 
@@ -387,9 +470,22 @@ export default function CarsList() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <h1 className="text-4xl sm:text-5xl font-black uppercase">Vehicles</h1>
         {!isAdmin && (
-          <Button onClick={openAddDialog} size="lg" className="font-black uppercase text-xl px-6 py-3">
-            <Plus className="w-6 h-6 mr-2" /> Add
-          </Button>
+          <div className="flex gap-3 flex-wrap">
+            {isMechanic && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => { setLinkVin(""); setLinkMatch(null); setLinkSearchError(""); setLinkVinOpen(true); }}
+                size="lg"
+                className="font-black uppercase text-xl px-6 py-3 border-4 border-black"
+              >
+                <Link2 className="w-6 h-6 mr-2" /> Link by VIN
+              </Button>
+            )}
+            <Button onClick={openAddDialog} size="lg" className="font-black uppercase text-xl px-6 py-3">
+              <Plus className="w-6 h-6 mr-2" /> Add
+            </Button>
+          </div>
         )}
       </div>
 
@@ -475,6 +571,11 @@ export default function CarsList() {
                     {car.carType === "personal" && (
                       <span className="bg-teal-700 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">Personal</span>
                     )}
+                    {car.isLinkedCar && (
+                      <span className="bg-indigo-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide flex items-center gap-1">
+                        <Link2 className="w-3 h-3" /> Client
+                      </span>
+                    )}
                     {vt !== "car" || car.vehicleSubtype ? (
                       <span className="bg-slate-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
                         {vehicleSubtypeLabel(vt, car.vehicleSubtype) || (vehicleTypeLabels[vt] ?? vt)}
@@ -493,6 +594,16 @@ export default function CarsList() {
                           <UserCheck className="w-3 h-3" /> Reassign
                         </button>
                       </>
+                    )}
+                    {car.isLinkedCar && isMechanic && (
+                      <button
+                        type="button"
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); handleUnlink(car.id); }}
+                        disabled={unlinking && unlinkCarId === car.id}
+                        className="flex items-center gap-1 bg-white text-red-700 font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-red-400"
+                      >
+                        <Unlink className="w-3 h-3" /> {unlinking && unlinkCarId === car.id ? "…" : "Unlink"}
+                      </button>
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -873,6 +984,64 @@ export default function CarsList() {
             <Button type="button" variant="outline" size="lg" onClick={() => setReassignOpen(false)}>CANCEL</Button>
             <Button type="button" size="lg" disabled={!selectedMechanicId || reassigning} onClick={handleReassign}>
               {reassigning ? "SAVING..." : "REASSIGN"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Link by VIN dialog */}
+      <Dialog open={linkVinOpen} onOpenChange={open => { setLinkVinOpen(open); if (!open) { setLinkMatch(null); setLinkSearchError(""); } }}>
+        <DialogContent className="bg-white text-black">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
+              <Link2 className="w-6 h-6" /> Link Client Vehicle by VIN
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 py-2">
+            <p className="text-gray-600 font-bold">Enter the VIN of a vehicle already registered by a client. It will appear in your list so you can track service history, inspections, and maintenance for them.</p>
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase block">VIN</label>
+              <div className="flex gap-2">
+                <Input
+                  value={linkVin}
+                  onChange={e => { setLinkVin(e.target.value.toUpperCase()); setLinkMatch(null); setLinkSearchError(""); }}
+                  placeholder="Enter VIN (min. 11 characters)"
+                  className="bg-white text-black font-mono flex-1"
+                  maxLength={17}
+                />
+                <Button
+                  type="button"
+                  onClick={searchLinkVin}
+                  disabled={linkSearching || linkVin.trim().length < 11}
+                  className="font-black uppercase"
+                >
+                  {linkSearching ? "..." : "Search"}
+                </Button>
+              </div>
+              {linkSearchError && <p className="text-red-600 font-bold text-sm">{linkSearchError}</p>}
+            </div>
+
+            {linkMatch && (
+              <div className="bg-green-50 border-4 border-green-600 rounded-xl p-4 space-y-2">
+                <p className="font-black text-green-800 text-lg uppercase">Vehicle Found</p>
+                <p className="font-black text-2xl">{linkMatch.year} {linkMatch.make} {linkMatch.model}</p>
+                {(linkMatch.owner || linkMatch.ownerDisplayName) && (
+                  <p className="font-bold text-gray-700">Owner: {linkMatch.owner || linkMatch.ownerDisplayName}</p>
+                )}
+                {linkMatch.color && <p className="font-bold text-gray-600">{linkMatch.color}</p>}
+                {linkMatch.mileage && <p className="font-bold text-gray-600">{linkMatch.mileage.toLocaleString()} miles</p>}
+                <p className="font-mono text-sm text-gray-500">{linkMatch.vin}</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" size="lg" onClick={() => setLinkVinOpen(false)}>CANCEL</Button>
+            <Button
+              type="button"
+              size="lg"
+              disabled={!linkMatch || linking}
+              onClick={handleLink}
+            >
+              {linking ? "LINKING..." : "ADD TO MY LIST"}
             </Button>
           </DialogFooter>
         </DialogContent>

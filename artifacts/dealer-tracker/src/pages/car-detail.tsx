@@ -358,6 +358,17 @@ export default function CarDetail() {
         </div>
       )}
 
+      {viewerSession.role === "driver" && (car as { linkedMechanicName?: string | null }).linkedMechanicName && (
+        <div className="mb-6 bg-indigo-50 border-4 border-indigo-600 rounded-2xl px-6 py-4 flex items-center gap-3 flex-wrap">
+          <span className="bg-indigo-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide flex items-center gap-1">
+            Your Mechanic
+          </span>
+          <span className="font-black text-indigo-900 text-xl uppercase">
+            {(car as { linkedMechanicName?: string | null }).linkedMechanicName}
+          </span>
+        </div>
+      )}
+
       <Tabs defaultValue="inspection" className="w-full">
         <TabsList className="flex flex-col sm:flex-row h-auto border-b-0 gap-2 sm:gap-4 mb-8">
           <TabsTrigger value="inspection" className="w-full sm:w-auto">INSPECTION</TabsTrigger>

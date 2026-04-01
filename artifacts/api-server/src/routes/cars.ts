@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request } from "express";
 import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable } from "@workspace/db";
-import { eq, and, max, ne } from "drizzle-orm";
+import { eq, and, max, ne, or, isNull } from "drizzle-orm";
 import { z } from "zod";
 
 const router: IRouter = Router();
@@ -42,12 +42,18 @@ router.get("/vin-lookup", async (req, res) => {
         vehicleSubtype: carsTable.vehicleSubtype,
         carType: carsTable.carType,
         vin: carsTable.vin,
+        owner: carsTable.owner,
         mechanicId: carsTable.mechanicId,
+        linkedMechanicId: carsTable.linkedMechanicId,
       })
       .from(carsTable)
       .where(
         mechanicId
-          ? and(eq(carsTable.vin, vin), ne(carsTable.mechanicId, mechanicId))
+          ? and(
+              eq(carsTable.vin, vin),
+              ne(carsTable.mechanicId, mechanicId),
+              or(isNull(carsTable.linkedMechanicId), ne(carsTable.linkedMechanicId, mechanicId))
+            )
           : eq(carsTable.vin, vin)
       );
 
@@ -56,7 +62,15 @@ router.get("/vin-lookup", async (req, res) => {
       return;
     }
     const car = rows[0];
-    res.json({ found: true, car });
+
+    // Resolve the owner's display name (if car has a mechanicId owner)
+    let ownerDisplayName: string | null = null;
+    if (car.mechanicId) {
+      const [m] = await db.select({ displayName: mechanicsTable.displayName }).from(mechanicsTable).where(eq(mechanicsTable.id, car.mechanicId));
+      ownerDisplayName = m?.displayName ?? null;
+    }
+
+    res.json({ found: true, car: { ...car, ownerDisplayName } });
   } catch (err) {
     res.status(500).json({ error: "Failed to check VIN" });
   }
@@ -186,10 +200,28 @@ router.get("/cars", async (req, res) => {
       return;
     }
 
-    const cars = mechanicId
-      ? await db.select().from(carsTable).where(eq(carsTable.mechanicId, mechanicId)).orderBy(carsTable.createdAt)
-      : await db.select().from(carsTable).orderBy(carsTable.createdAt);
-    res.json(cars);
+    if (!mechanicId) {
+      const cars = await db.select().from(carsTable).orderBy(carsTable.createdAt);
+      res.json(cars);
+      return;
+    }
+
+    // Owned cars
+    const ownedCars = await db
+      .select()
+      .from(carsTable)
+      .where(eq(carsTable.mechanicId, mechanicId))
+      .orderBy(carsTable.createdAt);
+
+    // Linked cars (cars owned by others that this mechanic services)
+    const linkedCars = await db
+      .select()
+      .from(carsTable)
+      .where(eq(carsTable.linkedMechanicId, mechanicId))
+      .orderBy(carsTable.createdAt);
+
+    const linked = linkedCars.map(r => ({ ...r, isLinkedCar: true as const }));
+    res.json([...ownedCars, ...linked]);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch cars" });
   }
@@ -222,9 +254,61 @@ router.get("/cars/:carId", async (req, res) => {
       res.status(404).json({ error: "Car not found" });
       return;
     }
-    res.json(car);
+    // Resolve linked mechanic display name if present
+    let linkedMechanicName: string | null = null;
+    if (car.linkedMechanicId) {
+      const [m] = await db.select({ displayName: mechanicsTable.displayName }).from(mechanicsTable).where(eq(mechanicsTable.id, car.linkedMechanicId));
+      linkedMechanicName = m?.displayName ?? null;
+    }
+    res.json({ ...car, linkedMechanicName });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch car" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Link / unlink a mechanic to a vehicle they service but don't own
+// ---------------------------------------------------------------------------
+router.post("/cars/:carId/link", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const mechanicId = getMechanicId(req);
+    if (!mechanicId) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+    const [car] = await db.select({ mechanicId: carsTable.mechanicId }).from(carsTable).where(eq(carsTable.id, carId));
+    if (!car) {
+      res.status(404).json({ error: "Vehicle not found" });
+      return;
+    }
+    if (car.mechanicId === mechanicId) {
+      res.status(400).json({ error: "You already own this vehicle" });
+      return;
+    }
+    const [updated] = await db.update(carsTable).set({ linkedMechanicId: mechanicId }).where(eq(carsTable.id, carId)).returning();
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to link vehicle" });
+  }
+});
+
+router.delete("/cars/:carId/link", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const mechanicId = getMechanicId(req);
+    if (!mechanicId) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+    const [updated] = await db.update(carsTable).set({ linkedMechanicId: null }).where(eq(carsTable.id, carId)).returning();
+    if (!updated) {
+      res.status(404).json({ error: "Vehicle not found" });
+      return;
+    }
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to unlink vehicle" });
   }
 });
 
