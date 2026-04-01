@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wrench, Lock, User, ChevronRight, ShieldCheck, Car } from "lucide-react";
+import { Wrench, Lock, User, ChevronRight, ShieldCheck, Car, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -22,6 +22,7 @@ export default function LoginPage({
   const [role, setRole] = useState<"mechanic" | "driver">("mechanic");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const reset = () => {
     setError("");
@@ -153,14 +154,24 @@ export default function LoginPage({
             <label className="text-base font-black uppercase flex items-center gap-2">
               <Lock className="w-4 h-4" /> Password
             </label>
-            <Input
-              type="password"
-              value={password}
-              onChange={e => { setPassword(e.target.value); setError(""); }}
-              onKeyDown={handleKey}
-              placeholder={mode === "register" ? "Choose a password (4+ chars)" : "Your password"}
-              className="bg-white text-black text-lg h-12 border-2 border-black"
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError(""); }}
+                onKeyDown={handleKey}
+                placeholder={mode === "register" ? "Choose a password (4+ chars)" : "Your password"}
+                className="bg-white text-black text-lg h-12 border-2 border-black pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
           {mode === "register" && (
