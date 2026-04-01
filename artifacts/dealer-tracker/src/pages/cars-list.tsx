@@ -105,11 +105,20 @@ function getIsAdmin(): boolean {
   } catch { return false; }
 }
 
+function getSession() {
+  try {
+    return JSON.parse(localStorage.getItem("dt_mechanic") || "{}") as { displayName?: string; role?: string };
+  } catch { return {}; }
+}
+
 export default function CarsList() {
   const queryClient = useQueryClient();
   const { data: cars, isLoading, isError } = useListCars();
   const isAdmin = getIsAdmin();
   const { mutate: createCar, isPending: isCreating } = useCreateCar();
+
+  const session = getSession();
+  const isDriver = session.role === "driver";
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>({ ...emptyForm });
@@ -253,7 +262,10 @@ export default function CarsList() {
   };
 
   const openAddDialog = () => {
-    setForm({ ...emptyForm });
+    setForm({
+      ...emptyForm,
+      ...(isDriver ? { carType: "personal" as const, owner: session.displayName || "" } : {}),
+    });
     setErrors({});
     setSubmitError("");
     setDialogOpen(true);
@@ -697,6 +709,11 @@ export default function CarsList() {
                   placeholder="e.g. John Smith"
                   className="bg-white text-black"
                 />
+                {isDriver && (
+                  <p className="text-xs text-gray-500 font-medium">
+                    Auto-filled from your account — change it if this vehicle belongs to someone else.
+                  </p>
+                )}
               </div>
             )}
 
