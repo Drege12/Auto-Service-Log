@@ -14,6 +14,7 @@ import {
   buildDefaultInspection,
   DRIVER_INSPECTION_CATEGORIES,
   buildDefaultDriverInspection,
+  getDriverCategoriesForVehicleType,
 } from "@/lib/inspection-template";
 import { Save, AlertCircle, AlertTriangle, CheckCircle2, HelpCircle, Clock, ChevronDown, ChevronRight, Printer, Car, Eye } from "lucide-react";
 import { printInspection } from "@/lib/print-utils";
@@ -58,7 +59,7 @@ export function InspectionsTab({
         const driverItems = inspectionItems.filter(i =>
           DRIVER_INSPECTION_CATEGORIES.includes(i.category || "")
         );
-        const items = driverItems.length === 0 ? buildDefaultDriverInspection() : driverItems;
+        const items = driverItems.length === 0 ? buildDefaultDriverInspection(vehicleType) : driverItems;
         setLocalItems(items);
         serverStateRef.current = items;
       } else {
@@ -260,7 +261,7 @@ export function InspectionsTab({
   };
 
   const displayCategories = isDriver
-    ? DRIVER_INSPECTION_CATEGORIES
+    ? getDriverCategoriesForVehicleType(vehicleType)
     : getCategoriesForVehicleType(vehicleType, vehicleSubtype);
 
   return (
@@ -271,7 +272,11 @@ export function InspectionsTab({
         <div>
           <h2 className="text-2xl font-black uppercase flex items-center gap-3">
             {isDriver && <Car className="w-7 h-7 text-teal-700" />}
-            {isDriver ? "Driver Check" : "Standard Inspection"}
+            {isDriver
+              ? vehicleType === "motorcycle" ? "Rider Check"
+              : vehicleType === "boat" ? "Operator Check"
+              : "Driver Check"
+              : "Standard Inspection"}
           </h2>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             {(() => {
@@ -289,7 +294,9 @@ export function InspectionsTab({
             })()}
             <p className={`font-medium ${isDriver ? "text-teal-700" : "text-gray-600"}`}>
               {isDriver
-                ? "Pre-drive, while driving, and post-drive checks."
+                ? vehicleType === "motorcycle" ? "Pre-ride, while riding, and post-ride checks."
+                : vehicleType === "boat" ? "Pre-launch, underway, and post-use checks."
+                : "Pre-drive, while driving, and post-drive checks."
                 : "Failed items are added to Needs Done on save."}
             </p>
           </div>
@@ -329,7 +336,10 @@ export function InspectionsTab({
           <div className="bg-teal-50 border-4 border-teal-600 rounded-xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h3 className="text-xl font-black uppercase flex items-center gap-2 text-teal-900">
-                <Eye className="w-6 h-6" /> Driver's Check — Review
+                <Eye className="w-6 h-6" />
+                {vehicleType === "motorcycle" ? "Rider's Check — Review"
+                  : vehicleType === "boat" ? "Operator's Check — Review"
+                  : "Driver's Check — Review"}
               </h3>
               <p className="text-teal-700 font-bold mt-1">Read-only view of what the operator recorded.</p>
             </div>
@@ -351,7 +361,7 @@ export function InspectionsTab({
             </div>
           </div>
 
-          {DRIVER_INSPECTION_CATEGORIES.map(category => {
+          {getDriverCategoriesForVehicleType(vehicleType).map(category => {
             const categoryItems = driverReviewItems.filter(i => i.category === category);
             if (categoryItems.length === 0) return null;
 
