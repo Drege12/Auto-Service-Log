@@ -6,6 +6,7 @@ import adminRouter from "./admin";
 import profileRouter from "./profile";
 import messagesRouter from "./messages";
 import notificationsRouter from "./notifications";
+import groupsRouter from "./groups";
 
 const router: IRouter = Router();
 
@@ -15,6 +16,7 @@ router.use(adminRouter);
 router.use(profileRouter);
 router.use(messagesRouter);
 router.use(notificationsRouter);
+router.use(groupsRouter);
 router.use(carsRouter);
 
 export default router;
