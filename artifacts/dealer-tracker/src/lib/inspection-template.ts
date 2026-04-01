@@ -2063,11 +2063,17 @@ export function buildDefaultInspection(vehicleType?: string | null, subtype?: st
   }));
 }
 
-// ─── Driver Inspection (Pre / During / Post — all vehicle types) ─────────────
+// ─── Driver / Operator Inspection (Pre / During / Post — per vehicle type) ────
 
-export const DRIVER_INSPECTION_CATEGORIES = ["Pre-Drive", "While Driving", "Post-Drive"];
+// All possible driver-role category names across all vehicle types
+export const DRIVER_INSPECTION_CATEGORIES = [
+  "Pre-Drive", "While Driving", "Post-Drive",       // car / ATV
+  "Pre-Ride",  "While Riding",  "Post-Ride",        // motorcycle
+  "Pre-Launch", "Underway",     "Post-Use",          // boat
+];
 
-export const DRIVER_INSPECTION_TEMPLATE = [
+// ── Car ──────────────────────────────────────────────────────────────────────
+const DRIVER_CAR_TEMPLATE = [
   { category: "Pre-Drive", item: "Tires — visible damage, low pressure, or bulges" },
   { category: "Pre-Drive", item: "Exterior lights — headlights, taillights, turn signals" },
   { category: "Pre-Drive", item: "Under vehicle — fluid leaks or drips" },
@@ -2089,8 +2095,98 @@ export const DRIVER_INSPECTION_TEMPLATE = [
   { category: "Post-Drive", item: "Fuel level — note if running low" },
 ];
 
-export function buildDefaultDriverInspection() {
-  return DRIVER_INSPECTION_TEMPLATE.map(t => ({
+// ── Motorcycle ───────────────────────────────────────────────────────────────
+const DRIVER_MOTORCYCLE_TEMPLATE = [
+  { category: "Pre-Ride", item: "Tires — check pressure and inspect for damage or embedded debris" },
+  { category: "Pre-Ride", item: "Chain or belt — lubricated and properly tensioned" },
+  { category: "Pre-Ride", item: "Engine oil level — check sight glass or dipstick" },
+  { category: "Pre-Ride", item: "Fuel level — sufficient for planned ride" },
+  { category: "Pre-Ride", item: "Throttle — smooth operation and snaps back fully" },
+  { category: "Pre-Ride", item: "Clutch lever — proper feel and free play" },
+  { category: "Pre-Ride", item: "Front and rear brakes — firm lever and pedal feel" },
+  { category: "Pre-Ride", item: "Lights — headlight, taillight, and turn signals" },
+  { category: "Pre-Ride", item: "Mirrors — positioned, secure, and clear" },
+  { category: "Pre-Ride", item: "Kill switch — confirm functional before starting" },
+  { category: "While Riding", item: "Dashboard warning lights — any illuminated" },
+  { category: "While Riding", item: "Engine temperature — in normal range" },
+  { category: "While Riding", item: "Brakes — responsive front and rear, no sponginess" },
+  { category: "While Riding", item: "Handling — no wobble, weaving, or pull to one side" },
+  { category: "While Riding", item: "Unusual sounds — knocking, ticking, or chain slap" },
+  { category: "While Riding", item: "Unusual vibrations — handlebars, seat, or footpegs" },
+  { category: "Post-Ride", item: "Chain or belt — re-lube if needed (especially after rain)" },
+  { category: "Post-Ride", item: "New fluid spots — check under bike after parking" },
+  { category: "Post-Ride", item: "Unusual smells — burning oil, fuel, or hot metal" },
+  { category: "Post-Ride", item: "Tire condition — check for cuts or embedded debris" },
+  { category: "Post-Ride", item: "Warning lights — note any that appeared during ride" },
+];
+
+// ── Boat ─────────────────────────────────────────────────────────────────────
+const DRIVER_BOAT_TEMPLATE = [
+  { category: "Pre-Launch", item: "Hull — inspect for cracks, damage, and drain plug installed" },
+  { category: "Pre-Launch", item: "Engine oil level — check before starting" },
+  { category: "Pre-Launch", item: "Fuel level — sufficient and fuel vent open" },
+  { category: "Pre-Launch", item: "Bilge pump — test operation" },
+  { category: "Pre-Launch", item: "Navigation lights — working (red/green/white)" },
+  { category: "Pre-Launch", item: "Life jackets — present and accessible for all passengers" },
+  { category: "Pre-Launch", item: "Fire extinguisher — present and within service date" },
+  { category: "Pre-Launch", item: "Kill switch lanyard — attached to operator" },
+  { category: "Pre-Launch", item: "Steering — full range of motion, no binding" },
+  { category: "Pre-Launch", item: "Battery charge — sufficient for trip" },
+  { category: "Underway", item: "Engine temperature gauge — in normal range" },
+  { category: "Underway", item: "Oil pressure — no warning light" },
+  { category: "Underway", item: "Bilge — check for water accumulation" },
+  { category: "Underway", item: "Unusual sounds or vibration from engine or hull" },
+  { category: "Underway", item: "Fuel gauge — monitor burn rate" },
+  { category: "Post-Use", item: "Flush engine with fresh water (if saltwater use)" },
+  { category: "Post-Use", item: "Remove drain plug — drain bilge completely" },
+  { category: "Post-Use", item: "Rinse and dry hull" },
+  { category: "Post-Use", item: "Secure all lines, close hatches, cover if stored" },
+  { category: "Post-Use", item: "Fuel level — note remaining for next trip" },
+  { category: "Post-Use", item: "Engine hours — log run time" },
+];
+
+// ── ATV / Off-Road ────────────────────────────────────────────────────────────
+const DRIVER_ATV_TEMPLATE = [
+  { category: "Pre-Drive", item: "Tires — check pressure and inspect for damage" },
+  { category: "Pre-Drive", item: "Engine oil level" },
+  { category: "Pre-Drive", item: "Fuel level — sufficient for ride" },
+  { category: "Pre-Drive", item: "Lights — headlights and taillights operational" },
+  { category: "Pre-Drive", item: "Brakes — front and rear lever/pedal feel" },
+  { category: "Pre-Drive", item: "Throttle — smooth operation and full snap-back" },
+  { category: "Pre-Drive", item: "Drive chain or belt — tension and lubrication" },
+  { category: "Pre-Drive", item: "Handlebars and controls — tight and secure" },
+  { category: "While Driving", item: "Brakes — responsive on all terrain" },
+  { category: "While Driving", item: "Engine temperature — in normal range" },
+  { category: "While Driving", item: "Unusual sounds — knocking, grinding, or chain slap" },
+  { category: "While Driving", item: "Steering — no pulling or wandering" },
+  { category: "While Driving", item: "Warning lights — any illuminated" },
+  { category: "Post-Drive", item: "Fluid leaks — check under vehicle after ride" },
+  { category: "Post-Drive", item: "Tire condition — inspect for punctures or debris" },
+  { category: "Post-Drive", item: "Air filter — visual check if dusty or muddy conditions" },
+  { category: "Post-Drive", item: "Drive chain — re-lube if needed" },
+  { category: "Post-Drive", item: "Clean mud from cooling vents and radiator" },
+];
+
+export function getDriverTemplateForVehicleType(vehicleType?: string | null) {
+  switch (vehicleType) {
+    case "motorcycle": return DRIVER_MOTORCYCLE_TEMPLATE;
+    case "boat":       return DRIVER_BOAT_TEMPLATE;
+    case "atv":        return DRIVER_ATV_TEMPLATE;
+    default:           return DRIVER_CAR_TEMPLATE;
+  }
+}
+
+export function getDriverCategoriesForVehicleType(vehicleType?: string | null): string[] {
+  switch (vehicleType) {
+    case "motorcycle": return ["Pre-Ride", "While Riding", "Post-Ride"];
+    case "boat":       return ["Pre-Launch", "Underway", "Post-Use"];
+    case "atv":        return ["Pre-Drive", "While Driving", "Post-Drive"];
+    default:           return ["Pre-Drive", "While Driving", "Post-Drive"];
+  }
+}
+
+export function buildDefaultDriverInspection(vehicleType?: string | null) {
+  return getDriverTemplateForVehicleType(vehicleType).map(t => ({
     ...t,
     status: UpsertInspectionItemStatus.pending,
     notes: "",
