@@ -26,10 +26,10 @@ function statusBadge(status?: string | null) {
       return <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">On Hold</span>;
     case "service_due":
       return <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Service Due</span>;
-    case "runs_rough":
-      return <span className="bg-orange-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Runs Rough</span>;
-    case "needs_repair":
-      return <span className="bg-red-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Needs Repair</span>;
+    case "needs_attention":
+      return <span className="bg-orange-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Needs Attention</span>;
+    case "out_of_service":
+      return <span className="bg-red-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Out of Service</span>;
     default:
       return null;
   }
@@ -41,8 +41,8 @@ function statusActiveColor(value: string): string {
     case "ready":        return "bg-green-600 text-white border-green-600";
     case "on_hold":      return "bg-amber-500 text-white border-amber-500";
     case "service_due":  return "bg-amber-500 text-white border-amber-500";
-    case "runs_rough":   return "bg-orange-600 text-white border-orange-600";
-    case "needs_repair": return "bg-red-600 text-white border-red-600";
+    case "needs_attention": return "bg-orange-600 text-white border-orange-600";
+    case "out_of_service":  return "bg-red-600 text-white border-red-600";
     default:             return "bg-black text-white border-black";
   }
 }
@@ -58,8 +58,8 @@ const PERSONAL_STATUS_OPTIONS = [
   { value: "", label: "— No Status —" },
   { value: "ready", label: "Ready" },
   { value: "service_due", label: "Service Due" },
-  { value: "runs_rough", label: "Runs Rough" },
-  { value: "needs_repair", label: "Needs Repair" },
+  { value: "needs_attention", label: "Needs Attention" },
+  { value: "out_of_service", label: "Out of Service" },
 ];
 
 const TYPE_OPTIONS = [

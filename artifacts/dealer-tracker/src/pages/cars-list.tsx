@@ -36,8 +36,8 @@ const PERSONAL_STATUS_OPTIONS = [
   { value: "", label: "— No Status —" },
   { value: "ready", label: "Ready" },
   { value: "service_due", label: "Service Due" },
-  { value: "runs_rough", label: "Runs Rough" },
-  { value: "needs_repair", label: "Needs Repair" },
+  { value: "needs_attention", label: "Needs Attention" },
+  { value: "out_of_service", label: "Out of Service" },
 ];
 
 const VEHICLE_TYPE_OPTIONS = [
@@ -57,10 +57,10 @@ function statusBadge(status?: string | null) {
       return <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">On Hold</span>;
     case "service_due":
       return <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Service Due</span>;
-    case "runs_rough":
-      return <span className="bg-orange-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Runs Rough</span>;
-    case "needs_repair":
-      return <span className="bg-red-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Needs Repair</span>;
+    case "needs_attention":
+      return <span className="bg-orange-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Needs Attention</span>;
+    case "out_of_service":
+      return <span className="bg-red-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide">Out of Service</span>;
     default:
       return null;
   }
@@ -72,8 +72,8 @@ function statusActiveColor(value: string): string {
     case "ready":      return "bg-green-600 text-white border-green-600";
     case "on_hold":    return "bg-amber-500 text-white border-amber-500";
     case "service_due": return "bg-amber-500 text-white border-amber-500";
-    case "runs_rough":  return "bg-orange-600 text-white border-orange-600";
-    case "needs_repair": return "bg-red-600 text-white border-red-600";
+    case "needs_attention": return "bg-orange-600 text-white border-orange-600";
+    case "out_of_service":  return "bg-red-600 text-white border-red-600";
     default:           return "bg-black text-white border-black";
   }
 }
@@ -361,7 +361,7 @@ export default function CarsList() {
       result = result.filter(c => typeFilters.includes(c.vehicleType || "car"));
     }
 
-    const statusFilters = ["in_service", "ready", "on_hold", "service_due", "runs_rough", "needs_repair"].filter(s => activeFilters.has(`status:${s}`));
+    const statusFilters = ["in_service", "ready", "on_hold", "service_due", "needs_attention", "out_of_service"].filter(s => activeFilters.has(`status:${s}`));
     if (statusFilters.length > 0) {
       result = result.filter(c => statusFilters.includes(c.status || ""));
     }
@@ -423,8 +423,8 @@ export default function CarsList() {
           { key: "status:ready",        label: "Ready",        on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400" },
           { key: "status:on_hold",      label: "On Hold",      on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
           { key: "status:service_due",  label: "Service Due",  on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
-          { key: "status:runs_rough",   label: "Runs Rough",   on: "bg-orange-600 text-white", off: "bg-white text-black border-2 border-orange-400" },
-          { key: "status:needs_repair", label: "Needs Repair", on: "bg-red-600 text-white",    off: "bg-white text-black border-2 border-red-400" },
+          { key: "status:needs_attention", label: "Needs Attention", on: "bg-orange-600 text-white", off: "bg-white text-black border-2 border-orange-400" },
+          { key: "status:out_of_service",  label: "Out of Service",  on: "bg-red-600 text-white",    off: "bg-white text-black border-2 border-red-400" },
           { key: "owner:dealer",    label: "Work",         on: "bg-black text-white",      off: "bg-white text-black border-2 border-gray-400" },
           { key: "owner:personal",  label: "Personal",     on: "bg-teal-700 text-white",   off: "bg-white text-black border-2 border-teal-400" },
         ].map(({ key, label, on, off }) => (
