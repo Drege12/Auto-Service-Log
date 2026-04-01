@@ -844,16 +844,17 @@ export default function MessagesPage() {
     <Layout>
       <div className="max-w-xl mx-auto">
         <div className="flex items-center justify-between mb-6 gap-3">
-          <h1 className="text-3xl font-black uppercase flex items-center gap-3">
-            <MessageSquare className="w-8 h-8" />Messages
+          <h1 className="text-2xl font-black uppercase flex items-center gap-2 min-w-0">
+            <MessageSquare className="w-7 h-7 shrink-0" />
+            <span className="truncate">Messages</span>
           </h1>
-          <div className="flex gap-2">
-            <Button type="button" size="lg" variant="outline" onClick={() => setShowCreateGroup(true)}
-              className="border-4 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-black">
-              <Users className="w-5 h-5 mr-1" />GROUP
-            </Button>
-            <Button type="button" size="lg" onClick={() => setShowNewConvo(true)}>
+          <div className="flex flex-col gap-2 shrink-0">
+            <Button type="button" size="sm" onClick={() => setShowNewConvo(true)}>
               + MESSAGE
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setShowCreateGroup(true)}
+              className="border-4 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-black">
+              <Users className="w-4 h-4 mr-1" />GROUP
             </Button>
           </div>
         </div>
