@@ -6,25 +6,27 @@ import { setMechanicId } from "@workspace/api-client-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function getMechanicSession(): { mechanicId: number | null; displayName: string; isAdmin: boolean; adminMode: boolean } {
+function getMechanicSession(): { mechanicId: number | null; displayName: string; isAdmin: boolean; adminMode: boolean; role: string } {
   try {
     const raw = localStorage.getItem("dt_mechanic");
-    if (!raw) return { mechanicId: null, displayName: "", isAdmin: false, adminMode: false };
+    if (!raw) return { mechanicId: null, displayName: "", isAdmin: false, adminMode: false, role: "mechanic" };
     const parsed = JSON.parse(raw);
     return {
       mechanicId: parsed?.mechanicId ?? null,
       displayName: parsed?.displayName || parsed?.username || "",
       isAdmin: parsed?.isAdmin === true,
       adminMode: parsed?.adminMode === true,
+      role: parsed?.role ?? "mechanic",
     };
   } catch {
-    return { mechanicId: null, displayName: "", isAdmin: false, adminMode: false };
+    return { mechanicId: null, displayName: "", isAdmin: false, adminMode: false, role: "mechanic" };
   }
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { mechanicId, displayName, isAdmin, adminMode } = getMechanicSession();
+  const { mechanicId, displayName, isAdmin, adminMode, role } = getMechanicSession();
+  const isDriver = role === "driver";
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -69,6 +71,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="flex items-center gap-2 hidden sm:flex">
                 {isAdmin && (
                   <span className="bg-amber-500 text-white font-black px-2 py-0.5 rounded text-xs uppercase tracking-widest">Admin</span>
+                )}
+                {isDriver && (
+                  <span className="bg-teal-600 text-white font-black px-2 py-0.5 rounded text-xs uppercase tracking-widest">Driver</span>
                 )}
                 <span className="text-sm font-black uppercase text-muted-foreground">{displayName}</span>
               </span>

@@ -71,7 +71,7 @@ router.post("/auth/login", async (req, res) => {
       return;
     }
 
-    res.json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, isAdmin: mechanic.isAdmin === 1 });
+    res.json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, isAdmin: mechanic.isAdmin === 1, role: mechanic.role ?? "mechanic" });
   } catch (err) {
     res.status(500).json({ error: "Login failed." });
   }

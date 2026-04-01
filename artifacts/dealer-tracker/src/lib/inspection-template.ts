@@ -2062,3 +2062,37 @@ export function buildDefaultInspection(vehicleType?: string | null, subtype?: st
     notes: "",
   }));
 }
+
+// ─── Driver Inspection (Pre / During / Post — all vehicle types) ─────────────
+
+export const DRIVER_INSPECTION_CATEGORIES = ["Pre-Drive", "While Driving", "Post-Drive"];
+
+export const DRIVER_INSPECTION_TEMPLATE = [
+  { category: "Pre-Drive", item: "Tires — visible damage, low pressure, or bulges" },
+  { category: "Pre-Drive", item: "Exterior lights — headlights, taillights, turn signals" },
+  { category: "Pre-Drive", item: "Under vehicle — fluid leaks or drips" },
+  { category: "Pre-Drive", item: "Windshield & mirrors — clean and unobstructed" },
+  { category: "Pre-Drive", item: "Engine oil level (check dipstick)" },
+  { category: "Pre-Drive", item: "Coolant level visible in reservoir" },
+  { category: "Pre-Drive", item: "Wipers — functional and streak-free" },
+  { category: "While Driving", item: "Dashboard warning lights — any illuminated" },
+  { category: "While Driving", item: "Engine temperature gauge — in normal range" },
+  { category: "While Driving", item: "Brakes — responsive, no grinding or pulling" },
+  { category: "While Driving", item: "Steering — no unusual play or drifting" },
+  { category: "While Driving", item: "Transmission — smooth shifts, no hesitation" },
+  { category: "While Driving", item: "Unusual sounds — knocking, squealing, or rattling" },
+  { category: "While Driving", item: "Unusual vibrations — wheel, seat, or pedals" },
+  { category: "Post-Drive", item: "Warning lights — note any that appeared during drive" },
+  { category: "Post-Drive", item: "New fluid spots — check under vehicle after parking" },
+  { category: "Post-Drive", item: "Unusual smells — burning, fuel, or sweet odor" },
+  { category: "Post-Drive", item: "Tire condition — check after drive" },
+  { category: "Post-Drive", item: "Fuel level — note if running low" },
+];
+
+export function buildDefaultDriverInspection() {
+  return DRIVER_INSPECTION_TEMPLATE.map(t => ({
+    ...t,
+    status: UpsertInspectionItemStatus.pending,
+    notes: "",
+  }));
+}

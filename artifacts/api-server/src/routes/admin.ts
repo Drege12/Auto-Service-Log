@@ -22,7 +22,7 @@ router.get("/admin/mechanics", async (req, res) => {
   if (adminId === null) return;
   try {
     const rows = await db
-      .select({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, isAdmin: mechanicsTable.isAdmin, phone: mechanicsTable.phone, email: mechanicsTable.email, contactPublic: mechanicsTable.contactPublic, createdAt: mechanicsTable.createdAt })
+      .select({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, isAdmin: mechanicsTable.isAdmin, role: mechanicsTable.role, phone: mechanicsTable.phone, email: mechanicsTable.email, contactPublic: mechanicsTable.contactPublic, createdAt: mechanicsTable.createdAt })
       .from(mechanicsTable)
       .orderBy(mechanicsTable.createdAt);
     res.json(rows);
@@ -36,11 +36,12 @@ router.post("/admin/mechanics", async (req, res) => {
   const adminId = await requireAdmin(req, res);
   if (adminId === null) return;
 
-  const { username, password, displayName, isAdmin } = req.body as {
+  const { username, password, displayName, isAdmin, role } = req.body as {
     username?: string;
     password?: string;
     displayName?: string;
     isAdmin?: boolean;
+    role?: string;
   };
 
   if (!username?.trim()) { res.status(400).json({ error: "Username is required." }); return; }
@@ -57,7 +58,8 @@ router.post("/admin/mechanics", async (req, res) => {
       passwordHash,
       displayName: displayName.trim(),
       isAdmin: isAdmin ? 1 : 0,
-    }).returning({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, isAdmin: mechanicsTable.isAdmin, createdAt: mechanicsTable.createdAt });
+      role: role === "driver" ? "driver" : "mechanic",
+    }).returning({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, isAdmin: mechanicsTable.isAdmin, role: mechanicsTable.role, createdAt: mechanicsTable.createdAt });
 
     res.status(201).json(mechanic);
   } catch {
@@ -73,11 +75,12 @@ router.patch("/admin/mechanics/:id", async (req, res) => {
   const targetId = parseInt(req.params.id, 10);
   if (isNaN(targetId)) { res.status(400).json({ error: "Invalid mechanic ID." }); return; }
 
-  const { username, displayName, password, isAdmin } = req.body as {
+  const { username, displayName, password, isAdmin, role } = req.body as {
     username?: string;
     displayName?: string;
     password?: string;
     isAdmin?: boolean;
+    role?: string;
   };
 
   try {
@@ -103,19 +106,20 @@ router.patch("/admin/mechanics/:id", async (req, res) => {
       }
     }
 
-    const hasChanges = username !== undefined || displayName !== undefined || password !== undefined || isAdmin !== undefined;
+    const hasChanges = username !== undefined || displayName !== undefined || password !== undefined || isAdmin !== undefined || role !== undefined;
     if (!hasChanges) { res.status(400).json({ error: "Nothing to update." }); return; }
 
-    const setValues: { username?: string; displayName?: string; passwordHash?: string; isAdmin?: number } = {};
+    const setValues: { username?: string; displayName?: string; passwordHash?: string; isAdmin?: number; role?: string } = {};
     if (username !== undefined) setValues.username = username.trim().toLowerCase();
     if (displayName !== undefined) setValues.displayName = displayName.trim();
     if (password !== undefined) setValues.passwordHash = await bcrypt.hash(password, 10);
     if (isAdmin !== undefined) setValues.isAdmin = isAdmin ? 1 : 0;
+    if (role !== undefined) setValues.role = role === "driver" ? "driver" : "mechanic";
 
     const [updated] = await db.update(mechanicsTable)
       .set(setValues)
       .where(eq(mechanicsTable.id, targetId))
-      .returning({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, isAdmin: mechanicsTable.isAdmin, createdAt: mechanicsTable.createdAt });
+      .returning({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, isAdmin: mechanicsTable.isAdmin, role: mechanicsTable.role, createdAt: mechanicsTable.createdAt });
 
     if (!updated) { res.status(404).json({ error: "Account not found." }); return; }
     res.json(updated);

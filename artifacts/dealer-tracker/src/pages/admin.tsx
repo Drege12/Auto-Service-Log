@@ -12,6 +12,7 @@ type Mechanic = {
   username: string;
   displayName: string;
   isAdmin: number;
+  role: string;
   phone?: string | null;
   email?: string | null;
   contactPublic?: number;
@@ -49,6 +50,7 @@ function EditRow({
   const [displayName, setDisplayName] = useState(mechanic.displayName);
   const [newPassword, setNewPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(mechanic.isAdmin === 1);
+  const [isDriver, setIsDriver] = useState(mechanic.role === "driver");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,7 +61,7 @@ function EditRow({
     setSaving(true);
     setError("");
     try {
-      const body: Record<string, unknown> = { username: username.trim(), displayName: displayName.trim(), isAdmin };
+      const body: Record<string, unknown> = { username: username.trim(), displayName: displayName.trim(), isAdmin, role: isDriver ? "driver" : "mechanic" };
       if (newPassword) body.password = newPassword;
       const res = await fetch(`${BASE}/api/admin/mechanics/${mechanic.id}`, {
         method: "PATCH",
@@ -129,7 +131,7 @@ function EditRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={() => { if (mechanic.id === selfId && isAdmin) return; setIsAdmin(v => !v); }}
@@ -137,10 +139,19 @@ function EditRow({
           title={mechanic.id === selfId ? "Cannot change your own admin status" : ""}
         >
           {isAdmin ? <ShieldCheck className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
-          {isAdmin ? "Admin" : "Mechanic"}
+          {isAdmin ? "Admin" : "Not Admin"}
         </button>
+        {!isAdmin && (
+          <button
+            type="button"
+            onClick={() => setIsDriver(v => !v)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-black text-sm uppercase transition-colors ${isDriver ? "bg-teal-600 text-white border-teal-600" : "bg-white text-black border-gray-400"}`}
+          >
+            {isDriver ? "Driver" : "Mechanic"}
+          </button>
+        )}
         {mechanic.id === selfId && (
-          <span className="text-xs text-muted-foreground font-bold">(Cannot change your own role)</span>
+          <span className="text-xs text-muted-foreground font-bold">(Cannot change your own admin status)</span>
         )}
       </div>
 
@@ -187,10 +198,11 @@ function CreateForm({ onCreated }: { onCreated: (m: Mechanic) => void }) {
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDriver, setIsDriver] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const reset = () => { setUsername(""); setDisplayName(""); setPassword(""); setIsAdmin(false); setError(""); };
+  const reset = () => { setUsername(""); setDisplayName(""); setPassword(""); setIsAdmin(false); setIsDriver(false); setError(""); };
 
   const create = async () => {
     if (!username.trim()) { setError("Username is required."); return; }
@@ -202,7 +214,7 @@ function CreateForm({ onCreated }: { onCreated: (m: Mechanic) => void }) {
       const res = await fetch(`${BASE}/api/admin/mechanics`, {
         method: "POST",
         headers: headers(),
-        body: JSON.stringify({ username: username.trim(), displayName: displayName.trim(), password, isAdmin }),
+        body: JSON.stringify({ username: username.trim(), displayName: displayName.trim(), password, isAdmin, role: isDriver ? "driver" : "mechanic" }),
       });
       const data = await res.json() as Mechanic & { error?: string };
       if (!res.ok) { setError(data.error || "Failed to create."); return; }
@@ -261,16 +273,27 @@ function CreateForm({ onCreated }: { onCreated: (m: Mechanic) => void }) {
         />
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => setIsAdmin(v => !v)}
+          onClick={() => { setIsAdmin(v => !v); if (!isAdmin) setIsDriver(false); }}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-black text-sm uppercase transition-colors ${isAdmin ? "bg-amber-500 text-white border-amber-500" : "bg-white text-black border-gray-400"}`}
         >
           {isAdmin ? <ShieldCheck className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
-          {isAdmin ? "Admin" : "Mechanic"}
+          {isAdmin ? "Admin" : "Not Admin"}
         </button>
-        <span className="text-xs text-muted-foreground font-bold">Toggle to grant admin access</span>
+        {!isAdmin && (
+          <button
+            type="button"
+            onClick={() => setIsDriver(v => !v)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 font-black text-sm uppercase transition-colors ${isDriver ? "bg-teal-600 text-white border-teal-600" : "bg-white text-black border-gray-400"}`}
+          >
+            {isDriver ? "Driver" : "Mechanic"}
+          </button>
+        )}
+        <span className="text-xs text-muted-foreground font-bold">
+          {isAdmin ? "Admin — full access" : isDriver ? "Driver — simplified checklist" : "Mechanic — full inspection"}
+        </span>
       </div>
 
       {error && <p className="text-destructive font-bold text-sm">{error}</p>}
@@ -403,6 +426,9 @@ export default function AdminPage() {
                         <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-widest flex items-center gap-1">
                           <ShieldCheck className="w-3 h-3" /> Admin
                         </span>
+                      )}
+                      {mechanic.role === "driver" && (
+                        <span className="bg-teal-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-widest">Driver</span>
                       )}
                       {isSelf && (
                         <span className="bg-blue-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-widest">You</span>
