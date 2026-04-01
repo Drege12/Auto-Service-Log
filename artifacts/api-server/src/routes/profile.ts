@@ -113,13 +113,14 @@ router.get("/mechanics/suggestions", async (req, res) => {
     let defaults: SuggestionUser[] = [];
 
     if (caller.role === "mechanic") {
-      // Clients = operators/drivers whose cars I manage (linkedMechanicId = their account, mechanicId = me)
+      // Clients = car owners whose vehicles I (the mechanic) am linked to service
+      // Mechanic links → becomes linkedMechanicId; car owner is mechanicId
       const linkedRows = await db
-        .select({ linkedId: carsTable.linkedMechanicId })
+        .select({ clientId: carsTable.mechanicId })
         .from(carsTable)
-        .where(and(eq(carsTable.mechanicId, me), isNotNull(carsTable.linkedMechanicId)));
+        .where(and(eq(carsTable.linkedMechanicId, me), isNotNull(carsTable.mechanicId)));
 
-      const clientIds = [...new Set(linkedRows.map(r => r.linkedId!))];
+      const clientIds = [...new Set(linkedRows.map(r => r.clientId!))];
       if (clientIds.length > 0) {
         const clients = await db
           .select({ id: mechanicsTable.id, displayName: mechanicsTable.displayName, username: mechanicsTable.username })
@@ -142,11 +143,11 @@ router.get("/mechanics/suggestions", async (req, res) => {
         defaults.push(...colleagues.filter(c => !existingIds.has(c.id)).map(c => ({ ...c, tag: "shop" })));
       }
     } else {
-      // Operator/driver: mechanics who manage my linked vehicles
+      // Operator/driver: I own the car (mechanicId = me); the mechanic linked to service it is linkedMechanicId
       const linkedRows = await db
-        .select({ mechId: carsTable.mechanicId })
+        .select({ mechId: carsTable.linkedMechanicId })
         .from(carsTable)
-        .where(and(eq(carsTable.linkedMechanicId, me), isNotNull(carsTable.mechanicId)));
+        .where(and(eq(carsTable.mechanicId, me), isNotNull(carsTable.linkedMechanicId)));
 
       const mechIds = [...new Set(linkedRows.map(r => r.mechId!))];
       if (mechIds.length > 0) {
