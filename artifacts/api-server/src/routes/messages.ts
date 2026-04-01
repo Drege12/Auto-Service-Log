@@ -187,6 +187,29 @@ router.post("/messages/read/:partnerId", async (req, res) => {
   }
 });
 
+// DELETE /api/messages/conversation/:partnerId — delete all messages in a thread
+router.delete("/messages/conversation/:partnerId", async (req, res) => {
+  const me = getMechanicId(req);
+  if (!me) { res.status(401).json({ error: "Not authenticated." }); return; }
+
+  const partnerId = parseInt(req.params.partnerId, 10);
+  if (isNaN(partnerId)) { res.status(400).json({ error: "Invalid partner ID." }); return; }
+
+  try {
+    await db
+      .delete(messagesTable)
+      .where(
+        or(
+          and(eq(messagesTable.senderId, me), eq(messagesTable.recipientId, partnerId)),
+          and(eq(messagesTable.senderId, partnerId), eq(messagesTable.recipientId, me)),
+        )
+      );
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Failed to delete conversation." });
+  }
+});
+
 // GET /api/mechanics/list — list all non-admin mechanics (for new conversation)
 router.get("/mechanics/list", async (req, res) => {
   const me = getMechanicId(req);

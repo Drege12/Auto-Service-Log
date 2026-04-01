@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ArrowLeft, Send, ChevronRight } from "lucide-react";
+import { MessageSquare, ArrowLeft, Send, ChevronRight, Trash2 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -66,6 +66,8 @@ export default function MessagesPage() {
   const [mechanics, setMechanics] = useState<Mechanic[]>([]);
   const [showNewConvo, setShowNewConvo] = useState(false);
   const [loadingThread, setLoadingThread] = useState(false);
+  const [confirmDeletePartnerId, setConfirmDeletePartnerId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const fetchInbox = async () => {
@@ -80,9 +82,7 @@ export default function MessagesPage() {
     try {
       const r = await fetch(`${BASE}/api/messages/thread/${partnerId}`, { headers: authHeaders() });
       if (r.ok) setThread(await r.json());
-      // mark as read
       await fetch(`${BASE}/api/messages/read/${partnerId}`, { method: "POST", headers: authHeaders() });
-      // update inbox unread count
       setConversations(prev => prev.map(c => c.partnerId === partnerId ? { ...c, unreadCount: 0 } : c));
     } catch { /* ignore */ }
     setLoadingThread(false);
@@ -93,6 +93,23 @@ export default function MessagesPage() {
       const r = await fetch(`${BASE}/api/mechanics/list`, { headers: authHeaders() });
       if (r.ok) setMechanics(await r.json());
     } catch { /* ignore */ }
+  };
+
+  const handleDeleteConversation = async (partnerId: number) => {
+    setDeleting(true);
+    try {
+      await fetch(`${BASE}/api/messages/conversation/${partnerId}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      setConversations(prev => prev.filter(c => c.partnerId !== partnerId));
+      if (activePartnerId === partnerId) {
+        setActivePartnerId(null);
+        setThread([]);
+      }
+    } catch { /* ignore */ }
+    setDeleting(false);
+    setConfirmDeletePartnerId(null);
   };
 
   // Initial load + polling
@@ -119,6 +136,7 @@ export default function MessagesPage() {
     setActivePartnerId(partnerId);
     setActivePartnerName(partnerName);
     setNewBody("");
+    setConfirmDeletePartnerId(null);
     fetchThread(partnerId);
     setShowNewConvo(false);
   };
@@ -145,23 +163,53 @@ export default function MessagesPage() {
 
   // ── Thread view ──────────────────────────────────────────────────────────
   if (activePartnerId !== null) {
+    const isConfirmingDelete = confirmDeletePartnerId === activePartnerId;
     return (
       <Layout>
         <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-120px)]">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-4 bg-gray-100 border-4 border-black rounded-xl p-4 shadow-brutal">
+          <div className="flex items-center gap-3 mb-4 bg-gray-100 border-4 border-black rounded-xl p-4 shadow-brutal">
             <button
               type="button"
-              onClick={() => setActivePartnerId(null)}
-              className="flex items-center gap-2 font-black text-base border-2 border-black rounded-lg px-3 py-2 bg-white hover:bg-black hover:text-white transition-all"
+              onClick={() => { setActivePartnerId(null); setConfirmDeletePartnerId(null); }}
+              className="flex items-center gap-2 font-black text-base border-2 border-black rounded-lg px-3 py-2 bg-white hover:bg-black hover:text-white transition-all shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
               BACK
             </button>
-            <div>
-              <h2 className="text-xl font-black uppercase">{activePartnerName}</h2>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-black uppercase truncate">{activePartnerName}</h2>
               <p className="text-gray-500 text-sm font-medium">Conversation</p>
             </div>
+            {isConfirmingDelete ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-sm font-black text-red-600 uppercase">Delete all?</span>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => handleDeleteConversation(activePartnerId)}
+                  className="bg-red-600 text-white font-black text-sm px-3 py-2 rounded-lg border-2 border-red-700 uppercase hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleting ? "..." : "YES"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeletePartnerId(null)}
+                  className="bg-white text-black font-black text-sm px-3 py-2 rounded-lg border-2 border-black uppercase hover:bg-gray-100"
+                >
+                  NO
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDeletePartnerId(activePartnerId)}
+                className="shrink-0 flex items-center gap-2 font-black text-sm border-2 border-red-300 text-red-600 rounded-lg px-3 py-2 bg-white hover:bg-red-50 hover:border-red-600 transition-all uppercase"
+              >
+                <Trash2 className="w-4 h-4" />
+                DELETE
+              </button>
+            )}
           </div>
 
           {/* Messages */}
@@ -299,28 +347,67 @@ export default function MessagesPage() {
           <div className="space-y-3">
             {conversations.map(c => {
               const isMine = c.lastSenderId === myId;
+              const isConfirming = confirmDeletePartnerId === c.partnerId;
               return (
-                <button
+                <div
                   key={c.partnerId}
-                  type="button"
-                  onClick={() => openConversation(c.partnerId, c.partnerName)}
-                  className="w-full flex items-center gap-4 bg-white border-4 border-black rounded-xl p-4 shadow-brutal hover:bg-gray-50 transition-all text-left"
+                  className="flex items-stretch bg-white border-4 border-black rounded-xl shadow-brutal overflow-hidden"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-lg font-black uppercase truncate">{c.partnerName}</span>
-                      <span className="text-xs text-gray-500 font-bold shrink-0">{formatTime(c.lastMessageAt)}</span>
+                  {/* Main clickable area */}
+                  <button
+                    type="button"
+                    onClick={() => openConversation(c.partnerId, c.partnerName)}
+                    className="flex-1 flex items-center gap-4 p-4 hover:bg-gray-50 transition-all text-left min-w-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-lg font-black uppercase truncate">{c.partnerName}</span>
+                        <span className="text-xs text-gray-500 font-bold shrink-0">{formatTime(c.lastMessageAt)}</span>
+                      </div>
+                      <p className={`text-sm truncate mt-0.5 ${c.unreadCount > 0 ? "font-black text-black" : "font-medium text-gray-500"}`}>
+                        {isMine ? "You: " : ""}{c.lastMessageBody}
+                      </p>
                     </div>
-                    <p className={`text-sm truncate mt-0.5 ${c.unreadCount > 0 ? "font-black text-black" : "font-medium text-gray-500"}`}>
-                      {isMine ? "You: " : ""}{c.lastMessageBody}
-                    </p>
+                    {c.unreadCount > 0 && (
+                      <span className="shrink-0 bg-black text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center">
+                        {c.unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Delete / confirm area */}
+                  <div className="shrink-0 flex items-center border-l-2 border-black">
+                    {isConfirming ? (
+                      <div className="flex items-center gap-1 px-3">
+                        <span className="text-xs font-black text-red-600 uppercase">Delete?</span>
+                        <button
+                          type="button"
+                          disabled={deleting}
+                          onClick={() => handleDeleteConversation(c.partnerId)}
+                          className="bg-red-600 text-white font-black text-xs px-2 py-1.5 rounded border border-red-700 uppercase disabled:opacity-50"
+                        >
+                          {deleting ? "..." : "YES"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeletePartnerId(null)}
+                          className="bg-white text-black font-black text-xs px-2 py-1.5 rounded border border-gray-400 uppercase"
+                        >
+                          NO
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeletePartnerId(c.partnerId)}
+                        className="flex items-center justify-center w-12 h-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                        title="Delete conversation"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
-                  {c.unreadCount > 0 && (
-                    <span className="shrink-0 bg-black text-white text-sm font-black w-7 h-7 rounded-full flex items-center justify-center">
-                      {c.unreadCount}
-                    </span>
-                  )}
-                </button>
+                </div>
               );
             })}
           </div>
