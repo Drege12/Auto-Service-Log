@@ -638,25 +638,27 @@ export default function CarsList() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-base font-black uppercase block">Ownership</label>
-              <div className="flex gap-3">
-                {[{ value: "dealer", label: "Work" }, { value: "personal", label: "Personal" }].map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setField("carType", opt.value)}
-                    className={`flex-1 px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
-                      form.carType === opt.value
-                        ? "bg-black text-white border-black"
-                        : "bg-white text-black border-black"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            {!isDriver && (
+              <div className="space-y-2">
+                <label className="text-base font-black uppercase block">Ownership</label>
+                <div className="flex gap-3">
+                  {[{ value: "dealer", label: "Work" }, { value: "personal", label: "Personal" }].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setField("carType", opt.value)}
+                      className={`flex-1 px-4 py-3 rounded-xl border-4 font-black uppercase text-sm transition-colors ${
+                        form.carType === opt.value
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-black border-black"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-base font-black uppercase block">Vehicle Type</label>
