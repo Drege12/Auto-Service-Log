@@ -222,4 +222,23 @@ router.post("/admin/trigger-mileage-reminders", async (req, res) => {
   res.json({ ok: true, message: "Mileage reminders sent to subscribed drivers." });
 });
 
+// Send a test push to a specific mechanic for a specific car (admin only)
+router.post("/admin/test-push/:mechanicId/:carId", async (req, res) => {
+  const adminId = await requireAdmin(req, res);
+  if (!adminId) return;
+  const mechanicId = parseInt(req.params.mechanicId, 10);
+  const carId = parseInt(req.params.carId, 10);
+  const [car] = await db.select({ year: carsTable.year, make: carsTable.make, model: carsTable.model })
+    .from(carsTable).where(eq(carsTable.id, carId));
+  if (!car) { res.status(404).json({ error: "Car not found" }); return; }
+  const label = `${car.year} ${car.make} ${car.model}`;
+  const { sendPushToMechanic } = await import("../lib/push");
+  await sendPushToMechanic(mechanicId, {
+    title: "Mileage Reminder",
+    body: `Time to log your mileage for your ${label}.`,
+    url: `cars/${carId}`,
+  });
+  res.json({ ok: true, message: `Push sent to mechanic ${mechanicId} for ${label}` });
+});
+
 export default router;
