@@ -165,7 +165,7 @@ router.post("/messages", async (req, res) => {
         type: "dm",
         title: senderName,
         body: body.trim().slice(0, 120),
-        url: "/messages",
+        url: "messages",
       })
     ).catch(() => {});
 

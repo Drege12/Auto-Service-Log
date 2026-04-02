@@ -64,7 +64,7 @@ async function notifyLinkedParty(
         type: "vehicle",
         title: "Maintenance Tracker",
         body: message.slice(0, 120),
-        url: "/notifications",
+        url: "notifications",
       })
     ).catch(() => {});
   } catch {
