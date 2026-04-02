@@ -396,23 +396,6 @@ export default function MessagesPage() {
     });
   };
 
-  // ── Compose box shared helper ─────────────────────────────────────────────
-
-  const ComposeBox = ({ onSend }: { onSend: () => void }) => (
-    <div className="flex gap-3 items-end border-t-4 border-black pt-4">
-      <textarea
-        value={newBody}
-        onChange={e => setNewBody(e.target.value)}
-        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }}
-        placeholder="Type a message..."
-        rows={2}
-        className="flex-1 resize-none rounded-xl border-4 border-black p-3 text-base font-medium bg-white text-black focus:outline-none focus:border-gray-500"
-      />
-      <Button type="button" size="lg" onClick={onSend} disabled={!newBody.trim() || sending} className="shrink-0">
-        <Send className="w-5 h-5 mr-2" />SEND
-      </Button>
-    </div>
-  );
 
   // ── View: DM thread ───────────────────────────────────────────────────────
 
@@ -477,7 +460,7 @@ export default function MessagesPage() {
             <div ref={bottomRef} />
           </div>
 
-          <ComposeBox onSend={handleSend} />
+          <ComposeBox value={newBody} onChange={setNewBody} onSend={handleSend} sending={sending} />
         </div>
 
         {/* Contact modal */}
@@ -606,7 +589,7 @@ export default function MessagesPage() {
             <div ref={bottomRef} />
           </div>
 
-          <ComposeBox onSend={handleSendGroup} />
+          <ComposeBox value={newBody} onChange={setNewBody} onSend={handleSendGroup} sending={sending} />
         </div>
 
         {/* Group members modal */}
@@ -1004,6 +987,34 @@ function Section({ icon, label, users, onSelect }: {
       <div className="space-y-3">
         {users.map(u => <UserRow key={u.id} user={u} onClick={() => onSelect(u)} />)}
       </div>
+    </div>
+  );
+}
+
+function ComposeBox({
+  value,
+  onChange,
+  onSend,
+  sending,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSend: () => void;
+  sending: boolean;
+}) {
+  return (
+    <div className="flex gap-3 items-end border-t-4 border-black pt-4">
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }}
+        placeholder="Type a message..."
+        rows={2}
+        className="flex-1 resize-none rounded-xl border-4 border-black p-3 text-base font-medium bg-white text-black focus:outline-none focus:border-gray-500"
+      />
+      <Button type="button" size="lg" onClick={onSend} disabled={!value.trim() || sending} className="shrink-0">
+        <Send className="w-5 h-5 mr-2" />SEND
+      </Button>
     </div>
   );
 }
