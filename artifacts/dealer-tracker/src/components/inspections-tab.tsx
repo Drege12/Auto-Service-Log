@@ -79,9 +79,8 @@ export function InspectionsTab({
         setLocalItems(items);
         serverStateRef.current = items;
 
-        // Start all mechanic categories open
-        const cats = new Set(items.map(i => i.category || "").filter(Boolean));
-        setOpenSections(cats);
+        // Start all mechanic categories collapsed
+        setOpenSections(new Set());
 
         if (isOwnCar) {
           // For mechanic viewing their own car: load driver items as editable
