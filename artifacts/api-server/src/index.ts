@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedAdminAccount } from "./seed";
+import { startScheduler } from "./lib/scheduler";
 
 const rawPort = process.env["PORT"];
 
@@ -19,5 +20,6 @@ if (Number.isNaN(port) || port <= 0) {
 seedAdminAccount().then(() => {
   app.listen(port, () => {
     logger.info({ port }, "Server listening");
+    startScheduler();
   });
 });
