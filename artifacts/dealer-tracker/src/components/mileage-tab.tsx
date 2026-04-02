@@ -60,7 +60,7 @@ const emptyForm = {
 
 type FormState = typeof emptyForm;
 
-export function MileageTab({ carId, carLabel, initialMileage, originalMileage, vehicleType }: { carId: number; carLabel: string; initialMileage?: number; originalMileage?: number; vehicleType?: string | null }) {
+export function MileageTab({ carId, carLabel, initialMileage, originalMileage, vehicleType, isDriver }: { carId: number; carLabel: string; initialMileage?: number; originalMileage?: number; vehicleType?: string | null; isDriver?: boolean }) {
   const ml = mileageLabel(vehicleType);
   const contentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -83,14 +83,14 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage, v
       setError("Enter a valid odometer reading.");
       return;
     }
-    if (!form.reason.trim()) {
+    if (!isDriver && !form.reason.trim()) {
       setError("Reason is required.");
       return;
     }
     createEntry({ carId, data: {
       date: form.date,
       odometer: odo,
-      reason: form.reason.trim(),
+      reason: isDriver ? "Commute" : form.reason.trim(),
       technician: form.technician.trim() || undefined,
       notes: form.notes.trim() || undefined,
       fuelLevel: form.fuelLevel || undefined,
@@ -194,52 +194,56 @@ export function MileageTab({ carId, carLabel, initialMileage, originalMileage, v
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="space-y-1">
-              <label className="text-base font-black uppercase block">Reason *</label>
-              <select
-                value={form.reason}
-                onChange={e => setField("reason", e.target.value)}
-                className="w-full border-2 border-black rounded-lg px-4 py-3 text-base font-bold bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
-              >
-                {REASON_OPTIONS.map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-base font-black uppercase block">Technician</label>
-              <Input
-                value={form.technician}
-                onChange={e => setField("technician", e.target.value)}
-                placeholder="Name (optional)"
-                className="bg-white text-black"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-base font-black uppercase block">
-              <Fuel className="inline w-5 h-5 mr-2 mb-0.5" />
-              Fuel Level at End of Drive
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {FUEL_LEVELS.map(level => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => setField("fuelLevel", form.fuelLevel === level ? "" : level)}
-                  className={`px-4 py-2 rounded-lg border-4 font-black text-sm min-w-[3rem] transition-colors ${
-                    form.fuelLevel === level
-                      ? fuelColor(level)
-                      : "bg-white text-black border-black"
-                  }`}
+          {!isDriver && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Reason *</label>
+                <select
+                  value={form.reason}
+                  onChange={e => setField("reason", e.target.value)}
+                  className="w-full border-2 border-black rounded-lg px-4 py-3 text-base font-bold bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
                 >
-                  {level}
-                </button>
-              ))}
+                  {REASON_OPTIONS.map(r => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Technician</label>
+                <Input
+                  value={form.technician}
+                  onChange={e => setField("technician", e.target.value)}
+                  placeholder="Name (optional)"
+                  className="bg-white text-black"
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {!isDriver && (
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase block">
+                <Fuel className="inline w-5 h-5 mr-2 mb-0.5" />
+                Fuel Level at End of Drive
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {FUEL_LEVELS.map(level => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setField("fuelLevel", form.fuelLevel === level ? "" : level)}
+                    className={`px-4 py-2 rounded-lg border-4 font-black text-sm min-w-[3rem] transition-colors ${
+                      form.fuelLevel === level
+                        ? fuelColor(level)
+                        : "bg-white text-black border-black"
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-base font-black uppercase block">Notes</label>

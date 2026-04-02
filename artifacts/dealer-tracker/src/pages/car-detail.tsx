@@ -398,7 +398,7 @@ export default function CarDetail() {
             <TodosTab carId={carId} carLabel={carLabel} />
           </TabsContent>
           <TabsContent value="mileage" className="mt-0">
-            <MileageTab carId={carId} carLabel={carLabel} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} />
+            <MileageTab carId={carId} carLabel={carLabel} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} isDriver={viewerSession.role === "driver"} />
           </TabsContent>
           <TabsContent value="costs" className="mt-0">
             <CostsTab
