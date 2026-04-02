@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { db, mechanicsTable, carsTable, maintenanceEntriesTable } from "@workspace/db";
 import { eq, ne, count, sum, avg, desc } from "drizzle-orm";
 import type { Request, Response } from "express";
+import { sendMonthlyMileageReminders } from "../lib/scheduler";
 
 const router = Router();
 
@@ -211,6 +212,14 @@ router.patch("/admin/cars/:carId/reassign", async (req, res) => {
   } catch {
     res.status(500).json({ error: "Failed to reassign car." });
   }
+});
+
+// Manually trigger the monthly mileage reminder (admin only — for testing)
+router.post("/admin/trigger-mileage-reminders", async (req, res) => {
+  const adminId = await requireAdmin(req, res);
+  if (!adminId) return;
+  sendMonthlyMileageReminders().catch(console.error);
+  res.json({ ok: true, message: "Mileage reminders sent to subscribed drivers." });
 });
 
 export default router;
