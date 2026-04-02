@@ -57,6 +57,16 @@ async function notifyLinkedParty(
     }
 
     await db.insert(vehicleNotificationsTable).values({ recipientId, actorId, carId, type, message });
+
+    // Push notification to recipient — fire and forget
+    import("../lib/push").then(({ sendPushToMechanic }) =>
+      sendPushToMechanic(recipientId, {
+        type: "vehicle",
+        title: "Maintenance Tracker",
+        body: message.slice(0, 120),
+        url: "/notifications",
+      })
+    ).catch(() => {});
   } catch {
     // Notification failures must never break the main route
   }

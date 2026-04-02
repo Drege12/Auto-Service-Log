@@ -156,6 +156,19 @@ router.post("/messages", async (req, res) => {
       .insert(messagesTable)
       .values({ senderId: me, recipientId, body: body.trim() })
       .returning();
+
+    // Push notification to recipient — fire and forget
+    const senderRow = await db.select({ displayName: mechanicsTable.displayName }).from(mechanicsTable).where(eq(mechanicsTable.id, me)).limit(1);
+    const senderName = senderRow[0]?.displayName ?? "Someone";
+    import("../lib/push").then(({ sendPushToMechanic }) =>
+      sendPushToMechanic(recipientId, {
+        type: "dm",
+        title: senderName,
+        body: body.trim().slice(0, 120),
+        url: "/messages",
+      })
+    ).catch(() => {});
+
     res.status(201).json(msg);
   } catch {
     res.status(500).json({ error: "Failed to send message." });
