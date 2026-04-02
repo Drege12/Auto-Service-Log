@@ -13,6 +13,7 @@ import { MileageTab } from "@/components/mileage-tab";
 import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
 import { NotesTab } from "@/components/notes-tab";
+import { ServiceIntervalsTab } from "@/components/service-intervals-tab";
 import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
@@ -377,6 +378,7 @@ export default function CarDetail() {
           <TabsTrigger value="todos" className="w-full sm:w-auto">NEEDS DONE</TabsTrigger>
           <TabsTrigger value="mileage" className="w-full sm:w-auto">MILEAGE</TabsTrigger>
           <TabsTrigger value="costs" className="w-full sm:w-auto">COSTS</TabsTrigger>
+          <TabsTrigger value="service" className="w-full sm:w-auto">SERVICE</TabsTrigger>
           <TabsTrigger value="notes" className="w-full sm:w-auto">NOTES</TabsTrigger>
         </TabsList>
 
@@ -412,6 +414,9 @@ export default function CarDetail() {
               actualPartsCost={car.actualPartsCost ?? undefined}
               actualLaborHours={car.actualLaborHours ?? undefined}
             />
+          </TabsContent>
+          <TabsContent value="service" className="mt-0">
+            <ServiceIntervalsTab carId={carId} vehicleType={car.vehicleType} />
           </TabsContent>
           <TabsContent value="notes" className="mt-0">
             <NotesTab carId={carId} initialNotes={car.notes} />

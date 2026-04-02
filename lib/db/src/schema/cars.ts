@@ -162,6 +162,23 @@ export const carNotesLogTable = pgTable("car_notes_log", {
 
 export type CarNoteLog = typeof carNotesLogTable.$inferSelect;
 
+export const serviceIntervalsTable = pgTable("service_intervals", {
+  id: serial("id").primaryKey(),
+  carId: integer("car_id").notNull().references(() => carsTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  intervalType: text("interval_type").notNull().default("miles"),
+  intervalValue: integer("interval_value"),
+  targetMonths: text("target_months"),
+  lastServiceReading: integer("last_service_reading"),
+  lastServiceDate: text("last_service_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertServiceIntervalSchema = createInsertSchema(serviceIntervalsTable).omit({ id: true, createdAt: true });
+export type InsertServiceInterval = z.infer<typeof insertServiceIntervalSchema>;
+export type ServiceInterval = typeof serviceIntervalsTable.$inferSelect;
+
 export const pushSubscriptionsTable = pgTable("push_subscriptions", {
   id: serial("id").primaryKey(),
   mechanicId: integer("mechanic_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),

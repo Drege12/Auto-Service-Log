@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request } from "express";
-import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable, vehicleNotificationsTable, carNotesLogTable } from "@workspace/db";
+import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable, vehicleNotificationsTable, carNotesLogTable, serviceIntervalsTable } from "@workspace/db";
 import { eq, and, max, ne, or, isNull, gt } from "drizzle-orm";
 import { z } from "zod";
 
@@ -867,6 +867,107 @@ router.patch("/cars/:carId/costs", async (req, res) => {
     res.json(car);
   } catch (err) {
     res.status(500).json({ error: "Failed to update repair costs" });
+  }
+});
+
+// ── Service Intervals ─────────────────────────────────────────────────────────
+
+const serviceIntervalBodySchema = z.object({
+  name: z.string().min(1),
+  intervalType: z.enum(["miles", "hours", "seasonal"]),
+  intervalValue: z.number().int().positive().optional().nullable(),
+  targetMonths: z.string().optional().nullable(),
+  lastServiceReading: z.number().int().optional().nullable(),
+  lastServiceDate: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+router.get("/cars/:carId/service-intervals", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const rows = await db.select().from(serviceIntervalsTable)
+      .where(eq(serviceIntervalsTable.carId, carId))
+      .orderBy(serviceIntervalsTable.createdAt);
+    res.json(rows);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch service intervals" });
+  }
+});
+
+router.post("/cars/:carId/service-intervals", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const parsed = serviceIntervalBodySchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: "Invalid data" }); return; }
+    const [row] = await db.insert(serviceIntervalsTable).values({
+      carId,
+      ...parsed.data,
+      intervalValue: parsed.data.intervalValue ?? null,
+      targetMonths: parsed.data.targetMonths ?? null,
+      lastServiceReading: parsed.data.lastServiceReading ?? null,
+      lastServiceDate: parsed.data.lastServiceDate ?? null,
+      notes: parsed.data.notes ?? null,
+    }).returning();
+    res.status(201).json(row);
+  } catch {
+    res.status(500).json({ error: "Failed to create service interval" });
+  }
+});
+
+router.put("/cars/:carId/service-intervals/:intervalId", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const intervalId = parseInt(req.params.intervalId, 10);
+    const parsed = serviceIntervalBodySchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: "Invalid data" }); return; }
+    const [row] = await db.update(serviceIntervalsTable)
+      .set({
+        ...parsed.data,
+        intervalValue: parsed.data.intervalValue ?? null,
+        targetMonths: parsed.data.targetMonths ?? null,
+        notes: parsed.data.notes ?? null,
+      })
+      .where(and(eq(serviceIntervalsTable.id, intervalId), eq(serviceIntervalsTable.carId, carId)))
+      .returning();
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
+    res.json(row);
+  } catch {
+    res.status(500).json({ error: "Failed to update service interval" });
+  }
+});
+
+router.patch("/cars/:carId/service-intervals/:intervalId/done", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const intervalId = parseInt(req.params.intervalId, 10);
+    const parsed = z.object({
+      lastServiceReading: z.number().int().optional().nullable(),
+      lastServiceDate: z.string(),
+    }).safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: "Invalid data" }); return; }
+    const [row] = await db.update(serviceIntervalsTable)
+      .set({
+        lastServiceReading: parsed.data.lastServiceReading ?? null,
+        lastServiceDate: parsed.data.lastServiceDate,
+      })
+      .where(and(eq(serviceIntervalsTable.id, intervalId), eq(serviceIntervalsTable.carId, carId)))
+      .returning();
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
+    res.json(row);
+  } catch {
+    res.status(500).json({ error: "Failed to mark done" });
+  }
+});
+
+router.delete("/cars/:carId/service-intervals/:intervalId", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const intervalId = parseInt(req.params.intervalId, 10);
+    await db.delete(serviceIntervalsTable)
+      .where(and(eq(serviceIntervalsTable.id, intervalId), eq(serviceIntervalsTable.carId, carId)));
+    res.status(204).send();
+  } catch {
+    res.status(500).json({ error: "Failed to delete service interval" });
   }
 });
 
