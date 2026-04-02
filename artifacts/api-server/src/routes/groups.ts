@@ -211,7 +211,7 @@ router.post("/groups/:groupId/messages", async (req, res) => {
           type: "group",
           title: `${groupName} — ${senderName}`,
           body: body.trim().slice(0, 120),
-          url: "/messages",
+          url: "messages",
         })
       );
     }).catch(() => {});
