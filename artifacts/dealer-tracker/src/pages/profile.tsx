@@ -3,7 +3,8 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/phone-input";
-import { Phone, Mail, Eye, EyeOff, User, Hash } from "lucide-react";
+import { Phone, Mail, Eye, EyeOff, User, Hash, Bell, BellOff, BellRing } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -220,6 +221,8 @@ export default function ProfilePage() {
               </Button>
             </div>
 
+            <PushNotificationCard />
+
             {session && !profile.phone && !profile.email && (
               <div className="bg-amber-50 border-4 border-amber-500 rounded-2xl p-5">
                 <p className="font-black text-amber-900 text-lg">No contact info added yet.</p>
@@ -230,5 +233,71 @@ export default function ProfilePage() {
         )}
       </div>
     </Layout>
+  );
+}
+
+function PushNotificationCard() {
+  const { state, subscribe, unsubscribe } = usePushNotifications();
+
+  if (state === "unsupported") return null;
+
+  const handleToggle = async () => {
+    if (state === "granted") {
+      await unsubscribe();
+    } else {
+      await subscribe();
+    }
+  };
+
+  return (
+    <div className="bg-white border-4 border-black rounded-2xl p-5 space-y-3">
+      <div className="flex items-center gap-3">
+        {state === "granted" ? (
+          <BellRing className="w-6 h-6 text-green-600 shrink-0" />
+        ) : (
+          <BellOff className="w-6 h-6 text-gray-400 shrink-0" />
+        )}
+        <div>
+          <p className="font-black text-lg uppercase">Push Notifications</p>
+          <p className="text-sm font-medium text-gray-500">
+            {state === "granted"
+              ? "You'll get notified for new messages and vehicle updates."
+              : state === "denied"
+              ? "Blocked in browser settings — allow notifications to enable."
+              : "Get notified for new messages and vehicle updates."}
+          </p>
+        </div>
+      </div>
+
+      {state !== "denied" && (
+        <Button
+          type="button"
+          size="lg"
+          disabled={state === "loading"}
+          onClick={handleToggle}
+          className={`w-full font-black uppercase ${
+            state === "granted"
+              ? "bg-white text-black border-4 border-black hover:bg-gray-100"
+              : ""
+          }`}
+          variant={state === "granted" ? "outline" : "default"}
+        >
+          <Bell className="w-5 h-5 mr-2" />
+          {state === "loading"
+            ? "LOADING..."
+            : state === "granted"
+            ? "DISABLE NOTIFICATIONS"
+            : "ENABLE NOTIFICATIONS"}
+        </Button>
+      )}
+
+      {state === "denied" && (
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center">
+          <p className="text-sm font-bold text-gray-500">
+            Open your browser settings and allow notifications for this site, then reload.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

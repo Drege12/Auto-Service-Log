@@ -197,6 +197,25 @@ router.post("/groups/:groupId/messages", async (req, res) => {
       .values({ groupId, senderId: me, body: body.trim() })
       .returning();
 
+    // Push to all other group members — fire and forget
+    Promise.all([
+      db.select({ displayName: mechanicsTable.displayName }).from(mechanicsTable).where(eq(mechanicsTable.id, me)).limit(1),
+      db.select({ mechanicId: groupMembersTable.mechanicId }).from(groupMembersTable).where(eq(groupMembersTable.groupId, groupId)),
+      db.select({ name: groupsTable.name }).from(groupsTable).where(eq(groupsTable.id, groupId)).limit(1),
+    ]).then(([senderRows, allMembers, groupRows]) => {
+      const senderName = senderRows[0]?.displayName ?? "Someone";
+      const groupName = groupRows[0]?.name ?? "Group";
+      const otherIds = allMembers.map(m => m.mechanicId).filter(id => id !== me);
+      import("../lib/push").then(({ sendPushToMechanics }) =>
+        sendPushToMechanics(otherIds, {
+          type: "group",
+          title: `${groupName} — ${senderName}`,
+          body: body.trim().slice(0, 120),
+          url: "/messages",
+        })
+      );
+    }).catch(() => {});
+
     res.status(201).json(msg);
   } catch {
     res.status(500).json({ error: "Failed to send message." });

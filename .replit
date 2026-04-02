@@ -43,3 +43,10 @@ externalPort = 3001
 [[ports]]
 localPort = 20152
 externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BGYQCewseYFD625YvGZBvN2YnJuMOgpMmv_SrIUuBf8AL24u5TM156BtEojR0UJxFkKO-F4l3tMsXG4PiAeulV0"
+VAPID_PRIVATE_KEY = "AZjEBiwsx3laq7M-l0_N3S5AeBWZPnq3JjQzbv39XpM"
+VAPID_EMAIL = "mailto:admin@maintenance-tracker.app"
