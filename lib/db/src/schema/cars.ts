@@ -152,6 +152,16 @@ export const groupMessagesTable = pgTable("group_messages", {
 
 export type GroupMessage = typeof groupMessagesTable.$inferSelect;
 
+export const carNotesLogTable = pgTable("car_notes_log", {
+  id: serial("id").primaryKey(),
+  carId: integer("car_id").notNull().references(() => carsTable.id, { onDelete: "cascade" }),
+  authorId: integer("author_id").references(() => mechanicsTable.id, { onDelete: "set null" }),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type CarNoteLog = typeof carNotesLogTable.$inferSelect;
+
 export const pushSubscriptionsTable = pgTable("push_subscriptions", {
   id: serial("id").primaryKey(),
   mechanicId: integer("mechanic_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
