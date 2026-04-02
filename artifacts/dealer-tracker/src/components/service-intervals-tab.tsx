@@ -127,6 +127,8 @@ const emptyForm = {
   intervalType: "miles" as "miles" | "hours" | "seasonal",
   intervalValue: "",
   targetMonths: [] as number[],
+  lastServiceReading: "",
+  lastServiceDate: "",
   notes: "",
 };
 
@@ -191,6 +193,8 @@ export function ServiceIntervalsTab({
       intervalType: si.intervalType as "miles" | "hours" | "seasonal",
       intervalValue: si.intervalValue ? String(si.intervalValue) : "",
       targetMonths: parseMonths(si.targetMonths),
+      lastServiceReading: si.lastServiceReading ? String(si.lastServiceReading) : "",
+      lastServiceDate: si.lastServiceDate ?? "",
       notes: si.notes ?? "",
     });
     setFormError("");
@@ -211,11 +215,14 @@ export function ServiceIntervalsTab({
       setFormError("Select at least one target month."); return;
     }
 
+    const lastReadingNum = form.lastServiceReading ? parseInt(form.lastServiceReading, 10) : null;
     const data = {
       name: form.name.trim(),
       intervalType: form.intervalType,
       intervalValue: form.intervalType !== "seasonal" ? parseInt(form.intervalValue, 10) : null,
       targetMonths: form.intervalType === "seasonal" ? monthsToString(form.targetMonths) : null,
+      lastServiceReading: form.intervalType !== "seasonal" && lastReadingNum && !isNaN(lastReadingNum) ? lastReadingNum : null,
+      lastServiceDate: form.lastServiceDate || null,
       notes: form.notes.trim() || null,
     };
 
@@ -376,6 +383,35 @@ export function ServiceIntervalsTab({
               </div>
             </div>
           )}
+
+          <div className="border-t-2 border-gray-200 pt-4 space-y-3">
+            <label className="text-base font-black uppercase block text-gray-500">Last Service (optional)</label>
+            <div className={`grid gap-4 ${form.intervalType !== "seasonal" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
+              <div className="space-y-1">
+                <label className="text-sm font-black uppercase block">Date Last Done</label>
+                <Input
+                  type="date"
+                  value={form.lastServiceDate}
+                  onChange={e => setField("lastServiceDate", e.target.value)}
+                  className="bg-white text-black"
+                />
+              </div>
+              {form.intervalType !== "seasonal" && (
+                <div className="space-y-1">
+                  <label className="text-sm font-black uppercase block">
+                    {form.intervalType === "hours" ? "Engine Hours at Last Service" : "Odometer at Last Service"}
+                  </label>
+                  <Input
+                    value={form.lastServiceReading}
+                    onChange={e => setField("lastServiceReading", e.target.value)}
+                    placeholder={form.intervalType === "hours" ? "e.g. 320" : "e.g. 42000"}
+                    inputMode="numeric"
+                    className="bg-white text-black font-mono"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="space-y-1">
             <label className="text-base font-black uppercase block">Notes</label>
