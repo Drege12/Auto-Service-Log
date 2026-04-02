@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { db, mechanicsTable, carsTable, pushSubscriptionsTable } from "@workspace/db";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, or } from "drizzle-orm";
 import { sendPushToMechanic } from "./push";
 
 export async function sendMonthlyMileageReminders() {
@@ -26,7 +26,13 @@ export async function sendMonthlyMileageReminders() {
       const cars = await db
         .select({ id: carsTable.id, year: carsTable.year, make: carsTable.make, model: carsTable.model })
         .from(carsTable)
-        .where(and(eq(carsTable.linkedMechanicId, driver.id), eq(carsTable.sold, 0)));
+        .where(and(
+          eq(carsTable.sold, 0),
+          or(
+            eq(carsTable.linkedMechanicId, driver.id),
+            eq(carsTable.mechanicId, driver.id),
+          )
+        ));
 
       if (cars.length === 0) continue;
 
