@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request } from "express";
-import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable, vehicleNotificationsTable } from "@workspace/db";
+import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable, vehicleNotificationsTable, carNotesLogTable } from "@workspace/db";
 import { eq, and, max, ne, or, isNull, gt } from "drizzle-orm";
 import { z } from "zod";
 
@@ -414,6 +414,86 @@ router.patch("/cars/:carId/notes", async (req, res) => {
     if (notes?.trim()) void notifyLinkedParty(carId, getMechanicId(req), "notes_updated", "Vehicle notes were updated", 15);
   } catch {
     res.status(500).json({ error: "Failed to save notes" });
+  }
+});
+
+// --- Car Notes Log ---
+
+router.get("/cars/:carId/notes-log", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const rows = await db
+      .select({
+        id: carNotesLogTable.id,
+        body: carNotesLogTable.body,
+        authorName: mechanicsTable.displayName,
+        createdAt: carNotesLogTable.createdAt,
+      })
+      .from(carNotesLogTable)
+      .leftJoin(mechanicsTable, eq(carNotesLogTable.authorId, mechanicsTable.id))
+      .where(eq(carNotesLogTable.carId, carId))
+      .orderBy(carNotesLogTable.createdAt);
+
+    // Auto-migrate legacy single-field note if log is empty
+    if (rows.length === 0) {
+      const [car] = await db.select({ notes: carsTable.notes }).from(carsTable).where(eq(carsTable.id, carId));
+      if (car?.notes?.trim()) {
+        const [entry] = await db
+          .insert(carNotesLogTable)
+          .values({ carId, body: car.notes.trim(), authorId: null })
+          .returning();
+        await db.update(carsTable).set({ notes: null }).where(eq(carsTable.id, carId));
+        const result = [{ id: entry.id, body: entry.body, authorName: null, createdAt: entry.createdAt }];
+        res.json(result);
+        return;
+      }
+    }
+
+    res.json(rows.map(r => ({ ...r, createdAt: r.createdAt.toISOString() })));
+  } catch {
+    res.status(500).json({ error: "Failed to load notes" });
+  }
+});
+
+router.post("/cars/:carId/notes-log", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const mechanicId = getMechanicId(req);
+    const { body } = req.body as { body?: string };
+    if (!body?.trim()) { res.status(400).json({ error: "Note body is required" }); return; }
+
+    const [entry] = await db
+      .insert(carNotesLogTable)
+      .values({ carId, body: body.trim(), authorId: mechanicId })
+      .returning();
+
+    const [author] = mechanicId
+      ? await db.select({ displayName: mechanicsTable.displayName }).from(mechanicsTable).where(eq(mechanicsTable.id, mechanicId))
+      : [];
+
+    res.json({
+      id: entry.id,
+      body: entry.body,
+      authorName: author?.displayName ?? null,
+      createdAt: entry.createdAt.toISOString(),
+    });
+
+    void notifyLinkedParty(carId, mechanicId, "notes_updated", "A new note was added to your vehicle", 0);
+  } catch {
+    res.status(500).json({ error: "Failed to add note" });
+  }
+});
+
+router.delete("/cars/:carId/notes-log/:noteId", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const noteId = parseInt(req.params.noteId, 10);
+    await db
+      .delete(carNotesLogTable)
+      .where(and(eq(carNotesLogTable.id, noteId), eq(carNotesLogTable.carId, carId)));
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Failed to delete note" });
   }
 });
 
