@@ -46,6 +46,7 @@ export function InspectionsTab({
   const [isDirty, setIsDirty] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [mechanicSectionOpen, setMechanicSectionOpen] = useState(true);
   const [driverReviewItems, setDriverReviewItems] = useState<Partial<InspectionItem>[]>([]);
   const [driverReviewOpen, setDriverReviewOpen] = useState<Set<string>>(new Set());
   // Editable driver/operator items for mechanics viewing their own (non-client) cars
@@ -77,6 +78,10 @@ export function InspectionsTab({
           : mechanicItems;
         setLocalItems(items);
         serverStateRef.current = items;
+
+        // Start all mechanic categories open
+        const cats = new Set(items.map(i => i.category || "").filter(Boolean));
+        setOpenSections(cats);
 
         if (isOwnCar) {
           // For mechanic viewing their own car: load driver items as editable
@@ -622,6 +627,27 @@ export function InspectionsTab({
         </div>
       )}
 
+      {!isDriver && (
+        <button
+          type="button"
+          onClick={() => setMechanicSectionOpen(v => !v)}
+          className="w-full flex items-center justify-between gap-4 p-5 text-left bg-black text-white rounded-xl font-black uppercase text-xl border-4 border-black shadow-brutal"
+        >
+          <div className="flex items-center gap-3 flex-wrap">
+            <span>Inspection Checklist</span>
+            <span className="text-sm font-bold bg-white text-black px-2 py-0.5 rounded">
+              {localItems.filter(i => !i.status || i.status === "pending").length > 0
+                ? `${localItems.filter(i => !i.status || i.status === "pending").length} PENDING`
+                : localItems.length > 0 ? "ALL REVIEWED" : ""}
+            </span>
+          </div>
+          {mechanicSectionOpen
+            ? <ChevronDown className="w-8 h-8 flex-shrink-0" />
+            : <ChevronRight className="w-8 h-8 flex-shrink-0" />}
+        </button>
+      )}
+
+      {(isDriver || mechanicSectionOpen) && (
       <div className="space-y-3">
         {displayCategories.map(category => {
           const categoryItems = localItems
@@ -793,6 +819,7 @@ export function InspectionsTab({
           );
         })}
       </div>
+      )}
     </div>
   );
 }
