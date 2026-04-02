@@ -165,7 +165,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               )}
             >
               <Home className="w-5 h-5 shrink-0" />
-              <span className="hidden md:inline text-sm">BACK</span>
+              <span className="hidden md:inline text-sm">HOME</span>
             </Link>
             <button
               type="button"
