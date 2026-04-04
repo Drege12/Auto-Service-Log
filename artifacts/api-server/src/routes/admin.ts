@@ -214,6 +214,35 @@ router.patch("/admin/cars/:carId/reassign", async (req, res) => {
   }
 });
 
+// Assign a driver/client to a vehicle (sets linkedMechanicId)
+router.patch("/admin/cars/:carId/assign-driver", async (req, res) => {
+  const adminId = await requireAdmin(req, res);
+  if (adminId === null) return;
+
+  const carId = parseInt(req.params.carId, 10);
+  if (isNaN(carId)) { res.status(400).json({ error: "Invalid car ID." }); return; }
+
+  const { driverId } = req.body as { driverId?: number | null };
+
+  try {
+    // null clears the assignment; otherwise validate the driver exists
+    if (driverId != null) {
+      const [mechanic] = await db.select({ id: mechanicsTable.id }).from(mechanicsTable).where(eq(mechanicsTable.id, Number(driverId)));
+      if (!mechanic) { res.status(404).json({ error: "Account not found." }); return; }
+    }
+
+    const [updated] = await db.update(carsTable)
+      .set({ linkedMechanicId: driverId != null ? Number(driverId) : null })
+      .where(eq(carsTable.id, carId))
+      .returning({ id: carsTable.id });
+
+    if (!updated) { res.status(404).json({ error: "Car not found." }); return; }
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Failed to assign client to car." });
+  }
+});
+
 // Manually trigger the monthly mileage reminder (admin only — for testing)
 router.post("/admin/trigger-mileage-reminders", async (req, res) => {
   const adminId = await requireAdmin(req, res);
