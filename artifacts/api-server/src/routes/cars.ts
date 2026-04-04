@@ -252,6 +252,7 @@ router.get("/cars", async (req, res) => {
           owner: carsTable.owner,
           sold: carsTable.sold,
           createdAt: carsTable.createdAt,
+          linkedMechanicId: carsTable.linkedMechanicId,
         })
         .from(carsTable)
         .leftJoin(mechanicsTable, eq(carsTable.mechanicId, mechanicsTable.id))

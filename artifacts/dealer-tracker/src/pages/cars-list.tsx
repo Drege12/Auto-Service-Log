@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useListCars, useCreateCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType, CreateCarVehicleSubtype } from "@workspace/api-client-react";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
@@ -7,7 +7,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download, UserCheck, Link2, Unlink } from "lucide-react";
+import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download, UserCheck, Link2, Unlink, Wrench, UserCircle } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -121,6 +121,7 @@ type CarItem = {
   owner?: string;
   sold?: number;
   createdAt?: string;
+  mechanicId?: number | null;
   mechanicName?: string | null;
   isLinkedCar?: boolean;
   linkedMechanicId?: number | null;
@@ -179,31 +180,37 @@ export default function CarsList() {
   const [unlinkCarId, setUnlinkCarId] = useState<number | null>(null);
   const [unlinking, setUnlinking] = useState(false);
 
-  type MechanicOption = { id: number; username: string; displayName: string };
+  type MechanicOption = { id: number; username: string; displayName: string; role?: string | null };
+  const [allMechanics, setAllMechanics] = useState<MechanicOption[]>([]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
+    fetch(`${BASE}/api/admin/mechanics`, { headers: { "X-Mechanic-Id": String(mechanicId) } })
+      .then(r => r.json())
+      .then((data: MechanicOption[]) => setAllMechanics(data))
+      .catch(() => setAllMechanics([]));
+  }, [isAdmin]);
+
+  const techOptions = allMechanics.filter(m => m.role !== "driver");
+  const clientOptions = allMechanics.filter(m => m.role === "driver");
+
+  // --- Assign Tech dialog ---
   const [reassignOpen, setReassignOpen] = useState(false);
   const [reassignCarId, setReassignCarId] = useState<number | null>(null);
   const [reassignCarLabel, setReassignCarLabel] = useState("");
-  const [mechanicOptions, setMechanicOptions] = useState<MechanicOption[]>([]);
   const [selectedMechanicId, setSelectedMechanicId] = useState<number | null>(null);
   const [reassigning, setReassigning] = useState(false);
   const [reassignError, setReassignError] = useState("");
 
-  const openReassignDialog = async (e: React.MouseEvent, car: CarItem) => {
+  const openAssignTechDialog = (e: React.MouseEvent, car: CarItem) => {
     e.preventDefault();
     e.stopPropagation();
     setReassignCarId(car.id);
     setReassignCarLabel(`${car.year} ${car.make} ${car.model}`);
-    setSelectedMechanicId(null);
+    setSelectedMechanicId(car.mechanicId ?? null);
     setReassignError("");
     setReassigning(false);
-    try {
-      const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
-      const res = await fetch(`${BASE}/api/admin/mechanics`, { headers: { "X-Mechanic-Id": String(mechanicId) } });
-      const data = await res.json() as MechanicOption[];
-      setMechanicOptions(data);
-    } catch {
-      setMechanicOptions([]);
-    }
     setReassignOpen(true);
   };
 
@@ -229,6 +236,51 @@ export default function CarsList() {
       setReassignError("Could not reach the server.");
     } finally {
       setReassigning(false);
+    }
+  };
+
+  // --- Assign Client dialog ---
+  const [assignClientOpen, setAssignClientOpen] = useState(false);
+  const [assignClientCarId, setAssignClientCarId] = useState<number | null>(null);
+  const [assignClientCarLabel, setAssignClientCarLabel] = useState("");
+  const [selectedDriverId, setSelectedDriverId] = useState<number | null | "none">(null);
+  const [assigningClient, setAssigningClient] = useState(false);
+  const [assignClientError, setAssignClientError] = useState("");
+
+  const openAssignClientDialog = (e: React.MouseEvent, car: CarItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAssignClientCarId(car.id);
+    setAssignClientCarLabel(`${car.year} ${car.make} ${car.model}`);
+    setSelectedDriverId(car.linkedMechanicId ?? "none");
+    setAssignClientError("");
+    setAssigningClient(false);
+    setAssignClientOpen(true);
+  };
+
+  const handleAssignClient = async () => {
+    if (!assignClientCarId || selectedDriverId === null) return;
+    setAssigningClient(true);
+    setAssignClientError("");
+    try {
+      const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
+      const driverId = selectedDriverId === "none" ? null : selectedDriverId;
+      const res = await fetch(`${BASE}/api/admin/cars/${assignClientCarId}/assign-driver`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-Mechanic-Id": String(mechanicId) },
+        body: JSON.stringify({ driverId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setAssignClientError(err.error || "Failed to assign client.");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      setAssignClientOpen(false);
+    } catch {
+      setAssignClientError("Could not reach the server.");
+    } finally {
+      setAssigningClient(false);
     }
   };
 
@@ -607,14 +659,31 @@ export default function CarsList() {
                     {isAdmin && (
                       <>
                         {car.mechanicName && (
-                          <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">{car.mechanicName}</span>
+                          <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
+                            <Wrench className="w-3 h-3 inline mr-1" />{car.mechanicName}
+                          </span>
                         )}
+                        {car.linkedMechanicId && (() => {
+                          const client = allMechanics.find(m => m.id === car.linkedMechanicId);
+                          return client ? (
+                            <span className="bg-teal-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
+                              <UserCircle className="w-3 h-3 inline mr-1" />{client.displayName}
+                            </span>
+                          ) : null;
+                        })()}
                         <button
                           type="button"
-                          onClick={e => openReassignDialog(e, car)}
+                          onClick={e => openAssignTechDialog(e, car)}
                           className="flex items-center gap-1 bg-white text-black font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-black"
                         >
-                          <UserCheck className="w-3 h-3" /> Reassign
+                          <Wrench className="w-3 h-3" /> Tech
+                        </button>
+                        <button
+                          type="button"
+                          onClick={e => openAssignClientDialog(e, car)}
+                          className="flex items-center gap-1 bg-white text-black font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-black"
+                        >
+                          <UserCircle className="w-3 h-3" /> Client
                         </button>
                       </>
                     )}
@@ -692,14 +761,31 @@ export default function CarsList() {
                           {isAdmin && (
                             <>
                               {car.mechanicName && (
-                                <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">{car.mechanicName}</span>
+                                <span className="bg-amber-500 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
+                                  <Wrench className="w-3 h-3 inline mr-1" />{car.mechanicName}
+                                </span>
                               )}
+                              {car.linkedMechanicId && (() => {
+                                const client = allMechanics.find(m => m.id === car.linkedMechanicId);
+                                return client ? (
+                                  <span className="bg-teal-600 text-white font-black px-2 py-1 rounded text-xs uppercase tracking-wide">
+                                    <UserCircle className="w-3 h-3 inline mr-1" />{client.displayName}
+                                  </span>
+                                ) : null;
+                              })()}
                               <button
                                 type="button"
-                                onClick={e => openReassignDialog(e, car)}
+                                onClick={e => openAssignTechDialog(e, car)}
                                 className="flex items-center gap-1 bg-white text-black font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-black"
                               >
-                                <UserCheck className="w-3 h-3" /> Reassign
+                                <Wrench className="w-3 h-3" /> Tech
+                              </button>
+                              <button
+                                type="button"
+                                onClick={e => openAssignClientDialog(e, car)}
+                                className="flex items-center gap-1 bg-white text-black font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-black"
+                              >
+                                <UserCircle className="w-3 h-3" /> Client
                               </button>
                             </>
                           )}
@@ -967,23 +1053,23 @@ export default function CarsList() {
         </DialogContent>
       </Dialog>
 
-      {/* Reassign car dialog */}
+      {/* Assign Technician dialog */}
       <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
         <DialogContent className="bg-white text-black">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
-              <UserCheck className="w-6 h-6" /> Reassign Vehicle
+              <Wrench className="w-6 h-6" /> Assign Technician
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-2">
             <p className="font-bold text-gray-700 text-lg">{reassignCarLabel}</p>
             <div className="space-y-1">
-              <label className="text-base font-black uppercase block">Assign To</label>
-              {mechanicOptions.length === 0 ? (
-                <p className="text-gray-500 font-bold">Loading accounts...</p>
+              <label className="text-base font-black uppercase block">Technician</label>
+              {techOptions.length === 0 ? (
+                <p className="text-gray-500 font-bold">No technician accounts found.</p>
               ) : (
                 <div className="space-y-2">
-                  {mechanicOptions.map(m => (
+                  {techOptions.map(m => (
                     <button
                       key={m.id}
                       type="button"
@@ -1006,7 +1092,63 @@ export default function CarsList() {
           <DialogFooter>
             <Button type="button" variant="outline" size="lg" onClick={() => setReassignOpen(false)}>CANCEL</Button>
             <Button type="button" size="lg" disabled={!selectedMechanicId || reassigning} onClick={handleReassign}>
-              {reassigning ? "SAVING..." : "REASSIGN"}
+              {reassigning ? "SAVING..." : "ASSIGN"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Client dialog */}
+      <Dialog open={assignClientOpen} onOpenChange={setAssignClientOpen}>
+        <DialogContent className="bg-white text-black">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
+              <UserCircle className="w-6 h-6" /> Assign Client
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 py-2">
+            <p className="font-bold text-gray-700 text-lg">{assignClientCarLabel}</p>
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Client / Driver</label>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDriverId("none")}
+                  className={`w-full px-4 py-3 rounded-xl border-4 font-black uppercase text-left transition-colors ${
+                    selectedDriverId === "none"
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-black border-black"
+                  }`}
+                >
+                  — None / Clear —
+                </button>
+                {clientOptions.length === 0 ? (
+                  <p className="text-gray-500 font-bold">No driver accounts found.</p>
+                ) : (
+                  clientOptions.map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedDriverId(m.id)}
+                      className={`w-full px-4 py-3 rounded-xl border-4 font-black uppercase text-left transition-colors ${
+                        selectedDriverId === m.id
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-black border-black"
+                      }`}
+                    >
+                      {m.displayName}
+                      <span className="ml-2 font-mono text-sm opacity-60">@{m.username}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+            {assignClientError && <p className="text-red-600 font-bold">{assignClientError}</p>}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" size="lg" onClick={() => setAssignClientOpen(false)}>CANCEL</Button>
+            <Button type="button" size="lg" disabled={selectedDriverId === null || assigningClient} onClick={handleAssignClient}>
+              {assigningClient ? "SAVING..." : "ASSIGN"}
             </Button>
           </DialogFooter>
         </DialogContent>
