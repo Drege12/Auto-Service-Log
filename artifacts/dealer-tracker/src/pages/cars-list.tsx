@@ -595,13 +595,13 @@ export default function CarsList() {
           { key: "type:motorcycle", label: "Motorcycle",   on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
           { key: "type:boat",       label: "Boat",         on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
           { key: "type:atv",        label: "ATV / UTV",    on: "bg-slate-700 text-white",  off: "bg-white text-black border-2 border-slate-400" },
-          { key: "status:in_service",      label: "In Service",      on: "bg-blue-600 text-white",   off: "bg-white text-black border-2 border-blue-400" },
-          { key: "status:ready",           label: "Ready",           on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400" },
-          { key: "status:on_hold",         label: "On Hold",         on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
-          { key: "status:service_due",     label: "Service Due",     on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400" },
-          { key: "status:needs_attention", label: "Needs Attention", on: "bg-orange-600 text-white", off: "bg-white text-black border-2 border-orange-400" },
-          { key: "status:out_of_service",  label: "Out of Service",  on: "bg-red-600 text-white",    off: "bg-white text-black border-2 border-red-400" },
-        ].map(({ key, label, on, off }) => (
+          { key: "status:in_service",      label: "In Service",      on: "bg-blue-600 text-white",   off: "bg-white text-black border-2 border-blue-400",   techOnly: true },
+          { key: "status:ready",           label: "Ready",           on: "bg-green-600 text-white",  off: "bg-white text-black border-2 border-green-400",  techOnly: true },
+          { key: "status:on_hold",         label: "On Hold",         on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400",  techOnly: true },
+          { key: "status:service_due",     label: "Service Due",     on: "bg-amber-500 text-white",  off: "bg-white text-black border-2 border-amber-400",  techOnly: false },
+          { key: "status:needs_attention", label: "Needs Attention", on: "bg-orange-600 text-white", off: "bg-white text-black border-2 border-orange-400", techOnly: false },
+          { key: "status:out_of_service",  label: "Out of Service",  on: "bg-red-600 text-white",    off: "bg-white text-black border-2 border-red-400",    techOnly: false },
+        ].filter(f => !isDriver || !f.techOnly).map(({ key, label, on, off }) => (
           <button
             key={key}
             type="button"
@@ -704,7 +704,7 @@ export default function CarsList() {
                   <div className="flex items-center gap-2 flex-wrap justify-end">
                     {car.sold
                       ? <span className="bg-gray-500 text-white font-black px-3 py-1 rounded text-sm uppercase">Sold</span>
-                      : statusBadge(car.status)
+                      : !isDriver ? statusBadge(car.status) : null
                     }
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black uppercase leading-tight">
