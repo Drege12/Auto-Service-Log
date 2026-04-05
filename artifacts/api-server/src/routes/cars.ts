@@ -334,13 +334,19 @@ router.get("/cars/:carId", async (req, res) => {
       res.status(404).json({ error: "Car not found" });
       return;
     }
-    // Resolve linked mechanic display name if present
+    // Resolve linked mechanic (client/driver) display name if present
     let linkedMechanicName: string | null = null;
     if (car.linkedMechanicId) {
       const [m] = await db.select({ displayName: mechanicsTable.displayName }).from(mechanicsTable).where(eq(mechanicsTable.id, car.linkedMechanicId));
       linkedMechanicName = m?.displayName ?? null;
     }
-    res.json({ ...car, linkedMechanicName });
+    // Resolve assigned technician display name if present
+    let mechanicName: string | null = null;
+    if (car.mechanicId) {
+      const [m] = await db.select({ displayName: mechanicsTable.displayName }).from(mechanicsTable).where(eq(mechanicsTable.id, car.mechanicId));
+      mechanicName = m?.displayName ?? null;
+    }
+    res.json({ ...car, linkedMechanicName, mechanicName });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch car" });
   }
