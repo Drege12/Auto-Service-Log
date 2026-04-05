@@ -275,14 +275,24 @@ router.get("/cars", async (req, res) => {
     const isDriver = me?.role === "driver";
 
     if (isDriver) {
-      // Drivers only see cars where they are the assigned client
-      const linkedCars = await db
+      // Drivers see cars they created themselves + cars explicitly assigned to them as a client
+      const ownedCars = await db
+        .select()
+        .from(carsTable)
+        .where(eq(carsTable.mechanicId, mechanicId))
+        .orderBy(carsTable.createdAt);
+
+      const assignedCars = await db
         .select()
         .from(carsTable)
         .where(eq(carsTable.linkedMechanicId, mechanicId))
         .orderBy(carsTable.createdAt);
-      const linked = linkedCars.map(r => ({ ...r, isLinkedCar: true as const }));
-      res.json(linked);
+
+      // Merge, avoiding duplicates (a driver shouldn't own AND be the linked client, but just in case)
+      const assignedIds = new Set(assignedCars.map(c => c.id));
+      const owned = ownedCars.filter(c => !assignedIds.has(c.id));
+      const assigned = assignedCars.map(r => ({ ...r, isLinkedCar: true as const }));
+      res.json([...owned, ...assigned]);
       return;
     }
 
