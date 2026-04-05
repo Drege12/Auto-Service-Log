@@ -14,7 +14,7 @@ import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
 import { NotesTab } from "@/components/notes-tab";
 import { ServiceIntervalsTab } from "@/components/service-intervals-tab";
-import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
 
@@ -360,13 +360,22 @@ export default function CarDetail() {
         </div>
       )}
 
-      {viewerSession.role === "driver" && (car as { linkedMechanicName?: string | null }).linkedMechanicName && (
-        <div className="mb-6 bg-indigo-50 border-4 border-indigo-600 rounded-2xl px-6 py-4 flex items-center gap-3 flex-wrap">
-          <span className="bg-indigo-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide flex items-center gap-1">
-            Your Mechanic
+      {viewerSession.role === "driver" && !(car as { mechanicId?: number | null }).mechanicId && (
+        <div className="mb-6 bg-gray-100 border-4 border-gray-400 rounded-2xl px-6 py-4 flex items-center gap-3 flex-wrap">
+          <span className="bg-gray-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide flex items-center gap-2">
+            <Wrench className="w-4 h-4" /> Technician
           </span>
-          <span className="font-black text-indigo-900 text-xl uppercase">
-            {(car as { linkedMechanicName?: string | null }).linkedMechanicName}
+          <span className="font-black text-gray-600 text-lg uppercase">No technician assigned yet</span>
+        </div>
+      )}
+
+      {viewerSession.role === "driver" && (car as { mechanicName?: string | null }).mechanicName && (
+        <div className="mb-6 bg-amber-50 border-4 border-amber-500 rounded-2xl px-6 py-4 flex items-center gap-3 flex-wrap">
+          <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide flex items-center gap-2">
+            <Wrench className="w-4 h-4" /> Your Technician
+          </span>
+          <span className="font-black text-amber-900 text-xl uppercase">
+            {(car as { mechanicName?: string | null }).mechanicName}
           </span>
         </div>
       )}

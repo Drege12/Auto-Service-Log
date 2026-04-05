@@ -193,17 +193,20 @@ router.patch("/admin/cars/:carId/reassign", async (req, res) => {
   const carId = parseInt(req.params.carId, 10);
   if (isNaN(carId)) { res.status(400).json({ error: "Invalid car ID." }); return; }
 
-  const { mechanicId } = req.body as { mechanicId?: number };
-  if (!mechanicId || isNaN(Number(mechanicId))) {
-    res.status(400).json({ error: "mechanicId is required." }); return;
-  }
+  const { mechanicId } = req.body as { mechanicId?: number | null };
 
   try {
-    const [mechanic] = await db.select({ id: mechanicsTable.id }).from(mechanicsTable).where(eq(mechanicsTable.id, Number(mechanicId)));
-    if (!mechanic) { res.status(404).json({ error: "Mechanic not found." }); return; }
+    // null clears the tech assignment; otherwise validate the mechanic exists
+    if (mechanicId != null) {
+      if (isNaN(Number(mechanicId))) {
+        res.status(400).json({ error: "Invalid mechanicId." }); return;
+      }
+      const [mechanic] = await db.select({ id: mechanicsTable.id }).from(mechanicsTable).where(eq(mechanicsTable.id, Number(mechanicId)));
+      if (!mechanic) { res.status(404).json({ error: "Mechanic not found." }); return; }
+    }
 
     const [updated] = await db.update(carsTable)
-      .set({ mechanicId: Number(mechanicId) })
+      .set({ mechanicId: mechanicId != null ? Number(mechanicId) : null })
       .where(eq(carsTable.id, carId))
       .returning({ id: carsTable.id });
 

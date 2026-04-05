@@ -199,7 +199,7 @@ export default function CarsList() {
   const [reassignOpen, setReassignOpen] = useState(false);
   const [reassignCarId, setReassignCarId] = useState<number | null>(null);
   const [reassignCarLabel, setReassignCarLabel] = useState("");
-  const [selectedMechanicId, setSelectedMechanicId] = useState<number | null>(null);
+  const [selectedMechanicId, setSelectedMechanicId] = useState<number | "none" | null>(null);
   const [reassigning, setReassigning] = useState(false);
   const [reassignError, setReassignError] = useState("");
 
@@ -208,22 +208,23 @@ export default function CarsList() {
     e.stopPropagation();
     setReassignCarId(car.id);
     setReassignCarLabel(`${car.year} ${car.make} ${car.model}`);
-    setSelectedMechanicId(car.mechanicId ?? null);
+    setSelectedMechanicId(car.mechanicId ?? "none");
     setReassignError("");
     setReassigning(false);
     setReassignOpen(true);
   };
 
   const handleReassign = async () => {
-    if (!reassignCarId || !selectedMechanicId) return;
+    if (!reassignCarId || selectedMechanicId === null) return;
     setReassigning(true);
     setReassignError("");
     try {
       const mechanicId = JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || "";
+      const techId = selectedMechanicId === "none" ? null : selectedMechanicId;
       const res = await fetch(`${BASE}/api/admin/cars/${reassignCarId}/reassign`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "X-Mechanic-Id": String(mechanicId) },
-        body: JSON.stringify({ mechanicId: selectedMechanicId }),
+        body: JSON.stringify({ mechanicId: techId }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
@@ -1065,11 +1066,22 @@ export default function CarsList() {
             <p className="font-bold text-gray-700 text-lg">{reassignCarLabel}</p>
             <div className="space-y-1">
               <label className="text-base font-black uppercase block">Technician</label>
-              {techOptions.length === 0 ? (
-                <p className="text-gray-500 font-bold">No technician accounts found.</p>
-              ) : (
-                <div className="space-y-2">
-                  {techOptions.map(m => (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMechanicId("none")}
+                  className={`w-full px-4 py-3 rounded-xl border-4 font-black uppercase text-left transition-colors ${
+                    selectedMechanicId === "none"
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-black border-black"
+                  }`}
+                >
+                  — None / Unassigned —
+                </button>
+                {techOptions.length === 0 ? (
+                  <p className="text-gray-500 font-bold">No technician accounts found.</p>
+                ) : (
+                  techOptions.map(m => (
                     <button
                       key={m.id}
                       type="button"
@@ -1083,15 +1095,15 @@ export default function CarsList() {
                       {m.displayName}
                       <span className="ml-2 font-mono text-sm opacity-60">@{m.username}</span>
                     </button>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </div>
             {reassignError && <p className="text-red-600 font-bold">{reassignError}</p>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" size="lg" onClick={() => setReassignOpen(false)}>CANCEL</Button>
-            <Button type="button" size="lg" disabled={!selectedMechanicId || reassigning} onClick={handleReassign}>
+            <Button type="button" size="lg" disabled={selectedMechanicId === null || reassigning} onClick={handleReassign}>
               {reassigning ? "SAVING..." : "ASSIGN"}
             </Button>
           </DialogFooter>
