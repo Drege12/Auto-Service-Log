@@ -46,7 +46,7 @@ export default function HelpPage() {
           <BadgeRow
             label="Needs Attention"
             color="bg-orange-600"
-            description="Something has been flagged that requires attention. Check with your technician for details."
+            description="The vehicle is drivable, but something needs to be addressed — either by you or a technician."
           />
           <BadgeRow
             label="Out of Service"
