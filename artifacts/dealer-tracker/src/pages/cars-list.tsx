@@ -565,26 +565,28 @@ export default function CarsList() {
         </div>
       </div>
 
-      {/* Work / Personal / Clients slider */}
-      <div className="flex border-4 border-black rounded-xl overflow-hidden mb-4">
-        {([
-          { key: "all",      label: "All" },
-          { key: "work",     label: "Work" },
-          { key: "personal", label: "Personal" },
-          { key: "clients",  label: "Clients" },
-        ] as const).map(({ key, label }, i, arr) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setCarView(key)}
-            className={`flex-1 py-3 font-black uppercase text-base tracking-wide transition-colors tap-target ${
-              i < arr.length - 1 ? "border-r-2 border-black" : ""
-            } ${carView === key ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* Work / Personal / Clients slider — hidden for driver/operator accounts */}
+      {!isDriver && (
+        <div className="flex border-4 border-black rounded-xl overflow-hidden mb-4">
+          {([
+            { key: "all",      label: "All" },
+            { key: "work",     label: "Work" },
+            { key: "personal", label: "Personal" },
+            { key: "clients",  label: "Clients" },
+          ] as const).map(({ key, label }, i, arr) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setCarView(key)}
+              className={`flex-1 py-3 font-black uppercase text-base tracking-wide transition-colors tap-target ${
+                i < arr.length - 1 ? "border-r-2 border-black" : ""
+              } ${carView === key ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Filter badges */}
       <div className="flex flex-wrap gap-2 mb-6">
