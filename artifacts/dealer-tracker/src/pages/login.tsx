@@ -11,7 +11,7 @@ export default function LoginPage({
   onLogin,
   onAdminAccess,
 }: {
-  onLogin: (mechanicId: number, username: string, displayName: string, isAdmin: boolean, role?: string) => void;
+  onLogin: (mechanicId: number, username: string, displayName: string, isAdmin: boolean, role?: string, token?: string) => void;
   onAdminAccess: () => void;
 }) {
   const [mode, setMode] = useState<Mode>("login");
@@ -48,13 +48,13 @@ export default function LoginPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), password }),
       });
-      const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; role?: string; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; role?: string; token?: string; error?: string };
       if (res.ok && data.mechanicId) {
         if (data.isAdmin) {
           setError("Admin accounts must sign in using the admin portal.");
           return;
         }
-        onLogin(data.mechanicId, data.username!, data.displayName!, false, data.role);
+        onLogin(data.mechanicId, data.username!, data.displayName!, false, data.role, data.token);
       } else {
         setError(data.error || "Incorrect username or password.");
       }
@@ -77,9 +77,9 @@ export default function LoginPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim(), role }),
       });
-      const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; role?: string; error?: string };
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; role?: string; token?: string; error?: string };
       if (res.ok && data.mechanicId) {
-        onLogin(data.mechanicId, data.username!, data.displayName!, data.isAdmin ?? false, data.role);
+        onLogin(data.mechanicId, data.username!, data.displayName!, data.isAdmin ?? false, data.role, data.token);
       } else {
         setError(data.error || "Could not create account.");
       }

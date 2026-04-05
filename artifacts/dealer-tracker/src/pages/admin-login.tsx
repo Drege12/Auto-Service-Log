@@ -9,7 +9,7 @@ export default function AdminLoginPage({
   onLogin,
   onBack,
 }: {
-  onLogin: (mechanicId: number, username: string, displayName: string) => void;
+  onLogin: (mechanicId: number, username: string, displayName: string, token?: string) => void;
   onBack: () => void;
 }) {
   const [username, setUsername] = useState("");
@@ -30,7 +30,7 @@ export default function AdminLoginPage({
       });
       const data = await res.json().catch(() => ({})) as {
         ok?: boolean; mechanicId?: number; username?: string;
-        displayName?: string; isAdmin?: boolean; error?: string;
+        displayName?: string; isAdmin?: boolean; token?: string; error?: string;
       };
 
       if (!res.ok || !data.mechanicId) {
@@ -43,7 +43,7 @@ export default function AdminLoginPage({
         return;
       }
 
-      onLogin(data.mechanicId, data.username!, data.displayName!);
+      onLogin(data.mechanicId, data.username!, data.displayName!, data.token);
     } catch {
       setError("Could not reach the server. Try again.");
     } finally {

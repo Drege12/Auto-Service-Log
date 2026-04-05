@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { db, mechanicsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { signToken, verifyToken, extractBearerToken } from "../lib/jwt";
 
 const router = Router();
 
@@ -43,7 +44,8 @@ router.post("/auth/register", async (req, res) => {
       role: role === "driver" ? "driver" : "mechanic",
     }).returning({ id: mechanicsTable.id, username: mechanicsTable.username, displayName: mechanicsTable.displayName, role: mechanicsTable.role });
 
-    res.status(201).json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, role: mechanic.role ?? "mechanic" });
+    const token = signToken(mechanic.id);
+    res.status(201).json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, role: mechanic.role ?? "mechanic", token });
   } catch (err) {
     res.status(500).json({ error: "Failed to create account." });
   }
@@ -73,9 +75,43 @@ router.post("/auth/login", async (req, res) => {
       return;
     }
 
-    res.json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, isAdmin: mechanic.isAdmin === 1, role: mechanic.role ?? "mechanic" });
+    const token = signToken(mechanic.id);
+    res.json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, isAdmin: mechanic.isAdmin === 1, role: mechanic.role ?? "mechanic", token });
   } catch (err) {
     res.status(500).json({ error: "Login failed." });
+  }
+});
+
+router.get("/auth/me", async (req, res) => {
+  const token = extractBearerToken(req.headers["authorization"]);
+  if (!token) {
+    res.status(401).json({ error: "No token provided." });
+    return;
+  }
+
+  const payload = verifyToken(token);
+  if (!payload) {
+    res.status(401).json({ error: "Invalid or expired session. Please sign in again." });
+    return;
+  }
+
+  try {
+    const [mechanic] = await db.select({
+      id: mechanicsTable.id,
+      username: mechanicsTable.username,
+      displayName: mechanicsTable.displayName,
+      isAdmin: mechanicsTable.isAdmin,
+      role: mechanicsTable.role,
+    }).from(mechanicsTable).where(eq(mechanicsTable.id, payload.mechanicId));
+
+    if (!mechanic) {
+      res.status(401).json({ error: "Account not found. Please sign in again." });
+      return;
+    }
+
+    res.json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, isAdmin: mechanic.isAdmin === 1, role: mechanic.role ?? "mechanic" });
+  } catch {
+    res.status(500).json({ error: "Session check failed." });
   }
 });
 
