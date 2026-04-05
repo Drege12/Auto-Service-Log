@@ -13,7 +13,9 @@ import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import AdminLoginPage from "@/pages/admin-login";
-import { setMechanicId } from "@workspace/api-client-react";
+import { setMechanicId, setAuthTokenGetter } from "@workspace/api-client-react";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,18 +33,27 @@ type Session = {
   isAdmin: boolean;
   adminMode?: boolean;
   role?: string;
+  token: string;
 };
 
-function getMechanicSession(): Session | null {
+function loadStoredSession(): Session | null {
   try {
     const raw = localStorage.getItem("dt_mechanic");
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && parsed.mechanicId) return parsed;
+    const parsed = JSON.parse(raw) as Partial<Session>;
+    if (parsed && parsed.mechanicId && parsed.token) return parsed as Session;
     return null;
   } catch {
     return null;
   }
+}
+
+function saveSession(s: Session) {
+  localStorage.setItem("dt_mechanic", JSON.stringify(s));
+}
+
+function clearSession() {
+  localStorage.removeItem("dt_mechanic");
 }
 
 function Router() {
@@ -61,31 +72,84 @@ function Router() {
 }
 
 function App() {
-  const [session, setSession] = useState<Session | null>(() => getMechanicSession());
+  const [session, setSession] = useState<Session | null>(null);
+  const [validating, setValidating] = useState(true);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   useEffect(() => {
-    if (session) {
-      setMechanicId(session.mechanicId);
-    } else {
-      setMechanicId(null);
+    const stored = loadStoredSession();
+    if (!stored) {
+      setValidating(false);
+      return;
     }
-  }, [session]);
 
-  const handleLogin = (mechanicId: number, username: string, displayName: string, isAdmin: boolean, role?: string) => {
-    const s: Session = { mechanicId, username, displayName, isAdmin, adminMode: false, role: role ?? "mechanic" };
-    localStorage.setItem("dt_mechanic", JSON.stringify(s));
-    setMechanicId(mechanicId);
+    fetch(`${BASE}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${stored.token}` },
+    })
+      .then(r => r.json())
+      .then((data: { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; role?: string; error?: string }) => {
+        if (data.ok && data.mechanicId) {
+          const refreshed: Session = {
+            ...stored,
+            mechanicId: data.mechanicId,
+            username: data.username ?? stored.username,
+            displayName: data.displayName ?? stored.displayName,
+            isAdmin: data.isAdmin ?? stored.isAdmin,
+            role: data.role ?? stored.role,
+          };
+          saveSession(refreshed);
+          applySession(refreshed);
+          setSession(refreshed);
+        } else {
+          clearSession();
+          setSession(null);
+        }
+      })
+      .catch(() => {
+        clearSession();
+        setSession(null);
+      })
+      .finally(() => setValidating(false));
+  }, []);
+
+  function applySession(s: Session) {
+    setMechanicId(s.mechanicId);
+    setAuthTokenGetter(() => s.token);
+  }
+
+  function clearAppliedSession() {
+    setMechanicId(null);
+    setAuthTokenGetter(null);
+  }
+
+  const handleLogin = (mechanicId: number, username: string, displayName: string, isAdmin: boolean, role?: string, token?: string) => {
+    const s: Session = { mechanicId, username, displayName, isAdmin, adminMode: false, role: role ?? "mechanic", token: token ?? "" };
+    saveSession(s);
+    applySession(s);
     setSession(s);
   };
 
-  const handleAdminLogin = (mechanicId: number, username: string, displayName: string) => {
-    const s: Session = { mechanicId, username, displayName, isAdmin: true, adminMode: true };
-    localStorage.setItem("dt_mechanic", JSON.stringify(s));
-    setMechanicId(mechanicId);
+  const handleAdminLogin = (mechanicId: number, username: string, displayName: string, token?: string) => {
+    const s: Session = { mechanicId, username, displayName, isAdmin: true, adminMode: true, token: token ?? "" };
+    saveSession(s);
+    applySession(s);
     setSession(s);
     setShowAdminLogin(false);
   };
+
+  const handleLogout = () => {
+    clearSession();
+    clearAppliedSession();
+    setSession(null);
+  };
+
+  if (validating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-gray-500 font-bold uppercase tracking-wide animate-pulse">Checking session...</p>
+      </div>
+    );
+  }
 
   if (!session) {
     if (showAdminLogin) {
