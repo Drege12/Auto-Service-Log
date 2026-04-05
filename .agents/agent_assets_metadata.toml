@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "XOHV6PTYUNWtWdhN0opef"
+uri = "file://artifacts/dealer-tracker/public/doc-images/vin-car.png"
+type = "image"
+title = "car vin location diagram"
+
+[[generated]]
+id = "O1763UaodFx39Usianc80"
+uri = "file://artifacts/dealer-tracker/public/doc-images/vin-motorcycle.png"
+type = "image"
+title = "motorcycle vin location diagram"
+
+[[generated]]
+id = "t_N7yBa5IlQXcioWx1-6K"
+uri = "file://artifacts/dealer-tracker/public/doc-images/hin-boat.png"
+type = "image"
+title = "boat hin location diagram"
+
+[[generated]]
+id = "lspxCn7xDX99yT2r71zhR"
+uri = "file://artifacts/dealer-tracker/public/doc-images/vin-atv.png"
+type = "image"
+title = "atv vin location diagram"
