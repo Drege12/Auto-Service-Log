@@ -262,12 +262,31 @@ router.get("/cars", async (req, res) => {
     }
 
     if (!mechanicId) {
-      const cars = await db.select().from(carsTable).orderBy(carsTable.createdAt);
-      res.json(cars);
+      res.status(401).json({ error: "Unauthorized" });
       return;
     }
 
-    // Owned cars
+    // Check the user's role — drivers only see cars explicitly assigned to them
+    const [me] = await db
+      .select({ role: mechanicsTable.role })
+      .from(mechanicsTable)
+      .where(eq(mechanicsTable.id, mechanicId));
+
+    const isDriver = me?.role === "driver";
+
+    if (isDriver) {
+      // Drivers only see cars where they are the assigned client
+      const linkedCars = await db
+        .select()
+        .from(carsTable)
+        .where(eq(carsTable.linkedMechanicId, mechanicId))
+        .orderBy(carsTable.createdAt);
+      const linked = linkedCars.map(r => ({ ...r, isLinkedCar: true as const }));
+      res.json(linked);
+      return;
+    }
+
+    // Mechanic: show their own cars + cars linked to them
     const ownedCars = await db
       .select()
       .from(carsTable)
