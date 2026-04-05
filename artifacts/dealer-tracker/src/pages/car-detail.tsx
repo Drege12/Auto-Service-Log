@@ -306,23 +306,6 @@ export default function CarDetail() {
             <Button variant="outline" size="lg" className="flex-1" onClick={openEditDialog}>
               <Edit2 className="w-5 h-5 mr-2" /> EDIT
             </Button>
-            <Button
-              type="button"
-              size="lg"
-              className={`flex-1 border-4 font-black text-sm ${car.sold ? "bg-green-600 border-green-600 text-white" : "bg-gray-500 border-gray-500 text-white"}`}
-              disabled={isUpdating}
-              onClick={handleToggleSold}
-            >
-              <Tag className="w-5 h-5 mr-2 flex-shrink-0" />
-              {car.sold ? (
-                "UNSELL"
-              ) : (
-                <span className="leading-tight text-center">MARK<br />SOLD</span>
-              )}
-            </Button>
-            <Button variant="destructive" size="lg" className="flex-1 border-destructive text-white" onClick={handleDelete}>
-              <Trash2 className="w-5 h-5 mr-2" /> DELETE
-            </Button>
           </div>
         </div>
       </div>
@@ -607,6 +590,28 @@ export default function CarDetail() {
             </div>
 
             {editError && <p className="text-destructive font-bold text-lg">{editError}</p>}
+
+            <div className="border-t-2 border-gray-200 pt-4 mt-2 flex flex-col sm:flex-row gap-3">
+              <Button
+                type="button"
+                size="lg"
+                className={`flex-1 border-4 font-black ${car?.sold ? "bg-green-600 border-green-600 text-white" : "bg-gray-500 border-gray-500 text-white"}`}
+                disabled={isUpdating}
+                onClick={() => { setDialogOpen(false); handleToggleSold(); }}
+              >
+                <Tag className="w-5 h-5 mr-2 flex-shrink-0" />
+                {car?.sold ? "MARK ACTIVE" : "MARK SOLD"}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="lg"
+                className="flex-1 border-destructive text-white"
+                onClick={() => { setDialogOpen(false); handleDelete(); }}
+              >
+                <Trash2 className="w-5 h-5 mr-2" /> DELETE VEHICLE
+              </Button>
+            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" size="lg" onClick={() => setDialogOpen(false)}>CANCEL</Button>
