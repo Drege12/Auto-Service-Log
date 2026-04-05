@@ -325,9 +325,19 @@ router.post("/cars", async (req, res) => {
       res.status(400).json({ error: "Invalid car data", details: parsed.error.flatten() });
       return;
     }
+
+    // Check if the creator is a driver — drivers don't act as the technician on their own cars
+    let isDriver = false;
+    if (mechanicId) {
+      const [me] = await db.select({ role: mechanicsTable.role }).from(mechanicsTable).where(eq(mechanicsTable.id, mechanicId));
+      isDriver = me?.role === "driver";
+    }
+
     const [car] = await db.insert(carsTable).values({
       ...parsed.data,
-      mechanicId: mechanicId ?? undefined,
+      // Drivers: no tech assigned, but link themselves as the client so the car stays visible to them
+      mechanicId: isDriver ? null : (mechanicId ?? undefined),
+      linkedMechanicId: isDriver ? mechanicId : undefined,
       originalMileage: parsed.data.mileage ?? null,
     }).returning();
     res.status(201).json(car);
