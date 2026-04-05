@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "XOHV6PTYUNWtWdhN0opef"
@@ -24,3 +23,147 @@ id = "lspxCn7xDX99yT2r71zhR"
 uri = "file://artifacts/dealer-tracker/public/doc-images/vin-atv.png"
 type = "image"
 title = "atv vin location diagram"
+
+[[outputs]]
+id = "6ZLffi-484GzWcXRvIrBJ"
+uri = "file://attached_assets/stock_images/sedan.jpg"
+type = "image"
+title = "sedan car side view white background"
+
+[[outputs]]
+id = "QapUQZC93zi1kBDVRW4ZD"
+uri = "file://attached_assets/stock_images/truck.jpg"
+type = "image"
+title = "pickup truck side view"
+
+[[outputs]]
+id = "Jt2wOeB3wCNKne1WzjckU"
+uri = "file://attached_assets/stock_images/suv.jpg"
+type = "image"
+title = "SUV sport utility vehicle side view"
+
+[[outputs]]
+id = "kiex_eqBcnm0GY7wLdHTL"
+uri = "file://attached_assets/stock_images/van.jpg"
+type = "image"
+title = "minivan side view"
+
+[[outputs]]
+id = "cJzX-YTE77cJrY3GyvgXp"
+uri = "file://attached_assets/stock_images/coupe.jpg"
+type = "image"
+title = "coupe sports car two door side view"
+
+[[outputs]]
+id = "fbkJqyWujx26EO3ggrD-w"
+uri = "file://attached_assets/stock_images/wagon.jpg"
+type = "image"
+title = "station wagon car side view"
+
+[[outputs]]
+id = "ljHlOkmis_KZD7FP8rKLv"
+uri = "file://attached_assets/stock_images/convertible.jpg"
+type = "image"
+title = "convertible car open top side view"
+
+[[outputs]]
+id = "17R1BJsDjp0NQ3lZChiR-"
+uri = "file://attached_assets/stock_images/cruiser-motorcycle.jpg"
+type = "image"
+title = "cruiser motorcycle harley style side view"
+
+[[outputs]]
+id = "RqICTNempoMKEhztbXyOH"
+uri = "file://attached_assets/stock_images/sport-bike.jpg"
+type = "image"
+title = "sport bike motorcycle side view"
+
+[[outputs]]
+id = "Ay0MJDb5zaNljKJ8ZqYU8"
+uri = "file://attached_assets/stock_images/touring-motorcycle.jpg"
+type = "image"
+title = "touring motorcycle with luggage side view"
+
+[[outputs]]
+id = "v_TV6A1Yc-KH7HMg3saAQ"
+uri = "file://attached_assets/stock_images/dualsport-motorcycle.jpg"
+type = "image"
+title = "dual sport motorcycle adventure bike"
+
+[[outputs]]
+id = "U3LbfvPcS-M10VLgcOxdN"
+uri = "file://attached_assets/stock_images/standard-motorcycle.jpg"
+type = "image"
+title = "standard upright motorcycle side view"
+
+[[outputs]]
+id = "w4ChYA2Uz-tZ26yOsU-0N"
+uri = "file://attached_assets/stock_images/outboard-boat.jpg"
+type = "image"
+title = "outboard motor boat on water"
+
+[[outputs]]
+id = "C12IT_TmvCAIVaMLXF_GF"
+uri = "file://attached_assets/stock_images/inboard-boat.jpg"
+type = "image"
+title = "inboard engine ski boat wakeboard boat"
+
+[[outputs]]
+id = "Ny4l7bN53E4XYFL4VMw66"
+uri = "file://attached_assets/stock_images/sterndrive-boat.jpg"
+type = "image"
+title = "sterndrive bowrider boat IO drive"
+
+[[outputs]]
+id = "w6-zcaOxQsDe8ByFJD9k4"
+uri = "file://attached_assets/stock_images/jet-boat.jpg"
+type = "image"
+title = "jet boat on water"
+
+[[outputs]]
+id = "Tgo00fxJMttMAvtUSkgic"
+uri = "file://attached_assets/stock_images/pwc.jpg"
+type = "image"
+title = "personal watercraft jet ski on water"
+
+[[outputs]]
+id = "8Hgqw9Xw_pP6gsSe9cuIs"
+uri = "file://attached_assets/stock_images/pontoon-boat.jpg"
+type = "image"
+title = "pontoon boat on lake"
+
+[[outputs]]
+id = "mAphKmO9qYfUREGAmK3hD"
+uri = "file://attached_assets/stock_images/sailboat.jpg"
+type = "image"
+title = "sailboat sailing on water"
+
+[[outputs]]
+id = "3-_kqazU6zsyBHPgkzjcK"
+uri = "file://attached_assets/stock_images/quad-atv.jpg"
+type = "image"
+title = "ATV four wheeler quad bike"
+
+[[outputs]]
+id = "z7VFPn2b5kG6Y2FwuFBw9"
+uri = "file://attached_assets/stock_images/side-by-side-utv.jpg"
+type = "image"
+title = "side by side UTV utility vehicle off road"
+
+[[outputs]]
+id = "DnV2DQ_rmzeveIl1Nkkzs"
+uri = "file://attached_assets/stock_images/dirtbike.jpg"
+type = "image"
+title = "dirtbike off road motorcycle"
+
+[[outputs]]
+id = "7i2IgGaOTzQVMlilQ2SYX"
+uri = "file://attached_assets/stock_images/snowmobile.jpg"
+type = "image"
+title = "snowmobile in snow"
+
+[[outputs]]
+id = "LrMzA8KEn5766C_jojB1e"
+uri = "file://attached_assets/stock_images/three-wheeler.jpg"
+type = "image"
+title = "three wheeler trike vehicle"

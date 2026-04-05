@@ -21,40 +21,42 @@ function BadgeRow({ label, color, description }: BadgeRowProps) {
   );
 }
 
-const CAR_SUBTYPES: { value: string; label: string; description: string }[] = [
-  { value: "sedan",       label: "Sedan",       description: "A standard 4-door car with a separate enclosed trunk. The most common vehicle type." },
-  { value: "truck",       label: "Truck",       description: "A pickup truck with an open bed behind the cab for hauling cargo or equipment." },
-  { value: "suv",         label: "SUV",         description: "Sport Utility Vehicle. Higher ride height than a regular car with a shared cargo and passenger area in the back." },
-  { value: "van",         label: "Van",         description: "A tall, boxy vehicle with a large interior — used for passengers (minivan) or cargo (cargo van)." },
-  { value: "coupe",       label: "Coupe",       description: "A 2-door car, typically with a sportier profile and a sloping roofline." },
-  { value: "wagon",       label: "Wagon",       description: "Like a sedan but with an extended roofline over the rear — cargo loads directly through a rear hatch instead of a separate trunk." },
-  { value: "convertible", label: "Convertible", description: "A car with a retractable roof — either a soft cloth top or a hard folding top." },
+interface SubtypeInfo { value: string; label: string; description: string; image: string }
+
+const CAR_SUBTYPES: SubtypeInfo[] = [
+  { value: "sedan",       label: "Sedan",       description: "A standard 4-door car with a separate enclosed trunk. The most common vehicle type.",                                   image: `${BASE}/doc-images/sedan.jpg` },
+  { value: "truck",       label: "Truck",       description: "A pickup truck with an open bed behind the cab for hauling cargo or equipment.",                                         image: `${BASE}/doc-images/truck.jpg` },
+  { value: "suv",         label: "SUV",         description: "Sport Utility Vehicle. Higher ride height than a regular car with a shared cargo and passenger area in the back.",         image: `${BASE}/doc-images/suv.jpg` },
+  { value: "van",         label: "Van",         description: "A tall, boxy vehicle with a large interior — used for passengers (minivan) or cargo (cargo van).",                        image: `${BASE}/doc-images/van.jpg` },
+  { value: "coupe",       label: "Coupe",       description: "A 2-door car, typically with a sportier profile and a sloping roofline.",                                                 image: `${BASE}/doc-images/coupe.jpg` },
+  { value: "wagon",       label: "Wagon",       description: "Like a sedan but with an extended roofline over the rear — cargo loads directly through a rear hatch instead of a separate trunk.", image: `${BASE}/doc-images/wagon.jpg` },
+  { value: "convertible", label: "Convertible", description: "A car with a retractable roof — either a soft cloth top or a hard folding top.",                                         image: `${BASE}/doc-images/convertible.jpg` },
 ];
 
-const MOTORCYCLE_SUBTYPES: { value: string; label: string; description: string }[] = [
-  { value: "cruiser",   label: "Cruiser",    description: "Low-slung bikes with a relaxed, laid-back riding position and feet forward. Harley-Davidson style." },
-  { value: "sport",     label: "Sport Bike", description: "Built for performance. Rider leans forward aggressively over the tank. Fast and lightweight." },
-  { value: "touring",   label: "Touring",    description: "Large, comfortable bikes designed for long-distance riding. Usually have fairings, built-in luggage, and a more upright seat." },
-  { value: "dualsport", label: "Dual Sport", description: "Street-legal motorcycles that can also handle gravel roads and light off-road use." },
-  { value: "standard",  label: "Standard",   description: "An upright, versatile everyday motorcycle. No extreme lean in either direction — comfortable for commuting or general use." },
+const MOTORCYCLE_SUBTYPES: SubtypeInfo[] = [
+  { value: "cruiser",   label: "Cruiser",    description: "Low-slung bikes with a relaxed, laid-back riding position and feet forward. Harley-Davidson style.",                         image: `${BASE}/doc-images/cruiser.jpg` },
+  { value: "sport",     label: "Sport Bike", description: "Built for performance. Rider leans forward aggressively over the tank. Fast and lightweight.",                               image: `${BASE}/doc-images/sport-bike.jpg` },
+  { value: "touring",   label: "Touring",    description: "Large, comfortable bikes designed for long-distance riding. Usually have fairings, built-in luggage, and a more upright seat.", image: `${BASE}/doc-images/touring.jpg` },
+  { value: "dualsport", label: "Dual Sport", description: "Street-legal motorcycles that can also handle gravel roads and light off-road use.",                                         image: `${BASE}/doc-images/dualsport.jpg` },
+  { value: "standard",  label: "Standard",   description: "An upright, versatile everyday motorcycle. No extreme lean in either direction — comfortable for commuting or general use.",  image: `${BASE}/doc-images/standard-motorcycle.jpg` },
 ];
 
-const BOAT_SUBTYPES: { value: string; label: string; description: string }[] = [
-  { value: "outboard",   label: "Outboard",         description: "Engine is mounted on the back of the boat outside the hull. The whole motor tilts and steers. Very common on smaller boats." },
-  { value: "inboard",    label: "Inboard",           description: "Engine is inside the hull and drives a shaft that goes through the bottom of the boat to a fixed propeller underneath. Common on ski boats and larger vessels." },
-  { value: "sterndrive", label: "I/O (Sterndrive)",  description: "Inboard/Outboard. Engine is inside the hull but drives an outdrive unit mounted on the transom (rear). Combines the power of an inboard with the steering of an outboard." },
-  { value: "jetboat",    label: "Jet Boat",          description: "Propelled by a jet of water instead of a propeller. No exposed prop under the hull — good for shallow water." },
-  { value: "pwc",        label: "PWC",               description: "Personal Watercraft. Small sit-on-top or stand-on watercraft — commonly known as Jet Ski, Sea-Doo, or WaveRunner." },
-  { value: "pontoon",    label: "Pontoon",            description: "A flat-deck boat supported by two or three large aluminum tubes (pontoons) instead of a traditional hull. Stable and spacious — popular for recreational use." },
-  { value: "sailboat",   label: "Sailboat",           description: "Uses wind power through sails as its primary means of propulsion. May also have an auxiliary motor." },
+const BOAT_SUBTYPES: SubtypeInfo[] = [
+  { value: "outboard",   label: "Outboard",         description: "Engine is mounted on the back of the boat outside the hull. The whole motor tilts and steers. Very common on smaller boats.",                                             image: `${BASE}/doc-images/outboard.jpg` },
+  { value: "inboard",    label: "Inboard",           description: "Engine is inside the hull and drives a shaft that goes through the bottom of the boat to a fixed propeller underneath. Common on ski boats and larger vessels.",             image: `${BASE}/doc-images/inboard.jpg` },
+  { value: "sterndrive", label: "I/O (Sterndrive)",  description: "Inboard/Outboard. Engine is inside the hull but drives an outdrive unit mounted on the transom (rear). Combines the power of an inboard with the steering of an outboard.", image: `${BASE}/doc-images/sterndrive.jpg` },
+  { value: "jetboat",    label: "Jet Boat",          description: "Propelled by a jet of water instead of a propeller. No exposed prop under the hull — good for shallow water.",                                                             image: `${BASE}/doc-images/jetboat.jpg` },
+  { value: "pwc",        label: "PWC",               description: "Personal Watercraft. Small sit-on-top or stand-on watercraft — commonly known as Jet Ski, Sea-Doo, or WaveRunner.",                                                       image: `${BASE}/doc-images/pwc.jpg` },
+  { value: "pontoon",    label: "Pontoon",            description: "A flat-deck boat supported by two or three large aluminum tubes (pontoons) instead of a traditional hull. Stable and spacious — popular for recreational use.",             image: `${BASE}/doc-images/pontoon.jpg` },
+  { value: "sailboat",   label: "Sailboat",           description: "Uses wind power through sails as its primary means of propulsion. May also have an auxiliary motor.",                                                                      image: `${BASE}/doc-images/sailboat.jpg` },
 ];
 
-const ATV_SUBTYPES: { value: string; label: string; description: string }[] = [
-  { value: "quad",         label: "4-Wheeler",      description: "A single-rider four-wheeled off-road vehicle steered with handlebars. Also called a quad or ATV." },
-  { value: "side-by-side", label: "Side-by-Side",   description: "A UTV (Utility Task Vehicle) with two or more seats side by side and a steering wheel. Bigger and more capable than a standard ATV." },
-  { value: "dirtbike",     label: "Dirtbike",        description: "A lightweight off-road motorcycle. Not street legal in most areas. Two wheels, handlebars, made for trails and rough terrain." },
-  { value: "snowmobile",   label: "Snowmobile",      description: "A winter vehicle with skis on the front for steering and a rubber track on the back for propulsion over snow." },
-  { value: "3wheeler",     label: "3-Wheeler",       description: "A three-wheeled vehicle — either a traditional trike ATV or a modern three-wheeled motorcycle/roadster." },
+const ATV_SUBTYPES: SubtypeInfo[] = [
+  { value: "quad",         label: "4-Wheeler",      description: "A single-rider four-wheeled off-road vehicle steered with handlebars. Also called a quad or ATV.",                   image: `${BASE}/doc-images/quad.jpg` },
+  { value: "side-by-side", label: "Side-by-Side",   description: "A UTV (Utility Task Vehicle) with two or more seats side by side and a steering wheel. Bigger and more capable than a standard ATV.", image: `${BASE}/doc-images/side-by-side.jpg` },
+  { value: "dirtbike",     label: "Dirtbike",        description: "A lightweight off-road motorcycle. Not street legal in most areas. Two wheels, handlebars, made for trails and rough terrain.",       image: `${BASE}/doc-images/dirtbike.jpg` },
+  { value: "snowmobile",   label: "Snowmobile",      description: "A winter vehicle with skis on the front for steering and a rubber track on the back for propulsion over snow.",                       image: `${BASE}/doc-images/snowmobile.jpg` },
+  { value: "3wheeler",     label: "3-Wheeler",       description: "A three-wheeled vehicle — either a traditional trike ATV or a modern three-wheeled motorcycle/roadster.",                             image: `${BASE}/doc-images/3wheeler.jpg` },
 ];
 
 const VEHICLE_TYPES = [
@@ -200,9 +202,17 @@ function VehicleTypesDrillDown() {
           </div>
 
           {subtypeData && (
-            <div className="bg-white border-4 border-black rounded-xl px-5 py-4">
-              <p className="font-black uppercase text-xl mb-1">{subtypeData.label}</p>
-              <p className="text-lg font-sans text-black leading-snug">{subtypeData.description}</p>
+            <div className="bg-white border-4 border-black rounded-xl overflow-hidden">
+              <img
+                src={subtypeData.image}
+                alt={subtypeData.label}
+                className="w-full object-cover max-h-56"
+                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+              <div className="px-5 py-4">
+                <p className="font-black uppercase text-xl mb-1">{subtypeData.label}</p>
+                <p className="text-lg font-sans text-black leading-snug">{subtypeData.description}</p>
+              </div>
             </div>
           )}
         </div>
