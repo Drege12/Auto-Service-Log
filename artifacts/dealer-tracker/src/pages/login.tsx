@@ -18,16 +18,19 @@ export default function LoginPage({
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<"mechanic" | "driver">("mechanic");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const reset = () => {
     setError("");
     setUsername("");
     setPassword("");
+    setConfirmPassword("");
     setDisplayName("");
     setRole("mechanic");
   };
@@ -69,6 +72,7 @@ export default function LoginPage({
     if (!username.trim()) { setError("Enter a username."); return; }
     if (!displayName.trim()) { setError("Enter your name."); return; }
     if (password.length < 4) { setError("Password must be at least 4 characters."); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match."); return; }
     setError("");
     setLoading(true);
     try {
@@ -173,6 +177,32 @@ export default function LoginPage({
               </button>
             </div>
           </div>
+
+          {mode === "register" && (
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <Lock className="w-4 h-4" /> Confirm Password
+              </label>
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={e => { setConfirmPassword(e.target.value); setError(""); }}
+                  onKeyDown={handleKey}
+                  placeholder="Re-enter your password"
+                  className="bg-white text-black text-lg h-12 border-2 border-black pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black transition-colors"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+          )}
 
           {mode === "register" && (
             <div className="space-y-2">
