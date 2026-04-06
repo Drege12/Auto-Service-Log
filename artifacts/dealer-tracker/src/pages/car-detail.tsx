@@ -235,7 +235,8 @@ export default function CarDetail() {
 
   useEffect(() => {
     if (!car?.mechanicId) return;
-    // Only fetch contact if admin or the car belongs to someone else (no-op for own car — they already know their own info)
+    // Don't fetch if the viewer IS the assigned technician — no point showing your own info
+    if (car.mechanicId === viewerSession.mechanicId) return;
     fetch(`${BASE}/api/mechanics/${car.mechanicId}/contact`, {
       headers: { "X-Mechanic-Id": String(viewerSession.mechanicId ?? "") },
     })
