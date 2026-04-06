@@ -9,10 +9,8 @@ type Mode = "login" | "register";
 
 export default function LoginPage({
   onLogin,
-  onAdminAccess,
 }: {
   onLogin: (mechanicId: number, username: string, displayName: string, isAdmin: boolean, role?: string, token?: string) => void;
-  onAdminAccess: () => void;
 }) {
   const [mode, setMode] = useState<Mode>("login");
 
@@ -106,14 +104,9 @@ export default function LoginPage({
             <div className="bg-black text-white p-4 rounded-2xl shadow-brutal">
               <Wrench className="w-12 h-12" />
             </div>
-            <button
-              type="button"
-              onClick={onAdminAccess}
-              title="Admin access"
-              className="bg-amber-500 text-white p-4 rounded-2xl shadow-brutal hover:bg-amber-600 transition-colors"
-            >
+            <div className="bg-amber-500 text-white p-4 rounded-2xl shadow-brutal">
               <ShieldCheck className="w-12 h-12" />
-            </button>
+            </div>
           </div>
           <h1 className="text-4xl font-black uppercase tracking-tight">Maintenance Tracker</h1>
           <p className="text-gray-500 font-medium">
