@@ -76,7 +76,9 @@ function Router() {
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [validating, setValidating] = useState(true);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(() => {
+    return new URLSearchParams(window.location.search).has("admin");
+  });
 
   useEffect(() => {
     const stored = loadStoredSession();
@@ -165,7 +167,6 @@ function App() {
     return (
       <LoginPage
         onLogin={handleLogin}
-        onAdminAccess={() => setShowAdminLogin(true)}
       />
     );
   }
