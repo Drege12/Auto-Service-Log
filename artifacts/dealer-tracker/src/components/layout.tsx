@@ -157,7 +157,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <UserCircle className="w-5 h-5 shrink-0" />
               <span className="hidden md:inline text-sm">PROFILE</span>
             </Link>
-            {isDriver && (
+            {!isAdmin && (
               <Link
                 href="/help"
                 className={cn(
