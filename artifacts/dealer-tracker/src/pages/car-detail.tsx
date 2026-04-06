@@ -353,7 +353,9 @@ export default function CarDetail() {
         </div>
       )}
 
-      {viewerSession.role === "driver" && (car as { mechanicName?: string | null }).mechanicName && (
+      {viewerSession.role === "driver"
+        && (car as { mechanicName?: string | null }).mechanicName
+        && (car as { mechanicId?: number | null }).mechanicId !== viewerSession.mechanicId && (
         <div className="mb-6 bg-amber-50 border-4 border-amber-500 rounded-2xl px-6 py-4 flex items-center gap-3 flex-wrap">
           <span className="bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-wide flex items-center gap-2">
             <Wrench className="w-4 h-4" /> Your Technician
