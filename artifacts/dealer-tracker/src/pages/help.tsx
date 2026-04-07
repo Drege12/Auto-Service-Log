@@ -279,7 +279,67 @@ function VinFinderDrillDown() {
   );
 }
 
+function getRole(): string {
+  try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}").role ?? "mechanic"; }
+  catch { return "mechanic"; }
+}
+
+function OperatorBadges() {
+  return (
+    <div className="border-4 border-black rounded-2xl bg-white px-6 pt-4 pb-2">
+      <h2 className="text-2xl font-black uppercase mb-1">Vehicle Status Badges</h2>
+      <p className="text-base font-sans text-gray-600 mb-2">
+        These colored labels appear on a vehicle's detail page.
+      </p>
+      <BadgeRow label="Ready"           color="bg-green-600"  description="No faults that impair drivability." />
+      <BadgeRow label="Service Due"     color="bg-amber-500"  description="Routine maintenance is coming up or overdue. No urgent issue, but something needs to be scheduled soon." />
+      <BadgeRow label="Needs Attention" color="bg-orange-600" description="The vehicle is drivable, but something needs to be addressed — either by you or a technician." />
+      <BadgeRow label="Out of Service"  color="bg-red-600"    description="The vehicle is not available for use. It may be unsafe to drive or waiting on a major repair." />
+    </div>
+  );
+}
+
+function TechnicianBadges() {
+  return (
+    <div className="space-y-6">
+      <div className="border-4 border-black rounded-2xl bg-white px-6 pt-4 pb-2">
+        <h2 className="text-2xl font-black uppercase mb-1">Vehicle Status Badges</h2>
+        <p className="text-base font-sans text-gray-600 mb-2">
+          Set these on any vehicle to communicate its current state to the rest of the shop.
+        </p>
+        <BadgeRow label="In Service"      color="bg-blue-600"   description="You are actively working on this vehicle right now." />
+        <BadgeRow label="Ready"           color="bg-green-600"  description="Work is complete — no issues that impair use or drivability." />
+        <BadgeRow label="On Hold"         color="bg-amber-500"  description="Work is paused. Typically waiting on parts, an approval, or additional information before continuing." />
+        <BadgeRow label="Service Due"     color="bg-amber-500"  description="Routine maintenance is coming up or overdue. No urgent fault, but something needs to be scheduled." />
+        <BadgeRow label="Needs Attention" color="bg-orange-600" description="Something has been flagged but the vehicle is still drivable. Could require action from the technician or the operator." />
+        <BadgeRow label="Out of Service"  color="bg-red-600"    description="Vehicle cannot be used. It is unsafe to drive or is awaiting a major repair before it can go back into service." />
+      </div>
+
+      <div className="border-4 border-black rounded-2xl bg-white px-6 pt-4 pb-2">
+        <h2 className="text-2xl font-black uppercase mb-1">Vehicle Type Badges</h2>
+        <p className="text-base font-sans text-gray-600 mb-2">
+          Shown on vehicle cards and detail pages to identify the category.
+        </p>
+        <BadgeRow label="Personal" color="bg-teal-700"   description="This vehicle belongs to a private owner, not shop inventory. Personal vehicles are tracked separately from dealer stock." />
+        <BadgeRow label="Sold"     color="bg-gray-500"   description="Vehicle has been marked as sold and archived. It moves to the Sold Vehicles section at the bottom of the list — nothing is deleted." />
+      </div>
+
+      <div className="border-4 border-black rounded-2xl bg-white px-6 pt-4 pb-2">
+        <h2 className="text-2xl font-black uppercase mb-1">Account Badges</h2>
+        <p className="text-base font-sans text-gray-600 mb-2">
+          Shown next to account names across the app.
+        </p>
+        <BadgeRow label="Admin"  color="bg-amber-500" description="This account has full administrative access — they can manage all vehicles, accounts, and assignments across the shop." />
+        <BadgeRow label="Driver" color="bg-teal-600"  description="This is an operator (client) account. Operators can add their own vehicles and communicate with the shop, but they cannot access shop-wide tools." />
+      </div>
+    </div>
+  );
+}
+
 export default function HelpPage() {
+  const role = getRole();
+  const isTech = role !== "driver";
+
   return (
     <Layout>
       <div className="max-w-2xl mx-auto space-y-8">
@@ -290,32 +350,7 @@ export default function HelpPage() {
           </p>
         </div>
 
-        <div className="border-4 border-black rounded-2xl bg-white px-6 pt-4 pb-2">
-          <h2 className="text-2xl font-black uppercase mb-1">Vehicle Status Badges</h2>
-          <p className="text-base font-sans text-gray-600 mb-2">
-            These colored labels appear on a vehicle's detail page.
-          </p>
-          <BadgeRow
-            label="Ready"
-            color="bg-green-600"
-            description="No faults that impair drivability."
-          />
-          <BadgeRow
-            label="Service Due"
-            color="bg-amber-500"
-            description="Routine maintenance is coming up or overdue. No urgent issue, but something needs to be scheduled soon."
-          />
-          <BadgeRow
-            label="Needs Attention"
-            color="bg-orange-600"
-            description="The vehicle is drivable, but something needs to be addressed — either by you or a technician."
-          />
-          <BadgeRow
-            label="Out of Service"
-            color="bg-red-600"
-            description="The vehicle is not available for use. It may be unsafe to drive or waiting on a major repair."
-          />
-        </div>
+        {isTech ? <TechnicianBadges /> : <OperatorBadges />}
 
         <div className="border-4 border-black rounded-2xl bg-white px-6 py-5 space-y-4">
           <div>
