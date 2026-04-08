@@ -118,7 +118,7 @@ title = "sterndrive IO boat side view"
 id = "79lvMarqqx0EvXZK-ZGpA"
 uri = "file://artifacts/dealer-tracker/public/doc-images/jetboat.png"
 type = "image"
-title = "jet boat side view"
+title = "jet boat clean transom side view"
 
 [[generated]]
 id = "Hoju0LtWm8fsmSDPtiKcA"
@@ -154,7 +154,7 @@ title = "side by side UTV side view"
 id = "J9oxtekEmzu0f649Jbi0r"
 uri = "file://artifacts/dealer-tracker/public/doc-images/dirtbike.png"
 type = "image"
-title = "dirtbike motocross side view"
+title = "motocross dirtbike accurate side view"
 
 [[generated]]
 id = "PyYwG0f0qR7LY4NzQl0PQ"
@@ -166,7 +166,7 @@ title = "snowmobile side view"
 id = "osiAtZWUNzLoSD3nQzjGP"
 uri = "file://artifacts/dealer-tracker/public/doc-images/3wheeler.png"
 type = "image"
-title = "three wheeler trike side view"
+title = "three wheeler ATC trike ATV side view"
 
 [[outputs]]
 id = "6ZLffi-484GzWcXRvIrBJ"
