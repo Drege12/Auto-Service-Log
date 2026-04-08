@@ -24,6 +24,150 @@ uri = "file://artifacts/dealer-tracker/public/doc-images/vin-atv.png"
 type = "image"
 title = "atv vin location diagram"
 
+[[generated]]
+id = "g_SkHf9nYpv9b7YUPQ77v"
+uri = "file://artifacts/dealer-tracker/public/doc-images/sedan.png"
+type = "image"
+title = "sedan side view illustration"
+
+[[generated]]
+id = "LavsLCpcnpkGaHF03-F7g"
+uri = "file://artifacts/dealer-tracker/public/doc-images/truck.png"
+type = "image"
+title = "pickup truck side view illustration"
+
+[[generated]]
+id = "LQmukRqYHRJQFP2dNIlQQ"
+uri = "file://artifacts/dealer-tracker/public/doc-images/suv.png"
+type = "image"
+title = "SUV side view illustration"
+
+[[generated]]
+id = "AG1721Qa3MvKwQHLteepy"
+uri = "file://artifacts/dealer-tracker/public/doc-images/van.png"
+type = "image"
+title = "minivan side view illustration"
+
+[[generated]]
+id = "OR2aIpftVME-VIm4MY9lX"
+uri = "file://artifacts/dealer-tracker/public/doc-images/coupe.png"
+type = "image"
+title = "coupe side view illustration"
+
+[[generated]]
+id = "Ijr6MufX8XX-No105_wwB"
+uri = "file://artifacts/dealer-tracker/public/doc-images/wagon.png"
+type = "image"
+title = "station wagon side view illustration"
+
+[[generated]]
+id = "fSFad_1-YUCMNdE6c514i"
+uri = "file://artifacts/dealer-tracker/public/doc-images/convertible.png"
+type = "image"
+title = "convertible open top side view illustration"
+
+[[generated]]
+id = "0SjFJxvz3ijH_ul4BuMRG"
+uri = "file://artifacts/dealer-tracker/public/doc-images/cruiser.png"
+type = "image"
+title = "cruiser motorcycle side view illustration"
+
+[[generated]]
+id = "8ON6fS_LPNAfvuqo-8RxZ"
+uri = "file://artifacts/dealer-tracker/public/doc-images/sport-bike.png"
+type = "image"
+title = "sport bike motorcycle side view"
+
+[[generated]]
+id = "qI0jAbxlto58eY71_sPQZ"
+uri = "file://artifacts/dealer-tracker/public/doc-images/touring.png"
+type = "image"
+title = "touring motorcycle side view"
+
+[[generated]]
+id = "R87ApFMzlIrWo5dsBpA69"
+uri = "file://artifacts/dealer-tracker/public/doc-images/dualsport.png"
+type = "image"
+title = "dual sport motorcycle side view"
+
+[[generated]]
+id = "PjlNsS5r0g3anlST6LLZY"
+uri = "file://artifacts/dealer-tracker/public/doc-images/standard-motorcycle.png"
+type = "image"
+title = "standard motorcycle side view"
+
+[[generated]]
+id = "5qsulxyNTudP-91rW6sxZ"
+uri = "file://artifacts/dealer-tracker/public/doc-images/outboard.png"
+type = "image"
+title = "outboard motorboat side view"
+
+[[generated]]
+id = "a6DhVKJ0TgZ0ui7l-G2SN"
+uri = "file://artifacts/dealer-tracker/public/doc-images/inboard.png"
+type = "image"
+title = "inboard ski boat side view"
+
+[[generated]]
+id = "pEnfHmlqUmWBNrnKRejfd"
+uri = "file://artifacts/dealer-tracker/public/doc-images/sterndrive.png"
+type = "image"
+title = "sterndrive IO boat side view"
+
+[[generated]]
+id = "79lvMarqqx0EvXZK-ZGpA"
+uri = "file://artifacts/dealer-tracker/public/doc-images/jetboat.png"
+type = "image"
+title = "jet boat side view"
+
+[[generated]]
+id = "Hoju0LtWm8fsmSDPtiKcA"
+uri = "file://artifacts/dealer-tracker/public/doc-images/pwc.png"
+type = "image"
+title = "PWC jet ski side view"
+
+[[generated]]
+id = "0fvccXNMyt7k6BbbFxn_j"
+uri = "file://artifacts/dealer-tracker/public/doc-images/pontoon.png"
+type = "image"
+title = "pontoon boat side view"
+
+[[generated]]
+id = "WP3xV2cyRhnretoqVFVLZ"
+uri = "file://artifacts/dealer-tracker/public/doc-images/sailboat.png"
+type = "image"
+title = "sailboat side view"
+
+[[generated]]
+id = "j7UeaXYE31jQ3rp5ear9t"
+uri = "file://artifacts/dealer-tracker/public/doc-images/quad.png"
+type = "image"
+title = "quad ATV four wheeler side view"
+
+[[generated]]
+id = "mx8ybwbOw5kItZxxG0wtZ"
+uri = "file://artifacts/dealer-tracker/public/doc-images/side-by-side.png"
+type = "image"
+title = "side by side UTV side view"
+
+[[generated]]
+id = "J9oxtekEmzu0f649Jbi0r"
+uri = "file://artifacts/dealer-tracker/public/doc-images/dirtbike.png"
+type = "image"
+title = "dirtbike motocross side view"
+
+[[generated]]
+id = "PyYwG0f0qR7LY4NzQl0PQ"
+uri = "file://artifacts/dealer-tracker/public/doc-images/snowmobile.png"
+type = "image"
+title = "snowmobile side view"
+
+[[generated]]
+id = "osiAtZWUNzLoSD3nQzjGP"
+uri = "file://artifacts/dealer-tracker/public/doc-images/3wheeler.png"
+type = "image"
+title = "three wheeler trike side view"
+
 [[outputs]]
 id = "6ZLffi-484GzWcXRvIrBJ"
 uri = "file://attached_assets/stock_images/sedan.jpg"
