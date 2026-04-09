@@ -87,6 +87,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {isAdmin && (
                   <span className="bg-amber-500 text-white font-black px-2 py-0.5 rounded text-xs uppercase tracking-widest">Admin</span>
                 )}
+                {!isAdmin && !isDriver && (
+                  <span className="bg-blue-700 text-white font-black px-2 py-0.5 rounded text-xs uppercase tracking-widest">Technician</span>
+                )}
                 {isDriver && (
                   <span className="bg-teal-600 text-white font-black px-2 py-0.5 rounded text-xs uppercase tracking-widest">Driver</span>
                 )}
