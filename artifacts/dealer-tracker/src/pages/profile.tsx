@@ -120,6 +120,9 @@ export default function ProfilePage() {
                 {profile.isAdmin === 1 && (
                   <span className="ml-auto bg-amber-500 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-widest">Admin</span>
                 )}
+                {profile.isAdmin !== 1 && profile.role !== "driver" && (
+                  <span className="ml-auto bg-blue-700 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-widest">Technician</span>
+                )}
                 {profile.role === "driver" && (
                   <span className="ml-auto bg-teal-600 text-white font-black px-3 py-1 rounded text-sm uppercase tracking-widest">Driver</span>
                 )}
