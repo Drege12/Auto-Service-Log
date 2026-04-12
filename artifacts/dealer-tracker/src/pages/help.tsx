@@ -380,6 +380,11 @@ export default function HelpPage() {
               Most you assholes already know me. I can speed this up with AI, but even if I do the work myself the resources to run it cost something. Help me keep this ad free.
             </p>
           </div>
+          <div className="border-t-2 border-gray-200 pt-4 space-y-1">
+            <p className="text-sm font-black uppercase text-gray-500">Contact</p>
+            <p className="font-bold text-base"><a href="mailto:gregwattsj@gmail.com" className="underline">gregwattsj@gmail.com</a></p>
+            <p className="font-bold text-base"><a href="tel:+13853099663" className="underline">(385) 309-9663</a></p>
+          </div>
         </div>
       </div>
     </Layout>
