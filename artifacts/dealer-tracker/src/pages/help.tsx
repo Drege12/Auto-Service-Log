@@ -330,7 +330,7 @@ function TechnicianBadges() {
           Shown next to account names across the app.
         </p>
         <BadgeRow label="Admin"      color="bg-amber-500" description="This account has full administrative access — they can manage all vehicles, accounts, and assignments across the shop." />
-        <BadgeRow label="Technician" color="bg-blue-700"  description="This is a shop technician account. Technicians can manage vehicles, log maintenance, run inspections, and communicate across the shop." />
+        <BadgeRow label="Technician" color="bg-blue-700"  description="Anyone who handles more than one vehicle. Can work for a shop or is independent of one." />
         <BadgeRow label="Driver"     color="bg-teal-600"  description="This is an operator (client) account. Operators can add their own vehicles and communicate with the shop, but they cannot access shop-wide tools." />
       </div>
     </div>
