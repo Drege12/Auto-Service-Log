@@ -116,10 +116,6 @@ export default function StatsPage() {
     setTimeout(() => window.print(), 150);
   };
 
-  const grandTotalEntries = filtered.reduce((s, g) => s + g.totalEntries, 0);
-  const grandTotalHours = filtered.reduce((s, g) => s + g.totalHours, 0);
-  const grandTotalCost = filtered.reduce((s, g) => s + g.totalCost, 0);
-
   if (!session?.adminMode) return null;
 
   return (
@@ -147,22 +143,6 @@ export default function StatsPage() {
           <Printer className="w-5 h-5" />
           PRINT
         </button>
-      </div>
-
-      {/* Summary bar */}
-      <div className="grid grid-cols-3 gap-4 mb-6 no-print">
-        <div className="bg-white border-2 border-black rounded-lg p-4 text-center">
-          <div className="text-3xl font-black">{grandTotalEntries}</div>
-          <div className="text-xs font-black uppercase text-muted-foreground mt-1">Total Jobs</div>
-        </div>
-        <div className="bg-blue-50 border-2 border-blue-600 rounded-lg p-4 text-center">
-          <div className="text-3xl font-black text-blue-700">{fmt(grandTotalHours)} h</div>
-          <div className="text-xs font-black uppercase text-muted-foreground mt-1">Total Hours</div>
-        </div>
-        <div className="bg-green-50 border-2 border-green-600 rounded-lg p-4 text-center">
-          <div className="text-3xl font-black text-green-700">{fmtMoney(grandTotalCost)}</div>
-          <div className="text-xs font-black uppercase text-muted-foreground mt-1">Total Cost</div>
-        </div>
       </div>
 
       {/* Search + expand controls */}
@@ -207,21 +187,11 @@ export default function StatsPage() {
                   {isOpen ? <ChevronDown className="w-5 h-5 shrink-0" /> : <ChevronRight className="w-5 h-5 shrink-0" />}
                   <span className="text-xl font-black uppercase">{group.year} {group.make} {group.model}</span>
                 </div>
-                <div className="flex items-center gap-4 text-sm font-bold">
-                  <span className="bg-gray-100 border border-gray-300 px-2 py-1 rounded">{group.totalEntries} job{group.totalEntries !== 1 ? "s" : ""}</span>
-                  <span className="text-blue-700 bg-blue-50 border border-blue-300 px-2 py-1 rounded">{fmt(group.totalHours)} h</span>
-                  <span className="text-green-700 bg-green-50 border border-green-300 px-2 py-1 rounded">{fmtMoney(group.totalCost)}</span>
-                </div>
               </button>
 
               {/* Print-always vehicle header */}
               <div className="hidden print:flex items-center justify-between px-5 py-3 border-b-2 border-black bg-gray-100">
                 <span className="text-lg font-black uppercase">{group.year} {group.make} {group.model}</span>
-                <div className="flex gap-4 text-sm font-bold">
-                  <span>{group.totalEntries} job{group.totalEntries !== 1 ? "s" : ""}</span>
-                  <span>{fmt(group.totalHours)} h total</span>
-                  <span>{fmtMoney(group.totalCost)} total</span>
-                </div>
               </div>
 
               {/* Task breakdown table */}
@@ -250,16 +220,6 @@ export default function StatsPage() {
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="border-t-2 border-black bg-gray-100">
-                      <tr>
-                        <td className="px-5 py-2 font-black uppercase text-xs">Totals</td>
-                        <td className="px-3 py-2 text-right font-black">{group.totalEntries}</td>
-                        <td className="px-3 py-2 text-right"></td>
-                        <td className="px-3 py-2 text-right font-black text-blue-700">{fmt(group.totalHours)}</td>
-                        <td className="px-3 py-2 text-right"></td>
-                        <td className="px-5 py-2 text-right font-black text-green-700">{fmtMoney(group.totalCost)}</td>
-                      </tr>
-                    </tfoot>
                   </table>
                 </div>
               )}
