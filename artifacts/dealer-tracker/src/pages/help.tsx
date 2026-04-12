@@ -372,6 +372,15 @@ export default function HelpPage() {
           </div>
           <VinFinderDrillDown />
         </div>
+
+        <div className="border-4 border-black rounded-2xl bg-white px-6 py-5 space-y-4">
+          <div>
+            <h2 className="text-2xl font-black uppercase mb-1">Would You Like to Donate?</h2>
+            <p className="text-base font-sans text-gray-600">
+              Most you assholes already know me. I can speed this up with AI, but even if I do the work myself the resources to run it cost something. Help me keep this ad free.
+            </p>
+          </div>
+        </div>
       </div>
     </Layout>
   );
