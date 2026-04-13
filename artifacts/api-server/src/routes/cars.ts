@@ -229,6 +229,7 @@ router.get("/cars", async (req, res) => {
           id: carsTable.id,
           mechanicId: carsTable.mechanicId,
           mechanicName: mechanicsTable.displayName,
+          ownerRole: mechanicsTable.role,
           stockNumber: carsTable.stockNumber,
           year: carsTable.year,
           make: carsTable.make,
@@ -257,7 +258,7 @@ router.get("/cars", async (req, res) => {
         .from(carsTable)
         .leftJoin(mechanicsTable, eq(carsTable.mechanicId, mechanicsTable.id))
         .orderBy(carsTable.createdAt);
-      res.json(rows.map(r => ({ ...r, isLinkedCar: r.linkedMechanicId != null })));
+      res.json(rows.map(r => ({ ...r, isLinkedCar: r.linkedMechanicId != null || r.ownerRole === "driver" })));
       return;
     }
 
