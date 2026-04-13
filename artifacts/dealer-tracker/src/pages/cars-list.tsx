@@ -151,6 +151,7 @@ export default function CarsList() {
   const session = getSession();
   const isDriver = session.role === "driver";
   const isMechanic = !isAdmin && !isDriver;
+  const currentMechanicId = Number(JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || 0);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>({ ...emptyForm });
@@ -690,7 +691,7 @@ export default function CarsList() {
                         </button>
                       </>
                     )}
-                    {car.isLinkedCar && isMechanic && (
+                    {car.isLinkedCar && isMechanic && car.mechanicId !== currentMechanicId && (
                       <button
                         type="button"
                         onClick={e => { e.preventDefault(); e.stopPropagation(); handleUnlink(car.id); }}
