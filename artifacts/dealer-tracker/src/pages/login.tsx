@@ -6,7 +6,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "forgot";
 
 type PendingLogin = {
   mechanicId: number;
@@ -35,6 +35,8 @@ export default function LoginPage({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(null);
   const [enablingPush, setEnablingPush] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
 
   const { subscribe, state: pushState } = usePushNotifications();
 
@@ -55,6 +57,29 @@ export default function LoginPage({
     completeLogin(pendingLogin);
   };
 
+  const handleForgot = async () => {
+    if (!forgotEmail.trim()) { setError("Enter your email address."); return; }
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail.trim().toLowerCase() }),
+      });
+      const data = await res.json().catch(() => ({})) as { ok?: boolean; error?: string };
+      if (res.ok) {
+        setForgotSent(true);
+      } else {
+        setError(data.error || "Something went wrong.");
+      }
+    } catch {
+      setError("Could not reach the server. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const reset = () => {
     setError("");
     setUsername("");
@@ -62,6 +87,8 @@ export default function LoginPage({
     setConfirmPassword("");
     setDisplayName("");
     setRole("mechanic");
+    setForgotEmail("");
+    setForgotSent(false);
   };
 
   const switchMode = (m: Mode) => {
@@ -176,45 +203,49 @@ export default function LoginPage({
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className="text-base font-black uppercase flex items-center gap-2">
-              <User className="w-4 h-4" /> Username
-            </label>
-            <Input
-              type="text"
-              value={username}
-              onChange={e => { setUsername(e.target.value); setError(""); }}
-              onKeyDown={handleKey}
-              placeholder="e.g. mikej"
-              className="bg-white text-black text-lg h-12 border-2 border-black"
-              autoFocus
-              autoCapitalize="none"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-base font-black uppercase flex items-center gap-2">
-              <Lock className="w-4 h-4" /> Password
-            </label>
-            <div className="relative">
+          {mode !== "forgot" && (
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <User className="w-4 h-4" /> Username
+              </label>
               <Input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={e => { setPassword(e.target.value); setError(""); }}
+                type="text"
+                value={username}
+                onChange={e => { setUsername(e.target.value); setError(""); }}
                 onKeyDown={handleKey}
-                placeholder={mode === "register" ? "Choose a password (4+ chars)" : "Your password"}
-                className="bg-white text-black text-lg h-12 border-2 border-black pr-12"
+                placeholder="e.g. mikej"
+                className="bg-white text-black text-lg h-12 border-2 border-black"
+                autoFocus
+                autoCapitalize="none"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black transition-colors"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
-          </div>
+          )}
+
+          {mode !== "forgot" && (
+            <div className="space-y-2">
+              <label className="text-base font-black uppercase flex items-center gap-2">
+                <Lock className="w-4 h-4" /> Password
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={e => { setPassword(e.target.value); setError(""); }}
+                  onKeyDown={handleKey}
+                  placeholder={mode === "register" ? "Choose a password (4+ chars)" : "Your password"}
+                  className="bg-white text-black text-lg h-12 border-2 border-black pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+          )}
 
           {mode === "register" && (
             <div className="space-y-2">
@@ -285,32 +316,75 @@ export default function LoginPage({
             </div>
           )}
 
+          {mode === "forgot" && (
+            <div className="space-y-2">
+              {forgotSent ? (
+                <div className="bg-green-50 border-2 border-green-600 text-green-800 font-bold p-4 rounded-lg text-center space-y-1">
+                  <p className="text-base">Check your email.</p>
+                  <p className="text-sm font-medium">If that address is on file, we sent your username and a temporary password.</p>
+                </div>
+              ) : (
+                <>
+                  <label className="text-base font-black uppercase flex items-center gap-2">
+                    Email Address
+                  </label>
+                  <Input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={e => { setForgotEmail(e.target.value); setError(""); }}
+                    onKeyDown={e => { if (e.key === "Enter") handleForgot(); }}
+                    placeholder="e.g. you@example.com"
+                    className="bg-white text-black text-lg h-12 border-2 border-black"
+                    autoFocus
+                  />
+                </>
+              )}
+            </div>
+          )}
+
           <Button
             type="button"
             size="lg"
             className="w-full h-12 text-base"
-            disabled={loading}
-            onClick={mode === "login" ? handleLogin : handleRegister}
+            disabled={loading || (mode === "forgot" && forgotSent)}
+            onClick={mode === "login" ? handleLogin : mode === "register" ? handleRegister : handleForgot}
           >
-            {loading ? "PLEASE WAIT..." : mode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}
+            {loading
+              ? "PLEASE WAIT..."
+              : mode === "login"
+              ? "SIGN IN"
+              : mode === "register"
+              ? "CREATE ACCOUNT"
+              : forgotSent
+              ? "EMAIL SENT"
+              : "SEND RECOVERY EMAIL"}
           </Button>
 
-          <div className="text-center pt-2">
+          <div className="text-center pt-2 space-y-2">
             {mode === "login" ? (
-              <button
-                type="button"
-                className="text-sm font-bold underline text-gray-600 flex items-center gap-1 mx-auto"
-                onClick={() => switchMode("register")}
-              >
-                New here? Create an account <ChevronRight className="w-4 h-4" />
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="text-sm font-bold underline text-gray-600 flex items-center gap-1 mx-auto"
+                  onClick={() => switchMode("register")}
+                >
+                  New here? Create an account <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  className="text-sm font-medium text-gray-400 underline block mx-auto"
+                  onClick={() => switchMode("forgot")}
+                >
+                  Forgot username or password?
+                </button>
+              </>
             ) : (
               <button
                 type="button"
                 className="text-sm font-bold underline text-gray-600 flex items-center gap-1 mx-auto"
                 onClick={() => switchMode("login")}
               >
-                Already have an account? Sign in <ChevronRight className="w-4 h-4" />
+                {mode === "forgot" ? "Back to sign in" : "Already have an account? Sign in"} <ChevronRight className="w-4 h-4" />
               </button>
             )}
           </div>
