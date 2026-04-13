@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { db, mechanicsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { signToken, verifyToken, extractBearerToken } from "../lib/jwt";
+import { emailConfigured, sendForgotPasswordEmail } from "../lib/email";
 
 const router = Router();
 
@@ -112,6 +113,48 @@ router.get("/auth/me", async (req, res) => {
     res.json({ ok: true, mechanicId: mechanic.id, username: mechanic.username, displayName: mechanic.displayName, isAdmin: mechanic.isAdmin === 1, role: mechanic.role ?? "mechanic" });
   } catch {
     res.status(500).json({ error: "Session check failed." });
+  }
+});
+
+router.post("/auth/forgot-password", async (req, res) => {
+  const { email } = req.body as { email?: string };
+  if (!email || !email.trim()) {
+    res.status(400).json({ error: "Email is required." });
+    return;
+  }
+
+  if (!emailConfigured) {
+    res.status(503).json({ error: "Email service is not configured on this server." });
+    return;
+  }
+
+  try {
+    const [mechanic] = await db
+      .select({ id: mechanicsTable.id, username: mechanicsTable.username, email: mechanicsTable.email })
+      .from(mechanicsTable)
+      .where(eq(mechanicsTable.email, email.trim().toLowerCase()));
+
+    if (!mechanic || !mechanic.email) {
+      res.json({ ok: true });
+      return;
+    }
+
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    const tempPassword = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    await db.update(mechanicsTable).set({ passwordHash }).where(eq(mechanicsTable.id, mechanic.id));
+
+    await sendForgotPasswordEmail({
+      to: mechanic.email,
+      username: mechanic.username,
+      tempPassword,
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ error: "Something went wrong. Try again." });
   }
 });
 
