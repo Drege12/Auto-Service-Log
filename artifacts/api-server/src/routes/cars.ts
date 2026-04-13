@@ -312,7 +312,9 @@ router.get("/cars", async (req, res) => {
       .orderBy(carsTable.createdAt);
 
     const linked = linkedCars.map(r => ({ ...r, isLinkedCar: true as const }));
-    res.json([...ownedCars, ...linked]);
+    // Also mark owned cars that have a client assigned (linkedMechanicId set) as client vehicles
+    const ownedMapped = ownedCars.map(r => ({ ...r, isLinkedCar: r.linkedMechanicId != null }));
+    res.json([...ownedMapped, ...linked]);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch cars" });
   }
