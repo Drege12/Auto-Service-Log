@@ -144,14 +144,14 @@ function getSession() {
 
 export default function CarsList() {
   const queryClient = useQueryClient();
-  const { data: cars, isLoading, isError } = useListCars();
+  const currentMechanicId = Number(JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || 0);
+  const { data: cars, isLoading, isError } = useListCars({ query: { queryKey: ["cars", currentMechanicId] } });
   const isAdmin = getIsAdmin();
   const { mutate: createCar, isPending: isCreating } = useCreateCar();
 
   const session = getSession();
   const isDriver = session.role === "driver";
   const isMechanic = !isAdmin && !isDriver;
-  const currentMechanicId = Number(JSON.parse(localStorage.getItem("dt_mechanic") || "{}").mechanicId || 0);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>({ ...emptyForm });
@@ -232,7 +232,7 @@ export default function CarsList() {
         setReassignError(err.error || "Reassign failed.");
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      queryClient.invalidateQueries({ queryKey: ["cars", currentMechanicId] });
       setReassignOpen(false);
     } catch {
       setReassignError("Could not reach the server.");
@@ -277,7 +277,7 @@ export default function CarsList() {
         setAssignClientError(err.error || "Failed to assign client.");
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      queryClient.invalidateQueries({ queryKey: ["cars", currentMechanicId] });
       setAssignClientOpen(false);
     } catch {
       setAssignClientError("Could not reach the server.");
@@ -329,7 +329,7 @@ export default function CarsList() {
         setLinkSearchError(err.error || "Could not link vehicle.");
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      queryClient.invalidateQueries({ queryKey: ["cars", currentMechanicId] });
       setLinkVinOpen(false);
       setLinkVin("");
       setLinkMatch(null);
@@ -349,7 +349,7 @@ export default function CarsList() {
         method: "DELETE",
         headers: { "X-Mechanic-Id": String(mechanicId) },
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      queryClient.invalidateQueries({ queryKey: ["cars", currentMechanicId] });
     } catch {
       // silent
     } finally {
@@ -397,7 +397,7 @@ export default function CarsList() {
         setVinImportError(err.error || "Import failed.");
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+      queryClient.invalidateQueries({ queryKey: ["cars", currentMechanicId] });
       setVinImportOpen(false);
       setDialogOpen(false);
       setVinMatch(null);
@@ -474,7 +474,7 @@ export default function CarsList() {
       }
     }, {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/cars"] });
+        queryClient.invalidateQueries({ queryKey: ["cars", currentMechanicId] });
         setDialogOpen(false);
       },
       onError: (err: unknown) => {
