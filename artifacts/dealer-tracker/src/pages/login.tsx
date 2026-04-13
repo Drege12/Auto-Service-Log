@@ -1,11 +1,21 @@
 import { useState } from "react";
-import { Wrench, Lock, User, ChevronRight, ShieldCheck, Car, Eye, EyeOff } from "lucide-react";
+import { Wrench, Lock, User, ChevronRight, ShieldCheck, Car, Eye, EyeOff, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type Mode = "login" | "register";
+
+type PendingLogin = {
+  mechanicId: number;
+  username: string;
+  displayName: string;
+  isAdmin: boolean;
+  role: string;
+  token: string;
+};
 
 export default function LoginPage({
   onLogin,
@@ -23,6 +33,27 @@ export default function LoginPage({
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(null);
+  const [enablingPush, setEnablingPush] = useState(false);
+
+  const { subscribe, state: pushState } = usePushNotifications();
+
+  const completeLogin = (p: PendingLogin) => {
+    onLogin(p.mechanicId, p.username, p.displayName, p.isAdmin, p.role, p.token);
+  };
+
+  const handleEnableNotifications = async () => {
+    if (!pendingLogin) return;
+    setEnablingPush(true);
+    await subscribe().catch(() => {});
+    setEnablingPush(false);
+    completeLogin(pendingLogin);
+  };
+
+  const handleSkipNotifications = () => {
+    if (!pendingLogin) return;
+    completeLogin(pendingLogin);
+  };
 
   const reset = () => {
     setError("");
@@ -81,7 +112,20 @@ export default function LoginPage({
       });
       const data = await res.json().catch(() => ({})) as { ok?: boolean; mechanicId?: number; username?: string; displayName?: string; isAdmin?: boolean; role?: string; token?: string; error?: string };
       if (res.ok && data.mechanicId) {
-        onLogin(data.mechanicId, data.username!, data.displayName!, data.isAdmin ?? false, data.role, data.token);
+        const pending: PendingLogin = {
+          mechanicId: data.mechanicId,
+          username: data.username!,
+          displayName: data.displayName!,
+          isAdmin: data.isAdmin ?? false,
+          role: data.role ?? "mechanic",
+          token: data.token ?? "",
+        };
+        localStorage.setItem("dt_mechanic", JSON.stringify({ mechanicId: pending.mechanicId, token: pending.token }));
+        if (pushState === "unsupported" || pushState === "denied") {
+          completeLogin(pending);
+        } else {
+          setPendingLogin(pending);
+        }
       } else {
         setError(data.error || "Could not create account.");
       }
@@ -97,6 +141,7 @@ export default function LoginPage({
   };
 
   return (
+    <>
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-3">
@@ -272,5 +317,61 @@ export default function LoginPage({
         </div>
       </div>
     </div>
+
+    {/* Push notification prompt overlay */}
+    {pendingLogin && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+        <div className="bg-white border-4 border-black rounded-2xl max-w-md w-full p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="bg-black rounded-xl p-3 shrink-0">
+              <Bell className="w-7 h-7 text-white" />
+            </div>
+            <h2 className="text-2xl font-black uppercase leading-tight">Enable Push Notifications?</h2>
+          </div>
+
+          <p className="text-base font-medium text-gray-700 leading-relaxed">
+            Get notified the moment something changes on a vehicle you're linked to — new maintenance logs, inspections, todos, mileage updates, and more.
+          </p>
+
+          <ul className="space-y-2">
+            {[
+              "Instant alerts when a vehicle is updated",
+              "Know when your linked vehicles get serviced",
+              "Never miss a message or inspection result",
+              "Works even when the app is closed",
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2 text-sm font-bold text-gray-800">
+                <span className="text-green-600 shrink-0 mt-0.5">✓</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          <p className="text-xs text-gray-500 font-medium">
+            You can turn this off any time from your profile settings.
+          </p>
+
+          <div className="flex flex-col gap-3 pt-1">
+            <Button
+              type="button"
+              className="w-full h-14 text-base font-black bg-black text-white hover:bg-gray-800"
+              onClick={handleEnableNotifications}
+              disabled={enablingPush}
+            >
+              {enablingPush ? "ENABLING..." : "YES, ENABLE NOTIFICATIONS"}
+            </Button>
+            <button
+              type="button"
+              className="w-full h-12 text-base font-bold text-gray-500 underline"
+              onClick={handleSkipNotifications}
+              disabled={enablingPush}
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
