@@ -7,7 +7,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download, UserCheck, Link2, Unlink, Wrench, UserCircle } from "lucide-react";
+import { Plus, Search, Eye, EyeOff, ChevronDown, ChevronUp, Download, UserCheck, Link2, Unlink, Wrench, UserCircle, UserX } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -180,6 +180,11 @@ export default function CarsList() {
   const [linking, setLinking] = useState(false);
   const [unlinkCarId, setUnlinkCarId] = useState<number | null>(null);
   const [unlinking, setUnlinking] = useState(false);
+  const [unassignCarId, setUnassignCarId] = useState<number | null>(null);
+  const [unassignCarLabel, setUnassignCarLabel] = useState("");
+  const [unassignOpen, setUnassignOpen] = useState(false);
+  const [unassigning, setUnassigning] = useState(false);
+  const [unassignError, setUnassignError] = useState("");
 
   type MechanicOption = { id: number; username: string; displayName: string; role?: string | null };
   const [allMechanics, setAllMechanics] = useState<MechanicOption[]>([]);
@@ -355,6 +360,38 @@ export default function CarsList() {
     } finally {
       setUnlinking(false);
       setUnlinkCarId(null);
+    }
+  };
+
+  const openUnassignDialog = (e: React.MouseEvent, car: CarItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setUnassignCarId(car.id);
+    setUnassignCarLabel(`${car.year} ${car.make} ${car.model}`);
+    setUnassignError("");
+    setUnassignOpen(true);
+  };
+
+  const handleUnassignTech = async () => {
+    if (!unassignCarId) return;
+    setUnassigning(true);
+    setUnassignError("");
+    try {
+      const res = await fetch(`${BASE}/api/cars/${unassignCarId}/technician`, {
+        method: "DELETE",
+        headers: { "X-Mechanic-Id": String(currentMechanicId) },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setUnassignError(err.error || "Failed to unassign.");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["cars", currentMechanicId] });
+      setUnassignOpen(false);
+    } catch {
+      setUnassignError("Could not reach the server.");
+    } finally {
+      setUnassigning(false);
     }
   };
 
@@ -699,6 +736,24 @@ export default function CarsList() {
                         className="flex items-center gap-1 bg-white text-red-700 font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-red-400"
                       >
                         <Unlink className="w-3 h-3" /> {unlinking && unlinkCarId === car.id ? "…" : "Unlink"}
+                      </button>
+                    )}
+                    {isMechanic && car.isLinkedCar && car.mechanicId === currentMechanicId && (
+                      <button
+                        type="button"
+                        onClick={e => openUnassignDialog(e, car)}
+                        className="flex items-center gap-1 bg-white text-red-700 font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-red-400"
+                      >
+                        <UserX className="w-3 h-3" /> Unassign
+                      </button>
+                    )}
+                    {isDriver && car.isLinkedCar && car.mechanicId != null && (
+                      <button
+                        type="button"
+                        onClick={e => openUnassignDialog(e, car)}
+                        className="flex items-center gap-1 bg-white text-red-700 font-black px-2 py-1 rounded text-xs uppercase tracking-wide border-2 border-red-400"
+                      >
+                        <UserX className="w-3 h-3" /> Remove Tech
                       </button>
                     )}
                   </div>
@@ -1251,6 +1306,44 @@ export default function CarsList() {
               onClick={handleLink}
             >
               {linking ? "LINKING..." : "ADD TO MY LIST"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unassign Tech Confirmation Dialog */}
+      <Dialog open={unassignOpen} onOpenChange={v => { if (!unassigning) setUnassignOpen(v); }}>
+        <DialogContent className="bg-white text-black border-2 border-black">
+          <DialogHeader>
+            <DialogTitle className="font-black uppercase text-sm">
+              {isDriver ? "Remove Technician?" : "Unassign Yourself?"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm">
+            {isDriver
+              ? `Remove the assigned technician from ${unassignCarLabel}? They will no longer be able to manage this vehicle.`
+              : `Remove yourself as the assigned technician for ${unassignCarLabel}? The client will remain linked.`}
+          </p>
+          {unassignError && (
+            <p className="text-red-600 text-xs font-bold">{unassignError}</p>
+          )}
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-2 border-black font-black uppercase text-xs"
+              onClick={() => setUnassignOpen(false)}
+              disabled={unassigning}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="bg-red-600 text-white font-black uppercase text-xs"
+              onClick={handleUnassignTech}
+              disabled={unassigning}
+            >
+              {unassigning ? "Removing…" : isDriver ? "Remove Tech" : "Unassign Me"}
             </Button>
           </DialogFooter>
         </DialogContent>

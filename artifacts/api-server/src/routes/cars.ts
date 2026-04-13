@@ -422,6 +422,40 @@ router.delete("/cars/:carId/link", async (req, res) => {
   }
 });
 
+// Unassign the technician from a vehicle.
+// Allowed by: the currently-assigned mechanic (removes themselves) OR the linked driver/client (removes the tech).
+router.delete("/cars/:carId/technician", async (req, res) => {
+  try {
+    const carId = parseInt(req.params.carId, 10);
+    const mechanicId = getMechanicId(req);
+    if (!mechanicId) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+    const [car] = await db
+      .select({ mechanicId: carsTable.mechanicId, linkedMechanicId: carsTable.linkedMechanicId })
+      .from(carsTable)
+      .where(eq(carsTable.id, carId));
+    if (!car) {
+      res.status(404).json({ error: "Vehicle not found" });
+      return;
+    }
+    // Only the assigned tech or the linked driver/client may unassign
+    if (car.mechanicId !== mechanicId && car.linkedMechanicId !== mechanicId) {
+      res.status(403).json({ error: "Not authorized to unassign this vehicle." });
+      return;
+    }
+    const [updated] = await db
+      .update(carsTable)
+      .set({ mechanicId: null })
+      .where(eq(carsTable.id, carId))
+      .returning();
+    res.json(updated);
+  } catch {
+    res.status(500).json({ error: "Failed to unassign technician" });
+  }
+});
+
 router.put("/cars/:carId", async (req, res) => {
   try {
     const carId = parseInt(req.params.carId, 10);
