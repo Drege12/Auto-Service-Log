@@ -257,7 +257,7 @@ router.get("/cars", async (req, res) => {
         .from(carsTable)
         .leftJoin(mechanicsTable, eq(carsTable.mechanicId, mechanicsTable.id))
         .orderBy(carsTable.createdAt);
-      res.json(rows);
+      res.json(rows.map(r => ({ ...r, isLinkedCar: r.linkedMechanicId != null })));
       return;
     }
 
