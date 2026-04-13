@@ -372,10 +372,10 @@ export default function LoginPage({
                 </button>
                 <button
                   type="button"
-                  className="text-sm font-medium text-gray-400 underline block mx-auto"
+                  className="text-sm font-medium text-gray-400 underline flex items-center gap-1 mx-auto"
                   onClick={() => switchMode("forgot")}
                 >
-                  Forgot username or password?
+                  Forgot username or password? <ChevronRight className="w-4 h-4" />
                 </button>
               </>
             ) : (
