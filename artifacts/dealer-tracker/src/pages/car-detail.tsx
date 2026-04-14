@@ -15,7 +15,7 @@ import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
 import { NotesTab } from "@/components/notes-tab";
 import { ServiceIntervalsTab } from "@/components/service-intervals-tab";
-import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench, AlertTriangle, Search } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
 
@@ -238,6 +238,40 @@ export default function CarDetail() {
   const [abuseDone, setAbuseDone] = useState(false);
   const [abuseTargetId, setAbuseTargetId] = useState<number | null>(null);
 
+  // VIN decode (NHTSA public API)
+  type VinDecodeResult = {
+    year: string; make: string; model: string; trim: string;
+    bodyClass: string; cylinders: string; displacement: string;
+    driveType: string; transmission: string; fuel: string;
+    plantCountry: string;
+  };
+  const [vinDecode, setVinDecode] = useState<VinDecodeResult | null>(null);
+  const [vinDecoding, setVinDecoding] = useState(false);
+  const [vinDecodeError, setVinDecodeError] = useState("");
+  const [vinDecodeOpen, setVinDecodeOpen] = useState(false);
+
+  const decodeVin = async (vin: string) => {
+    const trimmed = vin.trim().toUpperCase();
+    if (!trimmed || trimmed.length < 17) { setVinDecodeError("A full 17-character VIN is required."); setVinDecodeOpen(true); return; }
+    setVinDecoding(true); setVinDecodeError(""); setVinDecodeOpen(true); setVinDecode(null);
+    try {
+      const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${trimmed}?format=json`);
+      const json = await res.json();
+      const r = json?.Results?.[0];
+      if (!r || r.ErrorCode !== "0") {
+        setVinDecodeError(r?.ErrorText || "Could not decode this VIN."); setVinDecoding(false); return;
+      }
+      setVinDecode({
+        year: r.ModelYear || "", make: r.Make || "", model: r.Model || "", trim: r.Trim || "",
+        bodyClass: r.BodyClass || "", cylinders: r.EngineCylinders || "",
+        displacement: r.DisplacementL ? `${Number(r.DisplacementL).toFixed(1)}L` : "",
+        driveType: r.DriveType || "", transmission: r.TransmissionStyle || "",
+        fuel: r.FuelTypePrimary || "", plantCountry: r.PlantCountry || "",
+      });
+    } catch { setVinDecodeError("Could not reach VIN decoder. Check your connection."); }
+    setVinDecoding(false);
+  };
+
   const viewerSession = (() => {
     try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}") as { mechanicId?: number; isAdmin?: boolean; role?: string }; }
     catch { return {}; }
@@ -354,9 +388,18 @@ export default function CarDetail() {
                   {car.owner}
                 </div>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Key className="w-6 h-6 text-muted-foreground" />
                 {car.vin || vinLabel(car.vehicleType).empty}
+                {car.vin && (
+                  <button
+                    type="button"
+                    onClick={() => decodeVin(car.vin!)}
+                    className="ml-1 flex items-center gap-1 text-xs font-black uppercase bg-indigo-100 border-2 border-indigo-500 text-indigo-800 px-2 py-0.5 rounded hover:bg-indigo-200 transition-colors"
+                  >
+                    <Search className="w-3 h-3" /> {vinDecoding ? "Decoding..." : "Decode"}
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Gauge className="w-6 h-6 text-muted-foreground" />
@@ -377,6 +420,36 @@ export default function CarDetail() {
           </div>
         </div>
       </div>
+
+      {/* VIN Decode result panel */}
+      {vinDecodeOpen && (
+        <div className="mb-6 rounded-2xl border-4 border-indigo-500 bg-indigo-50 px-6 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-black uppercase text-indigo-900 text-base flex items-center gap-2">
+              <Search className="w-4 h-4" /> VIN Decode Result
+            </span>
+            <button type="button" onClick={() => setVinDecodeOpen(false)} className="text-indigo-500 font-black text-lg leading-none">✕</button>
+          </div>
+          {vinDecoding && <p className="text-indigo-700 font-bold">Decoding VIN...</p>}
+          {vinDecodeError && <p className="text-red-700 font-bold">{vinDecodeError}</p>}
+          {vinDecode && (
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm font-mono">
+              {[
+                ["Year", vinDecode.year], ["Make", vinDecode.make], ["Model", vinDecode.model],
+                ["Trim", vinDecode.trim], ["Body", vinDecode.bodyClass], ["Fuel", vinDecode.fuel],
+                ["Engine", [vinDecode.cylinders && `${vinDecode.cylinders} cyl`, vinDecode.displacement].filter(Boolean).join(" ")],
+                ["Drive", vinDecode.driveType], ["Trans", vinDecode.transmission],
+                ["Built in", vinDecode.plantCountry],
+              ].filter(([, v]) => v).map(([label, value]) => (
+                <div key={label} className="flex gap-2">
+                  <span className="font-black uppercase text-indigo-700 min-w-[56px]">{label}:</span>
+                  <span className="text-indigo-900 uppercase">{value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {contact && contact.id !== viewerSession.mechanicId && (
         <div className={`mb-6 rounded-2xl border-4 px-6 py-4 flex flex-wrap items-center gap-4 ${
