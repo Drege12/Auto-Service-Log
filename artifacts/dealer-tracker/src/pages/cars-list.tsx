@@ -100,6 +100,7 @@ const emptyForm = {
   vehicleType: "car" as "car" | "motorcycle" | "boat" | "atv",
   vehicleSubtype: "sedan" as string,
   owner: "",
+  notes: "",
 };
 
 type FormState = typeof emptyForm;
@@ -165,7 +166,10 @@ export default function CarsList() {
   const [soldCollapsed, setSoldCollapsed] = useState(true);
 
   // VIN decode (NHTSA public API) for the add-car form
-  type AddVinDecode = { year: string; make: string; model: string; trim: string; bodyClass: string; fuel: string };
+  type AddVinDecode = {
+    year: string; make: string; model: string; trim: string; bodyClass: string; fuel: string;
+    cylinders: string; displacement: string; driveType: string; transmission: string; plantCountry: string;
+  };
   const [addVinDecode, setAddVinDecode] = useState<AddVinDecode | null>(null);
   const [addVinDecoding, setAddVinDecoding] = useState(false);
   const [addVinDecodeError, setAddVinDecodeError] = useState("");
@@ -182,6 +186,10 @@ export default function CarsList() {
       const decoded: AddVinDecode = {
         year: r.ModelYear || "", make: r.Make || "", model: r.Model || "",
         trim: r.Trim || "", bodyClass: r.BodyClass || "", fuel: r.FuelTypePrimary || "",
+        cylinders: r.EngineCylinders || "",
+        displacement: r.DisplacementL ? `${Number(r.DisplacementL).toFixed(1)}L` : "",
+        driveType: r.DriveType || "", transmission: r.TransmissionStyle || "",
+        plantCountry: r.PlantCountry || "",
       };
       setAddVinDecode(decoded);
     } catch { setAddVinDecodeError("Could not reach VIN decoder."); }
@@ -189,11 +197,23 @@ export default function CarsList() {
   };
 
   const applyVinDecode = (decoded: AddVinDecode) => {
+    const titleCase = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s;
+    const engineParts = [decoded.cylinders && `${decoded.cylinders} cyl`, decoded.displacement].filter(Boolean).join(" ");
+    const noteLines: string[] = ["[VIN Decode]"];
+    if (decoded.trim)        noteLines.push(`Trim: ${decoded.trim}`);
+    if (decoded.bodyClass)   noteLines.push(`Body: ${decoded.bodyClass}`);
+    if (engineParts)         noteLines.push(`Engine: ${engineParts}`);
+    if (decoded.driveType)   noteLines.push(`Drive: ${decoded.driveType}`);
+    if (decoded.transmission) noteLines.push(`Trans: ${decoded.transmission}`);
+    if (decoded.fuel)        noteLines.push(`Fuel: ${decoded.fuel}`);
+    if (decoded.plantCountry) noteLines.push(`Built in: ${decoded.plantCountry}`);
+    const vinNotes = noteLines.join("\n");
     setForm(f => ({
       ...f,
       year: decoded.year || f.year,
-      make: decoded.make ? decoded.make.charAt(0).toUpperCase() + decoded.make.slice(1).toLowerCase() : f.make,
-      model: decoded.model ? decoded.model.charAt(0).toUpperCase() + decoded.model.slice(1).toLowerCase() : f.model,
+      make: decoded.make ? titleCase(decoded.make) : f.make,
+      model: decoded.model ? titleCase(decoded.model) : f.model,
+      notes: f.notes ? `${f.notes}\n\n${vinNotes}` : vinNotes,
     }));
     setAddVinDecode(null);
   };
@@ -542,6 +562,7 @@ export default function CarsList() {
         vehicleType: form.vehicleType as CreateCarVehicleType,
         vehicleSubtype: form.vehicleSubtype as CreateCarVehicleSubtype,
         owner: form.carType === "personal" && form.owner.trim() ? form.owner.trim() : undefined,
+        notes: form.notes.trim() || undefined,
       }
     }, {
       onSuccess: () => {
@@ -948,19 +969,23 @@ export default function CarsList() {
                 <div className="bg-indigo-50 border-2 border-indigo-400 rounded-xl p-3 mt-2 space-y-2">
                   <p className="text-xs font-black uppercase text-indigo-800">NHTSA Decode Result</p>
                   <div className="text-sm font-mono text-indigo-900 space-y-0.5">
-                    <div><span className="font-black">Year:</span> {addVinDecode.year}</div>
-                    <div><span className="font-black">Make:</span> {addVinDecode.make}</div>
-                    <div><span className="font-black">Model:</span> {addVinDecode.model}</div>
-                    {addVinDecode.trim && <div><span className="font-black">Trim:</span> {addVinDecode.trim}</div>}
-                    {addVinDecode.bodyClass && <div><span className="font-black">Body:</span> {addVinDecode.bodyClass}</div>}
-                    {addVinDecode.fuel && <div><span className="font-black">Fuel:</span> {addVinDecode.fuel}</div>}
+                    {[
+                      ["Year", addVinDecode.year], ["Make", addVinDecode.make], ["Model", addVinDecode.model],
+                      ["Trim", addVinDecode.trim], ["Body", addVinDecode.bodyClass],
+                      ["Engine", [addVinDecode.cylinders && `${addVinDecode.cylinders} cyl`, addVinDecode.displacement].filter(Boolean).join(" ")],
+                      ["Drive", addVinDecode.driveType], ["Trans", addVinDecode.transmission],
+                      ["Fuel", addVinDecode.fuel], ["Built in", addVinDecode.plantCountry],
+                    ].filter(([, v]) => v).map(([label, value]) => (
+                      <div key={label}><span className="font-black">{label}:</span> {value}</div>
+                    ))}
                   </div>
+                  <p className="text-xs text-indigo-600 font-bold">Trim, engine, drive, transmission, fuel, and origin will be saved to vehicle notes.</p>
                   <button
                     type="button"
                     onClick={() => applyVinDecode(addVinDecode)}
                     className="w-full py-2 rounded-xl bg-indigo-600 text-white font-black text-sm uppercase hover:bg-indigo-700 transition-colors"
                   >
-                    Fill in Year / Make / Model
+                    Fill in Year / Make / Model + Save Details to Notes
                   </button>
                 </div>
               )}
