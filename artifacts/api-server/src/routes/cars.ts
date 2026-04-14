@@ -387,7 +387,10 @@ router.post("/cars/:carId/link", async (req, res) => {
       res.status(401).json({ error: "Not authenticated" });
       return;
     }
-    const [car] = await db.select({ mechanicId: carsTable.mechanicId }).from(carsTable).where(eq(carsTable.id, carId));
+    const [car] = await db
+      .select({ mechanicId: carsTable.mechanicId, linkedMechanicId: carsTable.linkedMechanicId })
+      .from(carsTable)
+      .where(eq(carsTable.id, carId));
     if (!car) {
       res.status(404).json({ error: "Vehicle not found" });
       return;
@@ -396,7 +399,18 @@ router.post("/cars/:carId/link", async (req, res) => {
       res.status(400).json({ error: "You already own this vehicle" });
       return;
     }
-    const [updated] = await db.update(carsTable).set({ linkedMechanicId: mechanicId }).where(eq(carsTable.id, carId)).returning();
+    if (car.linkedMechanicId === mechanicId) {
+      res.status(400).json({ error: "You are already linked to this vehicle" });
+      return;
+    }
+
+    // Driver-created car (no tech yet): assign the linking mechanic as the tech.
+    // Mechanic-created car: store the linker in linkedMechanicId (follower/client slot).
+    const updateValues = car.mechanicId === null
+      ? { mechanicId }
+      : { linkedMechanicId: mechanicId };
+
+    const [updated] = await db.update(carsTable).set(updateValues).where(eq(carsTable.id, carId)).returning();
     res.json(updated);
     void notifyLinkedParty(carId, mechanicId, "linked", "A mechanic linked your vehicle to their account");
   } catch (err) {

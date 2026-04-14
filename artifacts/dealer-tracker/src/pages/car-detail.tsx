@@ -228,6 +228,7 @@ export default function CarDetail() {
   const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
   type ContactInfo = { id: number; displayName: string; phone: string | null; email: string | null; contactPublic: boolean; visible: boolean };
   const [contact, setContact] = useState<ContactInfo | null>(null);
+  const [clientContact, setClientContact] = useState<ContactInfo | null>(null);
 
   // Abuse report dialog
   const [abuseOpen, setAbuseOpen] = useState(false);
@@ -235,6 +236,7 @@ export default function CarDetail() {
   const [abuseSubmitting, setAbuseSubmitting] = useState(false);
   const [abuseError, setAbuseError] = useState("");
   const [abuseDone, setAbuseDone] = useState(false);
+  const [abuseTargetId, setAbuseTargetId] = useState<number | null>(null);
 
   const viewerSession = (() => {
     try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}") as { mechanicId?: number; isAdmin?: boolean; role?: string }; }
@@ -254,7 +256,33 @@ export default function CarDetail() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [car?.mechanicId]);
 
-  const handleReportAbuse = async (reportedId: number) => {
+  // Client contact info — shown to the assigned technician when a driver/client is linked
+  const linkedMechanicId = (car as unknown as { linkedMechanicId?: number | null })?.linkedMechanicId;
+  useEffect(() => {
+    if (!linkedMechanicId) return;
+    // Only mechanics need this; drivers already see their own info
+    if (viewerSession.role === "driver") return;
+    // Don't fetch if the viewer IS the linked client
+    if (linkedMechanicId === viewerSession.mechanicId) return;
+    fetch(`${BASE}/api/mechanics/${linkedMechanicId}/contact`, {
+      headers: { "X-Mechanic-Id": String(viewerSession.mechanicId ?? "") },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: ContactInfo | null) => setClientContact(data))
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkedMechanicId]);
+
+  const openAbuseDialog = (reportedId: number) => {
+    setAbuseTargetId(reportedId);
+    setAbuseReason("");
+    setAbuseError("");
+    setAbuseDone(false);
+    setAbuseOpen(true);
+  };
+
+  const handleReportAbuse = async () => {
+    if (!abuseTargetId) return;
     setAbuseSubmitting(true);
     setAbuseError("");
     try {
@@ -264,7 +292,7 @@ export default function CarDetail() {
           "Content-Type": "application/json",
           "X-Mechanic-Id": String(viewerSession.mechanicId ?? ""),
         },
-        body: JSON.stringify({ reportedId, carId, reason: abuseReason }),
+        body: JSON.stringify({ reportedId: abuseTargetId, carId, reason: abuseReason }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
@@ -376,7 +404,51 @@ export default function CarDetail() {
           )}
           <button
             type="button"
-            onClick={() => { setAbuseReason(""); setAbuseError(""); setAbuseDone(false); setAbuseOpen(true); }}
+            onClick={() => contact && openAbuseDialog(contact.id)}
+            className="ml-auto flex items-center gap-1 text-red-700 border-2 border-red-400 bg-white font-black px-3 py-1 rounded text-xs uppercase tracking-wide hover:bg-red-50"
+          >
+            <AlertTriangle className="w-3 h-3" /> Report Abuse
+          </button>
+        </div>
+      )}
+
+      {/* Client contact banner — shown to the assigned mechanic when a driver/client is linked */}
+      {clientContact && (
+        <div className={`mb-6 rounded-2xl border-4 px-6 py-4 flex flex-wrap items-center gap-4 ${
+          clientContact.visible
+            ? "bg-teal-50 border-teal-700"
+            : "bg-gray-100 border-gray-400"
+        }`}>
+          <span className={`font-black uppercase text-xs px-2 py-1 rounded ${
+            clientContact.visible ? "bg-teal-700 text-white" : "bg-gray-400 text-white"
+          }`}>Client</span>
+          <div className="flex items-center gap-2">
+            <User className={`w-5 h-5 ${clientContact.visible ? "text-teal-800" : "text-gray-500"}`} />
+            <span className={`font-black uppercase text-lg ${clientContact.visible ? "text-teal-900" : "text-gray-600"}`}>
+              {clientContact.displayName}
+            </span>
+          </div>
+          {clientContact.visible && clientContact.phone && (
+            <a href={`tel:${clientContact.phone}`} className="flex items-center gap-2 font-bold text-teal-900 underline text-lg">
+              <Phone className="w-5 h-5" /> {clientContact.phone}
+            </a>
+          )}
+          {clientContact.visible && clientContact.email && (
+            <a href={`mailto:${clientContact.email}`} className="flex items-center gap-2 font-bold text-teal-900 underline text-lg">
+              <Mail className="w-5 h-5" /> {clientContact.email}
+            </a>
+          )}
+          {clientContact.visible && !clientContact.phone && !clientContact.email && (
+            <span className="font-bold text-teal-700">No contact info on file.</span>
+          )}
+          {!clientContact.visible && (
+            <span className="flex items-center gap-2 font-bold text-gray-500">
+              <EyeOff className="w-4 h-4" /> Contact info is private
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => openAbuseDialog(clientContact.id)}
             className="ml-auto flex items-center gap-1 text-red-700 border-2 border-red-400 bg-white font-black px-3 py-1 rounded text-xs uppercase tracking-wide hover:bg-red-50"
           >
             <AlertTriangle className="w-3 h-3" /> Report Abuse
@@ -706,7 +778,7 @@ export default function CarDetail() {
                 <Button
                   type="button"
                   className="bg-red-600 text-white font-black uppercase text-xs"
-                  onClick={() => contact && handleReportAbuse(contact.id)}
+                  onClick={handleReportAbuse}
                   disabled={abuseSubmitting}
                 >
                   {abuseSubmitting ? "Sending…" : "Submit Report"}
