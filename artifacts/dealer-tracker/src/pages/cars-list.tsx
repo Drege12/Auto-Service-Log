@@ -164,6 +164,40 @@ export default function CarsList() {
   const [showSold, setShowSold] = useState(false);
   const [soldCollapsed, setSoldCollapsed] = useState(true);
 
+  // VIN decode (NHTSA public API) for the add-car form
+  type AddVinDecode = { year: string; make: string; model: string; trim: string; bodyClass: string; fuel: string };
+  const [addVinDecode, setAddVinDecode] = useState<AddVinDecode | null>(null);
+  const [addVinDecoding, setAddVinDecoding] = useState(false);
+  const [addVinDecodeError, setAddVinDecodeError] = useState("");
+
+  const decodeAddVin = async () => {
+    const trimmed = form.vin.trim().toUpperCase();
+    if (trimmed.length < 17) { setAddVinDecodeError("Enter a full 17-character VIN first."); return; }
+    setAddVinDecoding(true); setAddVinDecodeError(""); setAddVinDecode(null);
+    try {
+      const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${trimmed}?format=json`);
+      const json = await res.json();
+      const r = json?.Results?.[0];
+      if (!r || r.ErrorCode !== "0") { setAddVinDecodeError(r?.ErrorText || "Could not decode this VIN."); setAddVinDecoding(false); return; }
+      const decoded: AddVinDecode = {
+        year: r.ModelYear || "", make: r.Make || "", model: r.Model || "",
+        trim: r.Trim || "", bodyClass: r.BodyClass || "", fuel: r.FuelTypePrimary || "",
+      };
+      setAddVinDecode(decoded);
+    } catch { setAddVinDecodeError("Could not reach VIN decoder."); }
+    setAddVinDecoding(false);
+  };
+
+  const applyVinDecode = (decoded: AddVinDecode) => {
+    setForm(f => ({
+      ...f,
+      year: decoded.year || f.year,
+      make: decoded.make ? decoded.make.charAt(0).toUpperCase() + decoded.make.slice(1).toLowerCase() : f.make,
+      model: decoded.model ? decoded.model.charAt(0).toUpperCase() + decoded.model.slice(1).toLowerCase() : f.model,
+    }));
+    setAddVinDecode(null);
+  };
+
   const [vinChecking, setVinChecking] = useState(false);
   const [vinMatch, setVinMatch] = useState<VinMatch | null>(null);
   const [vinImportOpen, setVinImportOpen] = useState(false);
@@ -869,7 +903,7 @@ export default function CarsList() {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={v => { setDialogOpen(v); if (!v) { setAddVinDecode(null); setAddVinDecodeError(""); } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white text-black">
           <DialogHeader>
             <DialogTitle className="text-3xl font-black uppercase">Add Vehicle</DialogTitle>
@@ -934,14 +968,46 @@ export default function CarsList() {
 
             <div className="space-y-1">
               <label className="text-base font-black uppercase block">{vinLabel(form.vehicleType).label}</label>
-              <Input
-                value={form.vin}
-                onChange={e => setField("vin", e.target.value)}
-                onBlur={e => checkVin(e.target.value)}
-                placeholder={vinLabel(form.vehicleType).placeholder}
-                className="bg-white text-black"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={form.vin}
+                  onChange={e => { setField("vin", e.target.value); setAddVinDecode(null); setAddVinDecodeError(""); }}
+                  onBlur={e => checkVin(e.target.value)}
+                  placeholder={vinLabel(form.vehicleType).placeholder}
+                  className="bg-white text-black flex-1"
+                />
+                {form.vehicleType === "car" && form.vin.trim().length >= 17 && (
+                  <button
+                    type="button"
+                    onClick={decodeAddVin}
+                    className="px-3 py-2 rounded-xl border-2 border-indigo-500 bg-indigo-100 text-indigo-800 font-black text-xs uppercase whitespace-nowrap hover:bg-indigo-200 transition-colors"
+                  >
+                    {addVinDecoding ? "..." : "Decode VIN"}
+                  </button>
+                )}
+              </div>
               {vinChecking && <p className="text-sm font-bold text-gray-500">Checking VIN across accounts...</p>}
+              {addVinDecodeError && <p className="text-sm font-bold text-red-600">{addVinDecodeError}</p>}
+              {addVinDecode && (
+                <div className="bg-indigo-50 border-2 border-indigo-400 rounded-xl p-3 mt-2 space-y-2">
+                  <p className="text-xs font-black uppercase text-indigo-800">NHTSA Decode Result</p>
+                  <div className="text-sm font-mono text-indigo-900 space-y-0.5">
+                    <div><span className="font-black">Year:</span> {addVinDecode.year}</div>
+                    <div><span className="font-black">Make:</span> {addVinDecode.make}</div>
+                    <div><span className="font-black">Model:</span> {addVinDecode.model}</div>
+                    {addVinDecode.trim && <div><span className="font-black">Trim:</span> {addVinDecode.trim}</div>}
+                    {addVinDecode.bodyClass && <div><span className="font-black">Body:</span> {addVinDecode.bodyClass}</div>}
+                    {addVinDecode.fuel && <div><span className="font-black">Fuel:</span> {addVinDecode.fuel}</div>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => applyVinDecode(addVinDecode)}
+                    className="w-full py-2 rounded-xl bg-indigo-600 text-white font-black text-sm uppercase hover:bg-indigo-700 transition-colors"
+                  >
+                    Fill in Year / Make / Model
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
