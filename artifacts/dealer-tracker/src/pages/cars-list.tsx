@@ -922,50 +922,6 @@ export default function CarsList() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">Year *</label>
-                <Input
-                  value={form.year}
-                  onChange={e => setField("year", e.target.value)}
-                  inputMode="numeric"
-                  className="bg-white text-black"
-                />
-                {errors.year && <p className="text-destructive font-bold text-sm">{errors.year}</p>}
-              </div>
-              <div className="space-y-1">
-                <label className="text-base font-black uppercase block">Color</label>
-                <Input
-                  value={form.color}
-                  onChange={e => setField("color", e.target.value)}
-                  placeholder="e.g. Red"
-                  className="bg-white text-black"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-base font-black uppercase block">Make *</label>
-              <Input
-                value={form.make}
-                onChange={e => setField("make", e.target.value)}
-                placeholder="e.g. Toyota"
-                className="bg-white text-black"
-              />
-              {errors.make && <p className="text-destructive font-bold text-sm">{errors.make}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-base font-black uppercase block">Model *</label>
-              <Input
-                value={form.model}
-                onChange={e => setField("model", e.target.value)}
-                placeholder="e.g. Camry"
-                className="bg-white text-black"
-              />
-              {errors.model && <p className="text-destructive font-bold text-sm">{errors.model}</p>}
-            </div>
-
             <div className="space-y-1">
               <label className="text-base font-black uppercase block">{vinLabel(form.vehicleType).label}</label>
               <div className="flex gap-2">
@@ -1008,6 +964,50 @@ export default function CarsList() {
                   </button>
                 </div>
               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Year *</label>
+                <Input
+                  value={form.year}
+                  onChange={e => setField("year", e.target.value)}
+                  inputMode="numeric"
+                  className="bg-white text-black"
+                />
+                {errors.year && <p className="text-destructive font-bold text-sm">{errors.year}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-base font-black uppercase block">Color</label>
+                <Input
+                  value={form.color}
+                  onChange={e => setField("color", e.target.value)}
+                  placeholder="e.g. Red"
+                  className="bg-white text-black"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Make *</label>
+              <Input
+                value={form.make}
+                onChange={e => setField("make", e.target.value)}
+                placeholder="e.g. Toyota"
+                className="bg-white text-black"
+              />
+              {errors.make && <p className="text-destructive font-bold text-sm">{errors.make}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-base font-black uppercase block">Model *</label>
+              <Input
+                value={form.model}
+                onChange={e => setField("model", e.target.value)}
+                placeholder="e.g. Camry"
+                className="bg-white text-black"
+              />
+              {errors.model && <p className="text-destructive font-bold text-sm">{errors.model}</p>}
             </div>
 
             <div className="space-y-1">
