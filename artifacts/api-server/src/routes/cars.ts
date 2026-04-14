@@ -111,7 +111,8 @@ router.get("/vin-lookup", async (req, res) => {
         mechanicId
           ? and(
               ...baseConditions,
-              ne(carsTable.mechanicId, mechanicId),
+              // Allow NULL mechanic (driver-owned, no tech yet) or any other mechanic — just not the searcher themselves
+              or(isNull(carsTable.mechanicId), ne(carsTable.mechanicId, mechanicId)),
               or(isNull(carsTable.linkedMechanicId), ne(carsTable.linkedMechanicId, mechanicId))
             )
           : and(...baseConditions)
