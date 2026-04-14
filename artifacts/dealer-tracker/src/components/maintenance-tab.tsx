@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, Calendar, User, DollarSign, Clock, Printer, Phone, Mail } from "lucide-react";
+import { Plus, Edit2, Trash2, Calendar, User, DollarSign, Clock, Printer, Phone, Mail, AlertTriangle } from "lucide-react";
 import { printSection } from "@/lib/print-utils";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -60,6 +60,12 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
   const [contactInfo, setContactInfo] = useState<MechanicContact | null>(null);
   const [contactLoading, setContactLoading] = useState(false);
 
+  const [abuseOpen, setAbuseOpen] = useState(false);
+  const [abuseReason, setAbuseReason] = useState("");
+  const [abuseSubmitting, setAbuseSubmitting] = useState(false);
+  const [abuseError, setAbuseError] = useState("");
+  const [abuseDone, setAbuseDone] = useState(false);
+
   useEffect(() => {
     if (!session) return;
     fetch(`${BASE}/api/admin/mechanics`, { headers: { "X-Mechanic-Id": String(session.mechanicId) } })
@@ -105,6 +111,32 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
 
   const techHasProfile = (name: string) =>
     mechanics.some(m => m.displayName.toLowerCase() === name.toLowerCase());
+
+  const handleReportAbuse = async () => {
+    if (!contactInfo || !session) return;
+    setAbuseSubmitting(true);
+    setAbuseError("");
+    try {
+      const res = await fetch(`${BASE}/api/abuse-reports`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Mechanic-Id": String(session.mechanicId),
+        },
+        body: JSON.stringify({ reportedId: contactInfo.id, carId, reason: abuseReason }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setAbuseError(err.error || "Could not submit report.");
+        return;
+      }
+      setAbuseDone(true);
+    } catch {
+      setAbuseError("Could not reach the server.");
+    } finally {
+      setAbuseSubmitting(false);
+    }
+  };
 
   const openEditDialog = (entry: MaintenanceEntry) => {
     setEditingEntry(entry);
@@ -338,9 +370,67 @@ export function MaintenanceTab({ carId, carLabel }: { carId: number; carLabel: s
               )}
             </div>
           )}
-          <DialogFooter className="mt-4">
+          <DialogFooter className="mt-4 flex flex-wrap gap-2 justify-between">
+            <button
+              type="button"
+              onClick={() => { setAbuseReason(""); setAbuseError(""); setAbuseDone(false); setAbuseOpen(true); }}
+              className="flex items-center gap-1 text-red-700 border-2 border-red-400 bg-white font-black px-3 py-1 rounded text-xs uppercase tracking-wide hover:bg-red-50"
+            >
+              <AlertTriangle className="w-3 h-3" /> Report Abuse
+            </button>
             <Button type="button" variant="outline" onClick={() => setContactDialogOpen(false)}>CLOSE</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Abuse Dialog */}
+      <Dialog open={abuseOpen} onOpenChange={v => { if (!abuseSubmitting) setAbuseOpen(v); }}>
+        <DialogContent className="bg-white text-black border-2 border-black">
+          <DialogHeader>
+            <DialogTitle className="font-black uppercase text-sm flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-600" /> Report Abuse
+            </DialogTitle>
+          </DialogHeader>
+          {abuseDone ? (
+            <div className="py-4 text-center space-y-2">
+              <p className="font-black text-green-700 text-lg uppercase">Report Submitted</p>
+              <p className="text-sm text-gray-600">An administrator has been notified and will review the situation.</p>
+              <Button type="button" className="mt-4 font-black uppercase" onClick={() => { setAbuseOpen(false); setContactDialogOpen(false); }}>Close</Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-700">
+                Your report will be sent directly to an administrator. Optionally describe what happened:
+              </p>
+              <Textarea
+                placeholder="Describe the issue (optional)"
+                value={abuseReason}
+                onChange={e => setAbuseReason(e.target.value)}
+                className="border-2 border-black font-mono text-sm"
+                rows={4}
+              />
+              {abuseError && <p className="text-red-600 text-xs font-bold">{abuseError}</p>}
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-2 border-black font-black uppercase text-xs"
+                  onClick={() => setAbuseOpen(false)}
+                  disabled={abuseSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-red-600 text-white font-black uppercase text-xs"
+                  onClick={handleReportAbuse}
+                  disabled={abuseSubmitting}
+                >
+                  {abuseSubmitting ? "Sending…" : "Submit Report"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -202,3 +202,16 @@ export const vehicleNotificationsTable = pgTable("vehicle_notifications", {
 });
 
 export type VehicleNotification = typeof vehicleNotificationsTable.$inferSelect;
+
+export const abuseReportsTable = pgTable("abuse_reports", {
+  id: serial("id").primaryKey(),
+  reporterId: integer("reporter_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
+  reportedId: integer("reported_id").notNull().references(() => mechanicsTable.id, { onDelete: "cascade" }),
+  carId: integer("car_id").references(() => carsTable.id, { onDelete: "set null" }),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedById: integer("resolved_by_id").references(() => mechanicsTable.id, { onDelete: "set null" }),
+});
+
+export type AbuseReport = typeof abuseReportsTable.$inferSelect;

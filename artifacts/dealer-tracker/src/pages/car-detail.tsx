@@ -6,6 +6,7 @@ import { Layout } from "@/components/layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { InspectionsTab } from "@/components/inspections-tab";
 import { MaintenanceTab } from "@/components/maintenance-tab";
@@ -14,7 +15,7 @@ import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
 import { NotesTab } from "@/components/notes-tab";
 import { ServiceIntervalsTab } from "@/components/service-intervals-tab";
-import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench, AlertTriangle } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
 
@@ -228,6 +229,13 @@ export default function CarDetail() {
   type ContactInfo = { id: number; displayName: string; phone: string | null; email: string | null; contactPublic: boolean; visible: boolean };
   const [contact, setContact] = useState<ContactInfo | null>(null);
 
+  // Abuse report dialog
+  const [abuseOpen, setAbuseOpen] = useState(false);
+  const [abuseReason, setAbuseReason] = useState("");
+  const [abuseSubmitting, setAbuseSubmitting] = useState(false);
+  const [abuseError, setAbuseError] = useState("");
+  const [abuseDone, setAbuseDone] = useState(false);
+
   const viewerSession = (() => {
     try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}") as { mechanicId?: number; isAdmin?: boolean; role?: string }; }
     catch { return {}; }
@@ -245,6 +253,31 @@ export default function CarDetail() {
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [car?.mechanicId]);
+
+  const handleReportAbuse = async (reportedId: number) => {
+    setAbuseSubmitting(true);
+    setAbuseError("");
+    try {
+      const res = await fetch(`${BASE}/api/abuse-reports`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Mechanic-Id": String(viewerSession.mechanicId ?? ""),
+        },
+        body: JSON.stringify({ reportedId, carId, reason: abuseReason }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setAbuseError(err.error || "Could not submit report.");
+        return;
+      }
+      setAbuseDone(true);
+    } catch {
+      setAbuseError("Could not reach the server.");
+    } finally {
+      setAbuseSubmitting(false);
+    }
+  };
 
   if (isLoading) return <Layout><div className="text-center py-20 text-3xl font-black">Loading vehicle data...</div></Layout>;
   if (isError || !car) return <Layout><div className="text-center py-20 text-3xl font-black text-destructive">Vehicle not found.</div></Layout>;
@@ -341,6 +374,13 @@ export default function CarDetail() {
               <EyeOff className="w-4 h-4" /> Contact info is private
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => { setAbuseReason(""); setAbuseError(""); setAbuseDone(false); setAbuseOpen(true); }}
+            className="ml-auto flex items-center gap-1 text-red-700 border-2 border-red-400 bg-white font-black px-3 py-1 rounded text-xs uppercase tracking-wide hover:bg-red-50"
+          >
+            <AlertTriangle className="w-3 h-3" /> Report Abuse
+          </button>
         </div>
       )}
 
@@ -623,6 +663,57 @@ export default function CarDetail() {
               </Button>
             </DialogFooter>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Abuse Dialog */}
+      <Dialog open={abuseOpen} onOpenChange={v => { if (!abuseSubmitting) setAbuseOpen(v); }}>
+        <DialogContent className="bg-white text-black border-2 border-black">
+          <DialogHeader>
+            <DialogTitle className="font-black uppercase text-sm flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-600" /> Report Abuse
+            </DialogTitle>
+          </DialogHeader>
+          {abuseDone ? (
+            <div className="py-4 text-center space-y-2">
+              <p className="font-black text-green-700 text-lg uppercase">Report Submitted</p>
+              <p className="text-sm text-gray-600">An administrator has been notified and will review the situation.</p>
+              <Button type="button" className="mt-4 font-black uppercase" onClick={() => setAbuseOpen(false)}>Close</Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-700">
+                Your report will be sent directly to an administrator. Optionally describe what happened:
+              </p>
+              <Textarea
+                placeholder="Describe the issue (optional)"
+                value={abuseReason}
+                onChange={e => setAbuseReason(e.target.value)}
+                className="border-2 border-black font-mono text-sm"
+                rows={4}
+              />
+              {abuseError && <p className="text-red-600 text-xs font-bold">{abuseError}</p>}
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-2 border-black font-black uppercase text-xs"
+                  onClick={() => setAbuseOpen(false)}
+                  disabled={abuseSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-red-600 text-white font-black uppercase text-xs"
+                  onClick={() => contact && handleReportAbuse(contact.id)}
+                  disabled={abuseSubmitting}
+                >
+                  {abuseSubmitting ? "Sending…" : "Submit Report"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </Layout>
