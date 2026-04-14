@@ -114,6 +114,59 @@ export default function CarDetail() {
   const [editForm, setEditForm] = useState(emptyEditForm);
   const [editError, setEditError] = useState("");
 
+  // VIN decode state for the edit form
+  type EditVinDecode = {
+    year: string; make: string; model: string; trim: string; bodyClass: string; fuel: string;
+    cylinders: string; displacement: string; driveType: string; transmission: string; plantCountry: string;
+  };
+  const [editVinDecode, setEditVinDecode] = useState<EditVinDecode | null>(null);
+  const [editVinDecoding, setEditVinDecoding] = useState(false);
+  const [editVinDecodeError, setEditVinDecodeError] = useState("");
+  // The formatted notes string to append on save (set when user clicks Apply)
+  const [pendingVinNotes, setPendingVinNotes] = useState<string | null>(null);
+
+  const decodeEditVin = async () => {
+    const trimmed = editForm.vin.trim().toUpperCase();
+    if (trimmed.length < 17) { setEditVinDecodeError("A full 17-character VIN is required."); return; }
+    setEditVinDecoding(true); setEditVinDecodeError(""); setEditVinDecode(null);
+    try {
+      const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${trimmed}?format=json`);
+      const json = await res.json();
+      const r = json?.Results?.[0];
+      if (!r || r.ErrorCode !== "0") { setEditVinDecodeError(r?.ErrorText || "Could not decode this VIN."); setEditVinDecoding(false); return; }
+      setEditVinDecode({
+        year: r.ModelYear || "", make: r.Make || "", model: r.Model || "",
+        trim: r.Trim || "", bodyClass: r.BodyClass || "", fuel: r.FuelTypePrimary || "",
+        cylinders: r.EngineCylinders || "",
+        displacement: r.DisplacementL ? `${Number(r.DisplacementL).toFixed(1)}L` : "",
+        driveType: r.DriveType || "", transmission: r.TransmissionStyle || "",
+        plantCountry: r.PlantCountry || "",
+      });
+    } catch { setEditVinDecodeError("Could not reach VIN decoder. Check your connection."); }
+    setEditVinDecoding(false);
+  };
+
+  const applyEditVinDecode = (decoded: EditVinDecode) => {
+    const titleCase = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s;
+    const engineParts = [decoded.cylinders && `${decoded.cylinders} cyl`, decoded.displacement].filter(Boolean).join(" ");
+    const noteLines: string[] = ["[VIN Decode]"];
+    if (decoded.trim)         noteLines.push(`Trim: ${decoded.trim}`);
+    if (decoded.bodyClass)    noteLines.push(`Body: ${decoded.bodyClass}`);
+    if (engineParts)          noteLines.push(`Engine: ${engineParts}`);
+    if (decoded.driveType)    noteLines.push(`Drive: ${decoded.driveType}`);
+    if (decoded.transmission) noteLines.push(`Trans: ${decoded.transmission}`);
+    if (decoded.fuel)         noteLines.push(`Fuel: ${decoded.fuel}`);
+    if (decoded.plantCountry) noteLines.push(`Built in: ${decoded.plantCountry}`);
+    setPendingVinNotes(noteLines.join("\n"));
+    setEditForm(f => ({
+      ...f,
+      year: decoded.year || f.year,
+      make: decoded.make ? titleCase(decoded.make) : f.make,
+      model: decoded.model ? titleCase(decoded.model) : f.model,
+    }));
+    setEditVinDecode(null);
+  };
+
   const openEditDialog = () => {
     if (car) {
       const vt = (car.vehicleType as "car" | "motorcycle" | "boat" | "atv") ?? "car";
@@ -132,6 +185,9 @@ export default function CarDetail() {
         owner: car.owner || "",
       });
       setEditError("");
+      setEditVinDecode(null);
+      setEditVinDecodeError("");
+      setPendingVinNotes(null);
       setDialogOpen(true);
     }
   };
@@ -160,7 +216,20 @@ export default function CarDetail() {
       owner: editForm.carType === "personal" && editForm.owner.trim() ? editForm.owner.trim() : undefined,
     };
     updateCar({ carId, data }, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        // If the user decoded a VIN and clicked Apply, append those details to the vehicle notes
+        if (pendingVinNotes) {
+          const existingNotes = (car as unknown as { notes?: string | null })?.notes?.trim() || "";
+          const merged = existingNotes ? `${existingNotes}\n\n${pendingVinNotes}` : pendingVinNotes;
+          const session = (() => { try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}"); } catch { return {}; } })();
+          await fetch(`${BASE}/api/cars/${carId}/notes`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", "X-Mechanic-Id": String(session.mechanicId ?? "") },
+            body: JSON.stringify({ notes: merged }),
+          }).catch(() => {});
+          setPendingVinNotes(null);
+          queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}/notes`] });
+        }
         queryClient.invalidateQueries({ queryKey: [`/api/cars/${carId}`] });
         queryClient.invalidateQueries({ queryKey: [`/api/cars`] });
         setDialogOpen(false);
@@ -629,12 +698,54 @@ export default function CarDetail() {
               )}
               <div className="space-y-2">
                 <label className="text-lg font-bold uppercase">{vinLabel(editForm.vehicleType).label}</label>
-                <Input
-                  className="font-mono bg-white text-black"
-                  value={editForm.vin}
-                  placeholder={vinLabel(editForm.vehicleType).placeholder}
-                  onChange={e => setEditForm(f => ({ ...f, vin: e.target.value }))}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    className="font-mono bg-white text-black flex-1"
+                    value={editForm.vin}
+                    placeholder={vinLabel(editForm.vehicleType).placeholder}
+                    onChange={e => { setEditForm(f => ({ ...f, vin: e.target.value })); setEditVinDecode(null); setEditVinDecodeError(""); setPendingVinNotes(null); }}
+                  />
+                  {editForm.vehicleType === "car" && editForm.vin.trim().length >= 17 && (
+                    <button
+                      type="button"
+                      onClick={decodeEditVin}
+                      className="px-3 py-2 rounded-xl border-2 border-indigo-500 bg-indigo-100 text-indigo-800 font-black text-xs uppercase whitespace-nowrap hover:bg-indigo-200 transition-colors"
+                    >
+                      {editVinDecoding ? "..." : "Decode VIN"}
+                    </button>
+                  )}
+                </div>
+                {editVinDecodeError && <p className="text-sm font-bold text-red-600">{editVinDecodeError}</p>}
+                {pendingVinNotes && !editVinDecode && (
+                  <p className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-300 rounded-lg px-3 py-2">
+                    VIN details will be added to Notes on save.
+                    <button type="button" onClick={() => setPendingVinNotes(null)} className="ml-2 text-indigo-400 hover:text-indigo-700 font-black">✕ Cancel</button>
+                  </p>
+                )}
+                {editVinDecode && (
+                  <div className="bg-indigo-50 border-2 border-indigo-400 rounded-xl p-3 mt-1 space-y-2">
+                    <p className="text-xs font-black uppercase text-indigo-800">NHTSA Decode Result</p>
+                    <div className="text-sm font-mono text-indigo-900 space-y-0.5">
+                      {[
+                        ["Year", editVinDecode.year], ["Make", editVinDecode.make], ["Model", editVinDecode.model],
+                        ["Trim", editVinDecode.trim], ["Body", editVinDecode.bodyClass],
+                        ["Engine", [editVinDecode.cylinders && `${editVinDecode.cylinders} cyl`, editVinDecode.displacement].filter(Boolean).join(" ")],
+                        ["Drive", editVinDecode.driveType], ["Trans", editVinDecode.transmission],
+                        ["Fuel", editVinDecode.fuel], ["Built in", editVinDecode.plantCountry],
+                      ].filter(([, v]) => v).map(([label, value]) => (
+                        <div key={label}><span className="font-black">{label}:</span> {value}</div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-indigo-600 font-bold">Extra details will be appended to the vehicle's Notes on save.</p>
+                    <button
+                      type="button"
+                      onClick={() => applyEditVinDecode(editVinDecode)}
+                      className="w-full py-2 rounded-xl bg-indigo-600 text-white font-black text-sm uppercase hover:bg-indigo-700 transition-colors"
+                    >
+                      Fill in Year / Make / Model + Queue Notes
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
