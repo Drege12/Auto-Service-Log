@@ -256,14 +256,20 @@ export default function CarDetail() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [car?.mechanicId]);
 
-  // Client contact info — shown to the assigned technician when a driver/client is linked
+  // Linked-party contact info:
+  //  • For mechanics: shows the linked client/driver (teal "Client" banner)
+  //  • For drivers who OWN the car (mechanicId === viewerMechanicId): shows the linked mechanic (teal "Technician" banner)
+  //    This covers the case where the car was created by the driver and a mechanic VIN-linked via the old path,
+  //    leaving mechanicId = driverId and linkedMechanicId = mechId.
   const linkedMechanicId = (car as unknown as { linkedMechanicId?: number | null })?.linkedMechanicId;
   useEffect(() => {
     if (!linkedMechanicId) return;
-    // Only mechanics need this; drivers already see their own info
-    if (viewerSession.role === "driver") return;
-    // Don't fetch if the viewer IS the linked client
+    // Don't fetch if the viewer IS the linked party (no point showing your own info)
     if (linkedMechanicId === viewerSession.mechanicId) return;
+    // For drivers: only show when they own the car (mechanicId = their ID),
+    // meaning linkedMechanicId is the mechanic/tech attached to their vehicle.
+    // When car.mechanicId is someone else's (not theirs), the blue tech banner already covers it.
+    if (viewerSession.role === "driver" && (car as unknown as { mechanicId?: number | null })?.mechanicId !== viewerSession.mechanicId) return;
     fetch(`${BASE}/api/mechanics/${linkedMechanicId}/contact`, {
       headers: { "X-Mechanic-Id": String(viewerSession.mechanicId ?? "") },
     })
@@ -271,7 +277,7 @@ export default function CarDetail() {
       .then((data: ContactInfo | null) => setClientContact(data))
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linkedMechanicId]);
+  }, [linkedMechanicId, car?.mechanicId]);
 
   const openAbuseDialog = (reportedId: number) => {
     setAbuseTargetId(reportedId);
@@ -412,7 +418,7 @@ export default function CarDetail() {
         </div>
       )}
 
-      {/* Client contact banner — shown to the assigned mechanic when a driver/client is linked */}
+      {/* Linked-party contact banner — "Client" for mechanics, "Technician" for drivers who own the car */}
       {clientContact && (
         <div className={`mb-6 rounded-2xl border-4 px-6 py-4 flex flex-wrap items-center gap-4 ${
           clientContact.visible
@@ -421,7 +427,7 @@ export default function CarDetail() {
         }`}>
           <span className={`font-black uppercase text-xs px-2 py-1 rounded ${
             clientContact.visible ? "bg-teal-700 text-white" : "bg-gray-400 text-white"
-          }`}>Client</span>
+          }`}>{viewerSession.role === "driver" ? "Technician" : "Client"}</span>
           <div className="flex items-center gap-2">
             <User className={`w-5 h-5 ${clientContact.visible ? "text-teal-800" : "text-gray-500"}`} />
             <span className={`font-black uppercase text-lg ${clientContact.visible ? "text-teal-900" : "text-gray-600"}`}>
