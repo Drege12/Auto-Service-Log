@@ -100,7 +100,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link
                 href="/admin"
                 className={cn(
-                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
+                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center justify-center gap-1.5 rounded-md",
                   location === "/admin" ? "bg-amber-500 text-white border-amber-500 shadow-brutal-sm" : ""
                 )}
               >
@@ -112,7 +112,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link
                 href="/stats"
                 className={cn(
-                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
+                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center justify-center gap-1.5 rounded-md",
                   location === "/stats" ? "bg-blue-600 text-white border-blue-600 shadow-brutal-sm" : ""
                 )}
               >
@@ -123,7 +123,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/notifications"
               className={cn(
-                "relative font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
+                "relative font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center justify-center gap-1.5 rounded-md",
                 location === "/notifications" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
@@ -138,7 +138,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/messages"
               className={cn(
-                "relative font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
+                "relative font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center justify-center gap-1.5 rounded-md",
                 location === "/messages" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
@@ -153,7 +153,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/profile"
               className={cn(
-                "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
+                "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center justify-center gap-1.5 rounded-md",
                 location === "/profile" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
@@ -164,7 +164,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link
                 href="/help"
                 className={cn(
-                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
+                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center justify-center gap-1.5 rounded-md",
                   location === "/help" ? "bg-teal-600 text-white border-teal-600 shadow-brutal-sm" : ""
                 )}
               >
@@ -175,7 +175,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Link
               href="/"
               className={cn(
-                "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center gap-1.5 rounded-md",
+                "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center justify-center gap-1.5 rounded-md",
                 location === "/" ? "bg-black text-white border-black shadow-brutal-sm" : ""
               )}
             >
@@ -185,7 +185,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-1.5 font-bold px-2 py-2 border-2 border-black rounded-md hover:bg-black hover:text-white transition-all tap-target"
+              className="flex items-center justify-center gap-1.5 font-bold px-2 py-2 border-2 border-black rounded-md hover:bg-black hover:text-white transition-all tap-target"
               title="Log out"
             >
               <LogOut className="w-5 h-5 shrink-0" />
