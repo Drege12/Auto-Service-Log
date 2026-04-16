@@ -12,6 +12,23 @@ import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+function stripVinDecodeBlock(notes: string): string {
+  if (!notes) return "";
+  const keyRe = /^(Trim|Body|Engine|Drive|Trans|Fuel|Built in):/i;
+  const lines = notes.split("\n");
+  const out: string[] = [];
+  let skipping = false;
+  for (const line of lines) {
+    if (line.trim() === "[VIN Decode]") { skipping = true; continue; }
+    if (skipping) {
+      if (keyRe.test(line.trim()) || line.trim() === "") continue;
+      skipping = false;
+    }
+    out.push(line);
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").replace(/^\s+|\s+$/g, "");
+}
+
 type VinMatch = {
   id: number;
   year: number;
@@ -208,13 +225,16 @@ export default function CarsList() {
     if (decoded.fuel)        noteLines.push(`Fuel: ${decoded.fuel}`);
     if (decoded.plantCountry) noteLines.push(`Built in: ${decoded.plantCountry}`);
     const vinNotes = noteLines.join("\n");
-    setForm(f => ({
-      ...f,
-      year: decoded.year || f.year,
-      make: decoded.make ? titleCase(decoded.make) : f.make,
-      model: decoded.model ? titleCase(decoded.model) : f.model,
-      notes: f.notes ? `${f.notes}\n\n${vinNotes}` : vinNotes,
-    }));
+    setForm(f => {
+      const cleaned = stripVinDecodeBlock(f.notes || "");
+      return {
+        ...f,
+        year: decoded.year || f.year,
+        make: decoded.make ? titleCase(decoded.make) : f.make,
+        model: decoded.model ? titleCase(decoded.model) : f.model,
+        notes: cleaned ? `${cleaned}\n\n${vinNotes}` : vinNotes,
+      };
+    });
     setAddVinDecode(null);
   };
 
