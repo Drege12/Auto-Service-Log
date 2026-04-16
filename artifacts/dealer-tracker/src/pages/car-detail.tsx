@@ -19,6 +19,26 @@ import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, W
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
 
+// Strip any prior "[VIN Decode]" block (the marker line + all immediately
+// following Key: Value lines for known decode fields) so re-decoding a VIN
+// replaces the existing block instead of appending duplicates.
+function stripVinDecodeBlock(notes: string): string {
+  if (!notes) return "";
+  const keyRe = /^(Trim|Body|Engine|Drive|Trans|Fuel|Built in):/i;
+  const lines = notes.split("\n");
+  const out: string[] = [];
+  let skipping = false;
+  for (const line of lines) {
+    if (line.trim() === "[VIN Decode]") { skipping = true; continue; }
+    if (skipping) {
+      if (keyRe.test(line.trim()) || line.trim() === "") continue;
+      skipping = false;
+    }
+    out.push(line);
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").replace(/^\s+|\s+$/g, "");
+}
+
 function statusBadge(status?: string | null) {
   switch (status) {
     case "in_service":
@@ -219,8 +239,9 @@ export default function CarDetail() {
       onSuccess: async () => {
         // If the user decoded a VIN and clicked Apply, append those details to the vehicle notes
         if (pendingVinNotes) {
-          const existingNotes = (car as unknown as { notes?: string | null })?.notes?.trim() || "";
-          const merged = existingNotes ? `${existingNotes}\n\n${pendingVinNotes}` : pendingVinNotes;
+          const rawNotes = (car as unknown as { notes?: string | null })?.notes || "";
+          const cleaned = stripVinDecodeBlock(rawNotes);
+          const merged = cleaned ? `${cleaned}\n\n${pendingVinNotes}` : pendingVinNotes;
           const session = (() => { try { return JSON.parse(localStorage.getItem("dt_mechanic") || "{}"); } catch { return {}; } })();
           await fetch(`${BASE}/api/cars/${carId}/notes`, {
             method: "PATCH",
