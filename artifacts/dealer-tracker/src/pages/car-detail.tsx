@@ -658,13 +658,13 @@ export default function CarDetail() {
             render: () => <TodosTab carId={carId} carLabel={carLabel} /> },
           { key: "mileage",     label: "Mileage",      Icon: Gauge,          accent: "bg-purple-600",  ring: "ring-purple-300",
             render: () => <MileageTab carId={carId} carLabel={carLabel} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} isDriver={viewerSession.role === "driver"} /> },
-          { key: "costs",       label: "Quote",        Icon: DollarSign,     accent: "bg-green-700",   ring: "ring-green-300",
-            render: () => <CostsTab carId={carId} carLabel={carLabel} repairNotes={car.repairNotes ?? undefined} partsCost={car.partsCost ?? undefined} laborHours={car.laborHours ?? undefined} laborRate={car.laborRate ?? undefined} actualRepairNotes={car.actualRepairNotes ?? undefined} actualPartsCost={car.actualPartsCost ?? undefined} actualLaborHours={car.actualLaborHours ?? undefined} quoteItems={(car as { quoteItems?: import("@workspace/api-client-react").QuoteItem[] | null }).quoteItems ?? undefined} /> },
+          ...(viewerSession.role === "driver" ? [] : [{ key: "costs" as const, label: "Quote", Icon: DollarSign, accent: "bg-green-700", ring: "ring-green-300",
+            render: () => <CostsTab carId={carId} carLabel={carLabel} repairNotes={car.repairNotes ?? undefined} partsCost={car.partsCost ?? undefined} laborHours={car.laborHours ?? undefined} laborRate={car.laborRate ?? undefined} actualRepairNotes={car.actualRepairNotes ?? undefined} actualPartsCost={car.actualPartsCost ?? undefined} actualLaborHours={car.actualLaborHours ?? undefined} quoteItems={(car as { quoteItems?: import("@workspace/api-client-react").QuoteItem[] | null }).quoteItems ?? undefined} /> }]),
           { key: "service",     label: "Service Schedule", Icon: CalendarClock, accent: "bg-indigo-600", ring: "ring-indigo-300",
             render: () => <ServiceIntervalsTab carId={carId} vehicleType={car.vehicleType} /> },
           { key: "notes",       label: "Notes",        Icon: FileText,       accent: "bg-slate-700",   ring: "ring-slate-300",
             render: () => <NotesTab carId={carId} initialNotes={car.notes} /> },
-        ] as const).map(({ key, label, Icon, accent, ring, render }, idx) => {
+        ]).map(({ key, label, Icon, accent, ring, render }, idx) => {
           const isOpen = openSections[key] ?? (idx === 0);
           return (
             <section
