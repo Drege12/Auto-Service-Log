@@ -79,6 +79,18 @@ export const ListCarsResponseItem = zod.object({
   actualRepairNotes: zod.string().optional(),
   actualPartsCost: zod.string().optional(),
   actualLaborHours: zod.string().optional(),
+  quoteItems: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        kind: zod.enum(["part", "labor"]),
+        description: zod.string(),
+        qty: zod.number().nullish(),
+        unitCost: zod.number().nullish(),
+        hours: zod.number().nullish(),
+      }),
+    )
+    .nullish(),
   createdAt: zod.date(),
 });
 export const ListCarsResponse = zod.array(ListCarsResponseItem);
@@ -188,6 +200,18 @@ export const GetCarResponse = zod.object({
   actualRepairNotes: zod.string().optional(),
   actualPartsCost: zod.string().optional(),
   actualLaborHours: zod.string().optional(),
+  quoteItems: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        kind: zod.enum(["part", "labor"]),
+        description: zod.string(),
+        qty: zod.number().nullish(),
+        unitCost: zod.number().nullish(),
+        hours: zod.number().nullish(),
+      }),
+    )
+    .nullish(),
   createdAt: zod.date(),
 });
 
@@ -293,6 +317,18 @@ export const UpdateCarResponse = zod.object({
   actualRepairNotes: zod.string().optional(),
   actualPartsCost: zod.string().optional(),
   actualLaborHours: zod.string().optional(),
+  quoteItems: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        kind: zod.enum(["part", "labor"]),
+        description: zod.string(),
+        qty: zod.number().nullish(),
+        unitCost: zod.number().nullish(),
+        hours: zod.number().nullish(),
+      }),
+    )
+    .nullish(),
   createdAt: zod.date(),
 });
 
@@ -535,12 +571,24 @@ export const UpdateCostsParams = zod.object({
 
 export const UpdateCostsBody = zod.object({
   repairNotes: zod.string().optional(),
-  partsCost: zod.string().optional(),
-  laborHours: zod.string().optional(),
-  laborRate: zod.string().optional(),
+  partsCost: zod.number().optional(),
+  laborHours: zod.number().optional(),
+  laborRate: zod.number().optional(),
   actualRepairNotes: zod.string().optional(),
-  actualPartsCost: zod.string().optional(),
-  actualLaborHours: zod.string().optional(),
+  actualPartsCost: zod.number().optional(),
+  actualLaborHours: zod.number().optional(),
+  quoteItems: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        kind: zod.enum(["part", "labor"]),
+        description: zod.string(),
+        qty: zod.number().nullish(),
+        unitCost: zod.number().nullish(),
+        hours: zod.number().nullish(),
+      }),
+    )
+    .nullish(),
 });
 
 export const UpdateCostsResponse = zod.object({
@@ -594,5 +642,17 @@ export const UpdateCostsResponse = zod.object({
   actualRepairNotes: zod.string().optional(),
   actualPartsCost: zod.string().optional(),
   actualLaborHours: zod.string().optional(),
+  quoteItems: zod
+    .array(
+      zod.object({
+        id: zod.string(),
+        kind: zod.enum(["part", "labor"]),
+        description: zod.string(),
+        qty: zod.number().nullish(),
+        unitCost: zod.number().nullish(),
+        hours: zod.number().nullish(),
+      }),
+    )
+    .nullish(),
   createdAt: zod.date(),
 });

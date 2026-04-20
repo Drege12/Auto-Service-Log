@@ -547,6 +547,11 @@ components:
           type: string
         actualLaborHours:
           type: string
+        quoteItems:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/QuoteItem"
         createdAt:
           type: string
           format: date-time
@@ -600,23 +605,52 @@ components:
         - make
         - model
 
+    QuoteItem:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [part, labor]
+        description:
+          type: string
+        qty:
+          type: number
+          nullable: true
+        unitCost:
+          type: number
+          nullable: true
+        hours:
+          type: number
+          nullable: true
+      required:
+        - id
+        - kind
+        - description
+
     UpdateCosts:
       type: object
       properties:
         repairNotes:
           type: string
         partsCost:
-          type: string
+          type: number
         laborHours:
-          type: string
+          type: number
         laborRate:
-          type: string
+          type: number
         actualRepairNotes:
           type: string
         actualPartsCost:
-          type: string
+          type: number
         actualLaborHours:
-          type: string
+          type: number
+        quoteItems:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/QuoteItem"
 
     InspectionItem:
       type: object
