@@ -91,6 +91,15 @@ export const ListCarsResponseItem = zod.object({
         installHours: zod.number().nullish(),
         accessNotes: zod.string().nullish(),
         accessHours: zod.number().nullish(),
+        laborSteps: zod
+          .array(
+            zod.object({
+              id: zod.string(),
+              description: zod.string(),
+              hours: zod.number().nullish(),
+            }),
+          )
+          .nullish(),
       }),
     )
     .nullish(),
@@ -215,6 +224,15 @@ export const GetCarResponse = zod.object({
         installHours: zod.number().nullish(),
         accessNotes: zod.string().nullish(),
         accessHours: zod.number().nullish(),
+        laborSteps: zod
+          .array(
+            zod.object({
+              id: zod.string(),
+              description: zod.string(),
+              hours: zod.number().nullish(),
+            }),
+          )
+          .nullish(),
       }),
     )
     .nullish(),
@@ -335,6 +353,15 @@ export const UpdateCarResponse = zod.object({
         installHours: zod.number().nullish(),
         accessNotes: zod.string().nullish(),
         accessHours: zod.number().nullish(),
+        laborSteps: zod
+          .array(
+            zod.object({
+              id: zod.string(),
+              description: zod.string(),
+              hours: zod.number().nullish(),
+            }),
+          )
+          .nullish(),
       }),
     )
     .nullish(),
@@ -598,6 +625,15 @@ export const UpdateCostsBody = zod.object({
         installHours: zod.number().nullish(),
         accessNotes: zod.string().nullish(),
         accessHours: zod.number().nullish(),
+        laborSteps: zod
+          .array(
+            zod.object({
+              id: zod.string(),
+              description: zod.string(),
+              hours: zod.number().nullish(),
+            }),
+          )
+          .nullish(),
       }),
     )
     .nullish(),
@@ -666,6 +702,15 @@ export const UpdateCostsResponse = zod.object({
         installHours: zod.number().nullish(),
         accessNotes: zod.string().nullish(),
         accessHours: zod.number().nullish(),
+        laborSteps: zod
+          .array(
+            zod.object({
+              id: zod.string(),
+              description: zod.string(),
+              hours: zod.number().nullish(),
+            }),
+          )
+          .nullish(),
       }),
     )
     .nullish(),

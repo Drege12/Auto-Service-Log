@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { QuoteItemKind } from "./quoteItemKind";
+import type { QuoteLaborStep } from "./quoteLaborStep";
 
 export interface QuoteItem {
   id: string;
@@ -17,4 +18,5 @@ export interface QuoteItem {
   installHours?: number | null;
   accessNotes?: string | null;
   accessHours?: number | null;
+  laborSteps?: QuoteLaborStep[] | null;
 }

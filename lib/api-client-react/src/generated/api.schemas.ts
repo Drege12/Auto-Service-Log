@@ -79,6 +79,12 @@ export const QuoteItemKind = {
   labor: "labor",
 } as const;
 
+export interface QuoteLaborStep {
+  id: string;
+  description: string;
+  hours?: number | null;
+}
+
 export interface QuoteItem {
   id: string;
   kind: QuoteItemKind;
@@ -89,6 +95,7 @@ export interface QuoteItem {
   installHours?: number | null;
   accessNotes?: string | null;
   accessHours?: number | null;
+  laborSteps?: QuoteLaborStep[] | null;
 }
 
 export interface Car {
