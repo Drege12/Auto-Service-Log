@@ -5,13 +5,15 @@
  * Dealer Car Tracker API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuoteItem } from "./quoteItem";
 
 export interface UpdateCosts {
   repairNotes?: string;
-  partsCost?: string;
-  laborHours?: string;
-  laborRate?: string;
+  partsCost?: number;
+  laborHours?: number;
+  laborRate?: number;
   actualRepairNotes?: string;
-  actualPartsCost?: string;
-  actualLaborHours?: string;
+  actualPartsCost?: number;
+  actualLaborHours?: number;
+  quoteItems?: QuoteItem[] | null;
 }

@@ -27,6 +27,8 @@ export * from "./loginRequest";
 export * from "./loginResponse";
 export * from "./maintenanceEntry";
 export * from "./mileageEntry";
+export * from "./quoteItem";
+export * from "./quoteItemKind";
 export * from "./todoEntry";
 export * from "./todoEntryPriority";
 export * from "./updateCosts";

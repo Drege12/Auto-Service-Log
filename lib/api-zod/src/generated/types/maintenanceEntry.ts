@@ -12,7 +12,6 @@ export interface MaintenanceEntry {
   date: Date;
   description: string;
   technician?: string;
-  hours?: number;
   cost?: number;
   notes?: string;
   createdAt: Date;

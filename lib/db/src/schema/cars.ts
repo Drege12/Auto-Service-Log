@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, numeric, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -41,6 +41,7 @@ export const carsTable = pgTable("cars", {
   actualRepairNotes: text("actual_repair_notes"),
   actualPartsCost: numeric("actual_parts_cost"),
   actualLaborHours: numeric("actual_labor_hours"),
+  quoteItems: jsonb("quote_items"),
   carType: text("car_type").notNull().default("dealer"),
   vehicleType: text("vehicle_type").notNull().default("car"),
   vehicleSubtype: text("vehicle_subtype"),
@@ -49,7 +50,7 @@ export const carsTable = pgTable("cars", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertCarSchema = createInsertSchema(carsTable).omit({ id: true, createdAt: true, originalMileage: true, repairNotes: true, partsCost: true, laborHours: true, laborRate: true, actualRepairNotes: true, actualPartsCost: true, actualLaborHours: true });
+export const insertCarSchema = createInsertSchema(carsTable).omit({ id: true, createdAt: true, originalMileage: true, repairNotes: true, partsCost: true, laborHours: true, laborRate: true, actualRepairNotes: true, actualPartsCost: true, actualLaborHours: true, quoteItems: true });
 export type InsertCar = z.infer<typeof insertCarSchema>;
 export type Car = typeof carsTable.$inferSelect;
 

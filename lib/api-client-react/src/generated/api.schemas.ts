@@ -72,6 +72,22 @@ export const CarVehicleSubtype = {
   "3wheeler": "3wheeler",
 } as const;
 
+export type QuoteItemKind = (typeof QuoteItemKind)[keyof typeof QuoteItemKind];
+
+export const QuoteItemKind = {
+  part: "part",
+  labor: "labor",
+} as const;
+
+export interface QuoteItem {
+  id: string;
+  kind: QuoteItemKind;
+  description: string;
+  qty?: number | null;
+  unitCost?: number | null;
+  hours?: number | null;
+}
+
 export interface Car {
   id: number;
   stockNumber: string;
@@ -96,6 +112,7 @@ export interface Car {
   actualRepairNotes?: string;
   actualPartsCost?: string;
   actualLaborHours?: string;
+  quoteItems?: QuoteItem[] | null;
   createdAt: string;
 }
 
@@ -175,12 +192,13 @@ export interface CreateCar {
 
 export interface UpdateCosts {
   repairNotes?: string;
-  partsCost?: string;
-  laborHours?: string;
-  laborRate?: string;
+  partsCost?: number;
+  laborHours?: number;
+  laborRate?: number;
   actualRepairNotes?: string;
-  actualPartsCost?: string;
-  actualLaborHours?: string;
+  actualPartsCost?: number;
+  actualLaborHours?: number;
+  quoteItems?: QuoteItem[] | null;
 }
 
 export type InspectionItemStatus =
@@ -228,7 +246,6 @@ export interface MaintenanceEntry {
   date: string;
   description: string;
   technician?: string;
-  hours?: number;
   cost?: number;
   notes?: string;
   createdAt: string;
@@ -238,7 +255,6 @@ export interface CreateMaintenanceEntry {
   date: string;
   description: string;
   technician?: string;
-  hours?: number;
   cost?: number;
   notes?: string;
 }

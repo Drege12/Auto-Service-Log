@@ -9,6 +9,7 @@ import type { CarCarType } from "./carCarType";
 import type { CarStatus } from "./carStatus";
 import type { CarVehicleSubtype } from "./carVehicleSubtype";
 import type { CarVehicleType } from "./carVehicleType";
+import type { QuoteItem } from "./quoteItem";
 
 export interface Car {
   id: number;
@@ -34,5 +35,6 @@ export interface Car {
   actualRepairNotes?: string;
   actualPartsCost?: string;
   actualLaborHours?: string;
+  quoteItems?: QuoteItem[] | null;
   createdAt: Date;
 }

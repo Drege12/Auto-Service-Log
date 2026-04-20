@@ -248,6 +248,7 @@ router.get("/cars", async (req, res) => {
           actualRepairNotes: carsTable.actualRepairNotes,
           actualPartsCost: carsTable.actualPartsCost,
           actualLaborHours: carsTable.actualLaborHours,
+          quoteItems: carsTable.quoteItems,
           carType: carsTable.carType,
           vehicleType: carsTable.vehicleType,
           vehicleSubtype: carsTable.vehicleSubtype,
@@ -935,6 +936,14 @@ router.delete("/cars/:carId/mileage/:entryId", async (req, res) => {
 router.patch("/cars/:carId/costs", async (req, res) => {
   try {
     const carId = parseInt(req.params.carId, 10);
+    const quoteItemSchema = z.object({
+      id: z.string(),
+      kind: z.enum(["part", "labor"]),
+      description: z.string(),
+      qty: z.number().nullable().optional(),
+      unitCost: z.number().nullable().optional(),
+      hours: z.number().nullable().optional(),
+    });
     const costsSchema = z.object({
       repairNotes: z.string().optional().nullable(),
       partsCost: z.number().optional().nullable(),
@@ -943,13 +952,14 @@ router.patch("/cars/:carId/costs", async (req, res) => {
       actualRepairNotes: z.string().optional().nullable(),
       actualPartsCost: z.number().optional().nullable(),
       actualLaborHours: z.number().optional().nullable(),
+      quoteItems: z.array(quoteItemSchema).optional().nullable(),
     });
     const parsed = costsSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid cost data" });
       return;
     }
-    const updates: Record<string, string | null> = {};
+    const updates: Record<string, unknown> = {};
     if (parsed.data.repairNotes !== undefined) updates.repairNotes = parsed.data.repairNotes ?? null;
     if (parsed.data.partsCost !== undefined) updates.partsCost = parsed.data.partsCost != null ? String(parsed.data.partsCost) : null;
     if (parsed.data.laborHours !== undefined) updates.laborHours = parsed.data.laborHours != null ? String(parsed.data.laborHours) : null;
@@ -957,6 +967,7 @@ router.patch("/cars/:carId/costs", async (req, res) => {
     if (parsed.data.actualRepairNotes !== undefined) updates.actualRepairNotes = parsed.data.actualRepairNotes ?? null;
     if (parsed.data.actualPartsCost !== undefined) updates.actualPartsCost = parsed.data.actualPartsCost != null ? String(parsed.data.actualPartsCost) : null;
     if (parsed.data.actualLaborHours !== undefined) updates.actualLaborHours = parsed.data.actualLaborHours != null ? String(parsed.data.actualLaborHours) : null;
+    if (parsed.data.quoteItems !== undefined) updates.quoteItems = parsed.data.quoteItems ?? null;
     const [car] = await db.update(carsTable).set(updates).where(eq(carsTable.id, carId)).returning();
     if (!car) {
       res.status(404).json({ error: "Car not found" });
