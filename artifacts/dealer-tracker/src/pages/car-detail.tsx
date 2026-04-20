@@ -14,7 +14,7 @@ import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
 import { NotesTab } from "@/components/notes-tab";
 import { ServiceIntervalsTab } from "@/components/service-intervals-tab";
-import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench, AlertTriangle, Search, ChevronDown, ClipboardCheck, ListTodo, Activity, DollarSign, CalendarClock, FileText } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench, AlertTriangle, Search, ChevronDown, ClipboardCheck, ListTodo, DollarSign, CalendarClock, FileText } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
 import { cn } from "@/lib/utils";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
@@ -656,7 +656,7 @@ export default function CarDetail() {
             render: () => <MaintenanceTab carId={carId} carLabel={carLabel} /> },
           { key: "todos",       label: "Needs Done",   Icon: ListTodo,       accent: "bg-orange-500",  ring: "ring-orange-300",
             render: () => <TodosTab carId={carId} carLabel={carLabel} /> },
-          { key: "mileage",     label: "Mileage",      Icon: Activity,       accent: "bg-purple-600",  ring: "ring-purple-300",
+          { key: "mileage",     label: "Mileage",      Icon: Gauge,          accent: "bg-purple-600",  ring: "ring-purple-300",
             render: () => <MileageTab carId={carId} carLabel={carLabel} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} isDriver={viewerSession.role === "driver"} /> },
           { key: "costs",       label: "Costs",        Icon: DollarSign,     accent: "bg-green-700",   ring: "ring-green-300",
             render: () => <CostsTab carId={carId} carLabel={carLabel} repairNotes={car.repairNotes ?? undefined} partsCost={car.partsCost ?? undefined} laborHours={car.laborHours ?? undefined} laborRate={car.laborRate ?? undefined} actualRepairNotes={car.actualRepairNotes ?? undefined} actualPartsCost={car.actualPartsCost ?? undefined} actualLaborHours={car.actualLaborHours ?? undefined} /> },
