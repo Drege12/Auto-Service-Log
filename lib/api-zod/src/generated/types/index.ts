@@ -29,6 +29,7 @@ export * from "./maintenanceEntry";
 export * from "./mileageEntry";
 export * from "./quoteItem";
 export * from "./quoteItemKind";
+export * from "./quoteLaborStep";
 export * from "./todoEntry";
 export * from "./todoEntryPriority";
 export * from "./updateCosts";

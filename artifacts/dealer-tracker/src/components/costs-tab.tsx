@@ -31,6 +31,12 @@ function newId() {
   return `qi_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+type EditableLaborStep = {
+  id: string;
+  description: string;
+  hours: string;
+};
+
 type EditableItem = {
   id: string;
   kind: "part" | "labor";
@@ -38,24 +44,38 @@ type EditableItem = {
   qty: string;
   unitCost: string;
   hours: string;
-  installHours: string;
-  accessNotes: string;
-  accessHours: string;
+  laborSteps: EditableLaborStep[];
 };
 
 function toEditable(items: QuoteItem[] | null | undefined): EditableItem[] {
   if (!items || items.length === 0) return [];
-  return items.map(i => ({
-    id: i.id,
-    kind: i.kind as "part" | "labor",
-    description: i.description ?? "",
-    qty: i.qty != null ? String(i.qty) : "",
-    unitCost: i.unitCost != null ? String(i.unitCost) : "",
-    hours: i.hours != null ? String(i.hours) : "",
-    installHours: i.installHours != null ? String(i.installHours) : "",
-    accessNotes: i.accessNotes ?? "",
-    accessHours: i.accessHours != null ? String(i.accessHours) : "",
-  }));
+  return items.map(i => {
+    let steps: EditableLaborStep[] = [];
+    if (i.laborSteps && i.laborSteps.length > 0) {
+      steps = i.laborSteps.map(s => ({
+        id: s.id,
+        description: s.description ?? "",
+        hours: s.hours != null ? String(s.hours) : "",
+      }));
+    } else if (i.kind === "part") {
+      // Migrate legacy installHours / accessNotes / accessHours into steps
+      if (i.installHours != null) {
+        steps.push({ id: newId(), description: "Install part", hours: String(i.installHours) });
+      }
+      if ((i.accessNotes && i.accessNotes.trim()) || i.accessHours != null) {
+        steps.push({ id: newId(), description: i.accessNotes?.trim() || "Access work", hours: i.accessHours != null ? String(i.accessHours) : "" });
+      }
+    }
+    return {
+      id: i.id,
+      kind: i.kind as "part" | "labor",
+      description: i.description ?? "",
+      qty: i.qty != null ? String(i.qty) : "",
+      unitCost: i.unitCost != null ? String(i.unitCost) : "",
+      hours: i.hours != null ? String(i.hours) : "",
+      laborSteps: steps,
+    };
+  });
 }
 
 export function CostsTab({
@@ -82,7 +102,7 @@ export function CostsTab({
   const laborItems = items.filter(i => i.kind === "labor");
 
   const partLaborHours = (it: EditableItem): number =>
-    it.kind === "part" ? (toNum(it.installHours) ?? 0) + (toNum(it.accessHours) ?? 0) : 0;
+    it.kind === "part" ? it.laborSteps.reduce((s, st) => s + (toNum(st.hours) ?? 0), 0) : 0;
 
   const lineTotal = (it: EditableItem): number => {
     if (it.kind === "part") {
@@ -102,11 +122,26 @@ export function CostsTab({
   const laborSubtotal = laborHoursTotal * rateNum;
   const grandTotal = partsSubtotal + laborSubtotal;
 
-  const addPart = () => setItems(arr => [...arr, { id: newId(), kind: "part", description: "", qty: "1", unitCost: "", hours: "", installHours: "", accessNotes: "", accessHours: "" }]);
-  const addLabor = () => setItems(arr => [...arr, { id: newId(), kind: "labor", description: "", qty: "", unitCost: "", hours: "", installHours: "", accessNotes: "", accessHours: "" }]);
+  const addPart = () => setItems(arr => [...arr, {
+    id: newId(), kind: "part", description: "", qty: "1", unitCost: "", hours: "",
+    laborSteps: [{ id: newId(), description: "Install part", hours: "" }],
+  }]);
+  const addLabor = () => setItems(arr => [...arr, {
+    id: newId(), kind: "labor", description: "", qty: "", unitCost: "", hours: "",
+    laborSteps: [],
+  }]);
   const removeItem = (id: string) => setItems(arr => arr.filter(i => i.id !== id));
   const updateItem = (id: string, patch: Partial<EditableItem>) =>
     setItems(arr => arr.map(i => (i.id === id ? { ...i, ...patch } : i)));
+  const addStep = (itemId: string) => setItems(arr => arr.map(i =>
+    i.id === itemId ? { ...i, laborSteps: [...i.laborSteps, { id: newId(), description: "", hours: "" }] } : i
+  ));
+  const removeStep = (itemId: string, stepId: string) => setItems(arr => arr.map(i =>
+    i.id === itemId ? { ...i, laborSteps: i.laborSteps.filter(s => s.id !== stepId) } : i
+  ));
+  const updateStep = (itemId: string, stepId: string, patch: Partial<EditableLaborStep>) => setItems(arr => arr.map(i =>
+    i.id === itemId ? { ...i, laborSteps: i.laborSteps.map(s => s.id === stepId ? { ...s, ...patch } : s) } : i
+  ));
 
   const handleSave = () => {
     setError("");
@@ -115,6 +150,9 @@ export function CostsTab({
       if (it.qty.trim() && toNum(it.qty) == null) { setError("All quantities must be numbers."); return; }
       if (it.unitCost.trim() && toNum(it.unitCost) == null) { setError("All unit costs must be numbers."); return; }
       if (it.hours.trim() && toNum(it.hours) == null) { setError("All hours must be numbers."); return; }
+      for (const st of it.laborSteps) {
+        if (st.hours.trim() && toNum(st.hours) == null) { setError("All step hours must be numbers."); return; }
+      }
     }
 
     const payloadItems: QuoteItem[] = items.map(i => ({
@@ -124,9 +162,14 @@ export function CostsTab({
       qty: i.kind === "part" ? (toNum(i.qty) ?? null) : null,
       unitCost: i.kind === "part" ? (toNum(i.unitCost) ?? null) : null,
       hours: i.kind === "labor" ? (toNum(i.hours) ?? null) : null,
-      installHours: i.kind === "part" ? (toNum(i.installHours) ?? null) : null,
-      accessNotes: i.kind === "part" ? (i.accessNotes.trim() || null) : null,
-      accessHours: i.kind === "part" ? (toNum(i.accessHours) ?? null) : null,
+      installHours: null,
+      accessNotes: null,
+      accessHours: null,
+      laborSteps: i.kind === "part" ? i.laborSteps.map(s => ({
+        id: s.id,
+        description: s.description.trim(),
+        hours: toNum(s.hours) ?? null,
+      })) : null,
     }));
 
     updateCosts({ carId, data: {
@@ -241,37 +284,52 @@ export function CostsTab({
                   </button>
                 </div>
 
-                {/* Sub-row: install + access labor */}
-                <div className="grid grid-cols-12 gap-2 items-center bg-blue-50/60 border border-blue-200 rounded-lg px-2 py-2">
-                  <label className="col-span-12 sm:col-span-2 flex items-center gap-1 text-[11px] font-black uppercase text-blue-800 px-1">
-                    <Clock className="w-3 h-3" /> Install hrs
-                  </label>
-                  <div className="col-span-3 sm:col-span-2">
-                    <Input
-                      value={it.installHours}
-                      onChange={e => updateItem(it.id, { installHours: e.target.value })}
-                      placeholder="0"
-                      inputMode="decimal"
-                      className="bg-white text-black font-mono text-center text-sm h-9"
-                    />
+                {/* Sub-block: labor steps (add/remove as needed) */}
+                <div className="bg-blue-50/60 border border-blue-200 rounded-lg px-2 py-2 space-y-1.5">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="flex items-center gap-1 text-[11px] font-black uppercase text-blue-800">
+                      <Clock className="w-3 h-3" /> Labor Steps {it.laborSteps.length > 0 && <span className="text-blue-500">({it.laborSteps.length})</span>}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => addStep(it.id)}
+                      className="flex items-center gap-1 bg-blue-600 text-white font-black uppercase text-[10px] px-2 py-0.5 rounded border-2 border-black hover:bg-blue-700 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" /> Step
+                    </button>
                   </div>
-                  <Input
-                    value={it.accessNotes}
-                    onChange={e => updateItem(it.id, { accessNotes: e.target.value })}
-                    placeholder="Access work — what to remove (e.g. fender liner, intake)"
-                    className="bg-white text-black col-span-9 sm:col-span-5 text-sm h-9"
-                  />
-                  <div className="col-span-3 sm:col-span-2 flex items-center gap-1">
-                    <Input
-                      value={it.accessHours}
-                      onChange={e => updateItem(it.id, { accessHours: e.target.value })}
-                      placeholder="0"
-                      inputMode="decimal"
-                      className="bg-white text-black font-mono text-center text-sm h-9"
-                    />
-                    <span className="text-[11px] text-blue-700 font-black">hr</span>
-                  </div>
-                  <span className="hidden sm:block col-span-1" />
+                  {it.laborSteps.length === 0 && (
+                    <div className="text-[11px] italic text-gray-500 px-1 pb-1">No labor included — material cost only.</div>
+                  )}
+                  {it.laborSteps.map((st, idx) => (
+                    <div key={st.id} className="grid grid-cols-12 gap-1.5 items-center">
+                      <span className="col-span-1 text-center text-[10px] font-black text-blue-500">{idx + 1}.</span>
+                      <Input
+                        value={st.description}
+                        onChange={e => updateStep(it.id, st.id, { description: e.target.value })}
+                        placeholder={idx === 0 ? "Install part" : "What needs to come off / be done first"}
+                        className="bg-white text-black col-span-7 sm:col-span-8 text-sm h-9"
+                      />
+                      <div className="col-span-3 sm:col-span-2 flex items-center gap-1">
+                        <Input
+                          value={st.hours}
+                          onChange={e => updateStep(it.id, st.id, { hours: e.target.value })}
+                          placeholder="0"
+                          inputMode="decimal"
+                          className="bg-white text-black font-mono text-center text-sm h-9"
+                        />
+                        <span className="text-[11px] text-blue-700 font-black">hr</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeStep(it.id, st.id)}
+                        className="col-span-1 text-red-600 hover:text-white hover:bg-red-600 border border-red-300 hover:border-red-600 rounded p-1 transition-colors"
+                        aria-label="Remove step"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mx-auto" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             );

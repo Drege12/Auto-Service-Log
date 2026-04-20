@@ -936,6 +936,11 @@ router.delete("/cars/:carId/mileage/:entryId", async (req, res) => {
 router.patch("/cars/:carId/costs", async (req, res) => {
   try {
     const carId = parseInt(req.params.carId, 10);
+    const quoteLaborStepSchema = z.object({
+      id: z.string(),
+      description: z.string(),
+      hours: z.number().nullable().optional(),
+    });
     const quoteItemSchema = z.object({
       id: z.string(),
       kind: z.enum(["part", "labor"]),
@@ -946,6 +951,7 @@ router.patch("/cars/:carId/costs", async (req, res) => {
       installHours: z.number().nullable().optional(),
       accessNotes: z.string().nullable().optional(),
       accessHours: z.number().nullable().optional(),
+      laborSteps: z.array(quoteLaborStepSchema).nullable().optional(),
     });
     const costsSchema = z.object({
       repairNotes: z.string().optional().nullable(),

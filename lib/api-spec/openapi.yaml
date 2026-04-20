@@ -633,9 +633,28 @@ components:
         accessHours:
           type: number
           nullable: true
+        laborSteps:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/QuoteLaborStep'
       required:
         - id
         - kind
+        - description
+
+    QuoteLaborStep:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        hours:
+          type: number
+          nullable: true
+      required:
+        - id
         - description
 
     UpdateCosts:
