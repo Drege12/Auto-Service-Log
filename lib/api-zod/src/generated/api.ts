@@ -88,6 +88,9 @@ export const ListCarsResponseItem = zod.object({
         qty: zod.number().nullish(),
         unitCost: zod.number().nullish(),
         hours: zod.number().nullish(),
+        installHours: zod.number().nullish(),
+        accessNotes: zod.string().nullish(),
+        accessHours: zod.number().nullish(),
       }),
     )
     .nullish(),
@@ -209,6 +212,9 @@ export const GetCarResponse = zod.object({
         qty: zod.number().nullish(),
         unitCost: zod.number().nullish(),
         hours: zod.number().nullish(),
+        installHours: zod.number().nullish(),
+        accessNotes: zod.string().nullish(),
+        accessHours: zod.number().nullish(),
       }),
     )
     .nullish(),
@@ -326,6 +332,9 @@ export const UpdateCarResponse = zod.object({
         qty: zod.number().nullish(),
         unitCost: zod.number().nullish(),
         hours: zod.number().nullish(),
+        installHours: zod.number().nullish(),
+        accessNotes: zod.string().nullish(),
+        accessHours: zod.number().nullish(),
       }),
     )
     .nullish(),
@@ -586,6 +595,9 @@ export const UpdateCostsBody = zod.object({
         qty: zod.number().nullish(),
         unitCost: zod.number().nullish(),
         hours: zod.number().nullish(),
+        installHours: zod.number().nullish(),
+        accessNotes: zod.string().nullish(),
+        accessHours: zod.number().nullish(),
       }),
     )
     .nullish(),
@@ -651,6 +663,9 @@ export const UpdateCostsResponse = zod.object({
         qty: zod.number().nullish(),
         unitCost: zod.number().nullish(),
         hours: zod.number().nullish(),
+        installHours: zod.number().nullish(),
+        accessNotes: zod.string().nullish(),
+        accessHours: zod.number().nullish(),
       }),
     )
     .nullish(),

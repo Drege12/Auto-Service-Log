@@ -14,4 +14,7 @@ export interface QuoteItem {
   qty?: number | null;
   unitCost?: number | null;
   hours?: number | null;
+  installHours?: number | null;
+  accessNotes?: string | null;
+  accessHours?: number | null;
 }

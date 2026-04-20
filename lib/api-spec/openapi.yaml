@@ -624,6 +624,15 @@ components:
         hours:
           type: number
           nullable: true
+        installHours:
+          type: number
+          nullable: true
+        accessNotes:
+          type: string
+          nullable: true
+        accessHours:
+          type: number
+          nullable: true
       required:
         - id
         - kind

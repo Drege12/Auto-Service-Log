@@ -38,6 +38,9 @@ type EditableItem = {
   qty: string;
   unitCost: string;
   hours: string;
+  installHours: string;
+  accessNotes: string;
+  accessHours: string;
 };
 
 function toEditable(items: QuoteItem[] | null | undefined): EditableItem[] {
@@ -49,6 +52,9 @@ function toEditable(items: QuoteItem[] | null | undefined): EditableItem[] {
     qty: i.qty != null ? String(i.qty) : "",
     unitCost: i.unitCost != null ? String(i.unitCost) : "",
     hours: i.hours != null ? String(i.hours) : "",
+    installHours: i.installHours != null ? String(i.installHours) : "",
+    accessNotes: i.accessNotes ?? "",
+    accessHours: i.accessHours != null ? String(i.accessHours) : "",
   }));
 }
 
@@ -75,23 +81,29 @@ export function CostsTab({
   const partsItems = items.filter(i => i.kind === "part");
   const laborItems = items.filter(i => i.kind === "labor");
 
+  const partLaborHours = (it: EditableItem): number =>
+    it.kind === "part" ? (toNum(it.installHours) ?? 0) + (toNum(it.accessHours) ?? 0) : 0;
+
   const lineTotal = (it: EditableItem): number => {
     if (it.kind === "part") {
       const q = toNum(it.qty) ?? 1;
       const u = toNum(it.unitCost) ?? 0;
-      return q * u;
+      return q * u + partLaborHours(it) * rateNum;
     }
     const h = toNum(it.hours) ?? 0;
     return h * rateNum;
   };
 
-  const partsSubtotal = partsItems.reduce((s, i) => s + lineTotal(i), 0);
+  const partsMaterialsSubtotal = partsItems.reduce((s, i) => s + (toNum(i.qty) ?? 1) * (toNum(i.unitCost) ?? 0), 0);
+  const partsLaborHoursTotal = partsItems.reduce((s, i) => s + partLaborHours(i), 0);
+  const partsLaborSubtotal = partsLaborHoursTotal * rateNum;
+  const partsSubtotal = partsMaterialsSubtotal + partsLaborSubtotal;
   const laborHoursTotal = laborItems.reduce((s, i) => s + (toNum(i.hours) ?? 0), 0);
   const laborSubtotal = laborHoursTotal * rateNum;
   const grandTotal = partsSubtotal + laborSubtotal;
 
-  const addPart = () => setItems(arr => [...arr, { id: newId(), kind: "part", description: "", qty: "1", unitCost: "", hours: "" }]);
-  const addLabor = () => setItems(arr => [...arr, { id: newId(), kind: "labor", description: "", qty: "", unitCost: "", hours: "" }]);
+  const addPart = () => setItems(arr => [...arr, { id: newId(), kind: "part", description: "", qty: "1", unitCost: "", hours: "", installHours: "", accessNotes: "", accessHours: "" }]);
+  const addLabor = () => setItems(arr => [...arr, { id: newId(), kind: "labor", description: "", qty: "", unitCost: "", hours: "", installHours: "", accessNotes: "", accessHours: "" }]);
   const removeItem = (id: string) => setItems(arr => arr.filter(i => i.id !== id));
   const updateItem = (id: string, patch: Partial<EditableItem>) =>
     setItems(arr => arr.map(i => (i.id === id ? { ...i, ...patch } : i)));
@@ -112,6 +124,9 @@ export function CostsTab({
       qty: i.kind === "part" ? (toNum(i.qty) ?? null) : null,
       unitCost: i.kind === "part" ? (toNum(i.unitCost) ?? null) : null,
       hours: i.kind === "labor" ? (toNum(i.hours) ?? null) : null,
+      installHours: i.kind === "part" ? (toNum(i.installHours) ?? null) : null,
+      accessNotes: i.kind === "part" ? (i.accessNotes.trim() || null) : null,
+      accessHours: i.kind === "part" ? (toNum(i.accessHours) ?? null) : null,
     }));
 
     updateCosts({ carId, data: {
@@ -182,44 +197,101 @@ export function CostsTab({
           )}
           {partsItems.map(it => {
             const total = lineTotal(it);
+            const labHrs = partLaborHours(it);
+            const matCost = (toNum(it.qty) ?? 1) * (toNum(it.unitCost) ?? 0);
             return (
-              <div key={it.id} className="border-b-2 border-gray-200 last:border-b-0 px-4 py-3 grid grid-cols-12 gap-2 items-center hover:bg-gray-50">
-                <Input
-                  value={it.description}
-                  onChange={e => updateItem(it.id, { description: e.target.value })}
-                  placeholder="Part description (e.g. Brake pads — front)"
-                  className="bg-white text-black col-span-12 sm:col-span-5 font-medium"
-                />
-                <div className="col-span-3 sm:col-span-2 flex items-center gap-1">
+              <div key={it.id} className="border-b-2 border-gray-200 last:border-b-0 px-4 py-3 hover:bg-gray-50/60 space-y-2">
+                {/* Top row: description / qty / unit cost / line total / remove */}
+                <div className="grid grid-cols-12 gap-2 items-center">
                   <Input
-                    value={it.qty}
-                    onChange={e => updateItem(it.id, { qty: e.target.value })}
-                    placeholder="Qty"
-                    inputMode="decimal"
-                    className="bg-white text-black font-mono text-center"
+                    value={it.description}
+                    onChange={e => updateItem(it.id, { description: e.target.value })}
+                    placeholder="Part (e.g. Brake pads — front)"
+                    className="bg-white text-black col-span-12 sm:col-span-5 font-bold"
                   />
+                  <div className="col-span-3 sm:col-span-2">
+                    <Input
+                      value={it.qty}
+                      onChange={e => updateItem(it.id, { qty: e.target.value })}
+                      placeholder="Qty"
+                      inputMode="decimal"
+                      className="bg-white text-black font-mono text-center"
+                    />
+                  </div>
+                  <div className="col-span-4 sm:col-span-2 flex items-center gap-1">
+                    <span className="text-gray-400 font-bold">$</span>
+                    <Input
+                      value={it.unitCost}
+                      onChange={e => updateItem(it.id, { unitCost: e.target.value })}
+                      placeholder="0.00"
+                      inputMode="decimal"
+                      className="bg-white text-black font-mono"
+                    />
+                  </div>
+                  <div className="col-span-3 sm:col-span-2 text-right font-mono font-black text-base text-blue-900 leading-tight">
+                    {money(total)}
+                    {labHrs > 0 && (
+                      <div className="text-[10px] font-bold text-blue-500 uppercase">
+                        {money(matCost)} + {labHrs.toFixed(2)}h
+                      </div>
+                    )}
+                  </div>
+                  <button type="button" onClick={() => removeItem(it.id)} className="col-span-2 sm:col-span-1 ml-auto text-red-600 hover:text-white hover:bg-red-600 border-2 border-red-300 hover:border-red-600 rounded-lg p-1.5 transition-colors" aria-label="Remove">
+                    <Trash2 className="w-4 h-4 mx-auto" />
+                  </button>
                 </div>
-                <div className="col-span-4 sm:col-span-2 flex items-center gap-1">
-                  <span className="text-gray-400 font-bold">$</span>
+
+                {/* Sub-row: install + access labor */}
+                <div className="grid grid-cols-12 gap-2 items-center bg-blue-50/60 border border-blue-200 rounded-lg px-2 py-2">
+                  <label className="col-span-12 sm:col-span-2 flex items-center gap-1 text-[11px] font-black uppercase text-blue-800 px-1">
+                    <Clock className="w-3 h-3" /> Install hrs
+                  </label>
+                  <div className="col-span-3 sm:col-span-2">
+                    <Input
+                      value={it.installHours}
+                      onChange={e => updateItem(it.id, { installHours: e.target.value })}
+                      placeholder="0"
+                      inputMode="decimal"
+                      className="bg-white text-black font-mono text-center text-sm h-9"
+                    />
+                  </div>
                   <Input
-                    value={it.unitCost}
-                    onChange={e => updateItem(it.id, { unitCost: e.target.value })}
-                    placeholder="0.00"
-                    inputMode="decimal"
-                    className="bg-white text-black font-mono"
+                    value={it.accessNotes}
+                    onChange={e => updateItem(it.id, { accessNotes: e.target.value })}
+                    placeholder="Access work — what to remove (e.g. fender liner, intake)"
+                    className="bg-white text-black col-span-9 sm:col-span-5 text-sm h-9"
                   />
+                  <div className="col-span-3 sm:col-span-2 flex items-center gap-1">
+                    <Input
+                      value={it.accessHours}
+                      onChange={e => updateItem(it.id, { accessHours: e.target.value })}
+                      placeholder="0"
+                      inputMode="decimal"
+                      className="bg-white text-black font-mono text-center text-sm h-9"
+                    />
+                    <span className="text-[11px] text-blue-700 font-black">hr</span>
+                  </div>
+                  <span className="hidden sm:block col-span-1" />
                 </div>
-                <div className="col-span-3 sm:col-span-2 text-right font-mono font-black text-base text-blue-900">{money(total)}</div>
-                <button type="button" onClick={() => removeItem(it.id)} className="col-span-2 sm:col-span-1 ml-auto text-red-600 hover:text-white hover:bg-red-600 border-2 border-red-300 hover:border-red-600 rounded-lg p-1.5 transition-colors" aria-label="Remove">
-                  <Trash2 className="w-4 h-4 mx-auto" />
-                </button>
               </div>
             );
           })}
           {partsItems.length > 0 && (
-            <div className="bg-blue-50 border-t-4 border-black px-5 py-3 flex justify-between items-center">
-              <span className="font-black uppercase text-blue-900">Parts Subtotal</span>
-              <span className="font-mono font-black text-xl text-blue-900">{money(partsSubtotal)}</span>
+            <div className="bg-blue-50 border-t-4 border-black px-5 py-3 space-y-1">
+              <div className="flex justify-between items-center text-sm font-bold text-blue-800">
+                <span className="uppercase">Materials</span>
+                <span className="font-mono">{money(partsMaterialsSubtotal)}</span>
+              </div>
+              {partsLaborHoursTotal > 0 && (
+                <div className="flex justify-between items-center text-sm font-bold text-blue-800">
+                  <span className="uppercase">Install + Access Labor</span>
+                  <span className="font-mono">{partsLaborHoursTotal.toFixed(2)} hr × ${rateNum.toFixed(2)} = {money(partsLaborSubtotal)}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center pt-1 border-t-2 border-blue-300">
+                <span className="font-black uppercase text-blue-900">Parts Subtotal</span>
+                <span className="font-mono font-black text-xl text-blue-900">{money(partsSubtotal)}</span>
+              </div>
             </div>
           )}
         </div>
@@ -229,7 +301,7 @@ export function CostsTab({
       <section className="border-4 border-black rounded-xl overflow-hidden shadow-brutal-sm">
         <div className="bg-orange-50 border-b-4 border-black px-5 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 font-black uppercase text-lg text-orange-900">
-            <Wrench className="w-5 h-5" /> Labor / Services ({laborItems.length})
+            <Wrench className="w-5 h-5" /> Add'l Services ({laborItems.length})
           </div>
           <button type="button" onClick={addLabor} className="flex items-center gap-1.5 bg-orange-600 text-white font-black uppercase text-sm px-3 py-1.5 rounded-lg border-2 border-black hover:bg-orange-700 transition-colors shadow-brutal-sm tap-target">
             <Plus className="w-4 h-4" /> Add Service
