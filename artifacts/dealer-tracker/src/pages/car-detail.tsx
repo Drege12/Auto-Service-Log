@@ -3,7 +3,6 @@ import { useRoute, useLocation } from "wouter";
 import { useGetCar, useUpdateCar, useDeleteCar, CreateCarStatus, CreateCarCarType, CreateCarVehicleType, CreateCarVehicleSubtype } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,8 +14,9 @@ import { TodosTab } from "@/components/todos-tab";
 import { CostsTab } from "@/components/costs-tab";
 import { NotesTab } from "@/components/notes-tab";
 import { ServiceIntervalsTab } from "@/components/service-intervals-tab";
-import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench, AlertTriangle, Search } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, Key, Gauge, Tag, User, Phone, Mail, EyeOff, Wrench, AlertTriangle, Search, ChevronDown, ClipboardCheck, ListTodo, Activity, DollarSign, CalendarClock, FileText } from "lucide-react";
 import { vinLabel, mileageLabel } from "@/lib/vehicle-labels";
+import { cn } from "@/lib/utils";
 import { getSubtypesForVehicleType, getDefaultSubtype, vehicleSubtypeLabel } from "@/lib/inspection-template";
 
 // Strip any prior "[VIN Decode]" block (the marker line + all immediately
@@ -131,6 +131,7 @@ export default function CarDetail() {
   const { mutate: deleteCar } = useDeleteCar();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [editForm, setEditForm] = useState(emptyEditForm);
   const [editError, setEditError] = useState("");
 
@@ -647,58 +648,58 @@ export default function CarDetail() {
         </div>
       )}
 
-      <Tabs defaultValue="inspection" className="w-full">
-        <TabsList className="flex flex-col sm:flex-row h-auto border-b-0 gap-2 sm:gap-4 mb-8">
-          <TabsTrigger value="inspection" className="w-full sm:w-auto">INSPECTION</TabsTrigger>
-          <TabsTrigger value="maintenance" className="w-full sm:w-auto">MAINTENANCE</TabsTrigger>
-          <TabsTrigger value="todos" className="w-full sm:w-auto">NEEDS DONE</TabsTrigger>
-          <TabsTrigger value="mileage" className="w-full sm:w-auto">MILEAGE</TabsTrigger>
-          <TabsTrigger value="costs" className="w-full sm:w-auto">COSTS</TabsTrigger>
-          <TabsTrigger value="service" className="w-full sm:w-auto">SERVICE</TabsTrigger>
-          <TabsTrigger value="notes" className="w-full sm:w-auto">NOTES</TabsTrigger>
-        </TabsList>
-
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border-4 border-black shadow-brutal min-h-[500px]">
-          <TabsContent value="inspection" className="mt-0">
-            <InspectionsTab
-              carId={carId}
-              carLabel={carLabel}
-              vehicleType={car.vehicleType}
-              vehicleSubtype={car.vehicleSubtype}
-              userRole={viewerSession.role}
-              isOwnCar={!(car as { linkedMechanicId?: number | null }).linkedMechanicId && viewerSession.role !== "driver"}
-            />
-          </TabsContent>
-          <TabsContent value="maintenance" className="mt-0">
-            <MaintenanceTab carId={carId} carLabel={carLabel} />
-          </TabsContent>
-          <TabsContent value="todos" className="mt-0">
-            <TodosTab carId={carId} carLabel={carLabel} />
-          </TabsContent>
-          <TabsContent value="mileage" className="mt-0">
-            <MileageTab carId={carId} carLabel={carLabel} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} isDriver={viewerSession.role === "driver"} />
-          </TabsContent>
-          <TabsContent value="costs" className="mt-0">
-            <CostsTab
-              carId={carId}
-              carLabel={carLabel}
-              repairNotes={car.repairNotes ?? undefined}
-              partsCost={car.partsCost ?? undefined}
-              laborHours={car.laborHours ?? undefined}
-              laborRate={car.laborRate ?? undefined}
-              actualRepairNotes={car.actualRepairNotes ?? undefined}
-              actualPartsCost={car.actualPartsCost ?? undefined}
-              actualLaborHours={car.actualLaborHours ?? undefined}
-            />
-          </TabsContent>
-          <TabsContent value="service" className="mt-0">
-            <ServiceIntervalsTab carId={carId} vehicleType={car.vehicleType} />
-          </TabsContent>
-          <TabsContent value="notes" className="mt-0">
-            <NotesTab carId={carId} initialNotes={car.notes} />
-          </TabsContent>
-        </div>
-      </Tabs>
+      <div className="space-y-4">
+        {([
+          { key: "inspection",  label: "Inspection",   Icon: ClipboardCheck, accent: "bg-emerald-500", ring: "ring-emerald-300",
+            render: () => <InspectionsTab carId={carId} carLabel={carLabel} vehicleType={car.vehicleType} vehicleSubtype={car.vehicleSubtype} userRole={viewerSession.role} isOwnCar={!(car as { linkedMechanicId?: number | null }).linkedMechanicId && viewerSession.role !== "driver"} /> },
+          { key: "maintenance", label: "Maintenance",  Icon: Wrench,         accent: "bg-blue-600",    ring: "ring-blue-300",
+            render: () => <MaintenanceTab carId={carId} carLabel={carLabel} /> },
+          { key: "todos",       label: "Needs Done",   Icon: ListTodo,       accent: "bg-orange-500",  ring: "ring-orange-300",
+            render: () => <TodosTab carId={carId} carLabel={carLabel} /> },
+          { key: "mileage",     label: "Mileage",      Icon: Activity,       accent: "bg-purple-600",  ring: "ring-purple-300",
+            render: () => <MileageTab carId={carId} carLabel={carLabel} initialMileage={car.mileage ?? undefined} originalMileage={car.originalMileage ?? undefined} vehicleType={car.vehicleType} isDriver={viewerSession.role === "driver"} /> },
+          { key: "costs",       label: "Costs",        Icon: DollarSign,     accent: "bg-green-700",   ring: "ring-green-300",
+            render: () => <CostsTab carId={carId} carLabel={carLabel} repairNotes={car.repairNotes ?? undefined} partsCost={car.partsCost ?? undefined} laborHours={car.laborHours ?? undefined} laborRate={car.laborRate ?? undefined} actualRepairNotes={car.actualRepairNotes ?? undefined} actualPartsCost={car.actualPartsCost ?? undefined} actualLaborHours={car.actualLaborHours ?? undefined} /> },
+          { key: "service",     label: "Service Schedule", Icon: CalendarClock, accent: "bg-indigo-600", ring: "ring-indigo-300",
+            render: () => <ServiceIntervalsTab carId={carId} vehicleType={car.vehicleType} /> },
+          { key: "notes",       label: "Notes",        Icon: FileText,       accent: "bg-slate-700",   ring: "ring-slate-300",
+            render: () => <NotesTab carId={carId} initialNotes={car.notes} /> },
+        ] as const).map(({ key, label, Icon, accent, ring, render }, idx) => {
+          const isOpen = openSections[key] ?? (idx === 0);
+          return (
+            <section
+              key={key}
+              className={cn(
+                "bg-white border-4 border-black rounded-2xl shadow-brutal overflow-hidden transition-all",
+                isOpen && `ring-4 ${ring} ring-offset-2`
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => setOpenSections(s => ({ ...s, [key]: !isOpen }))}
+                className="w-full flex items-center gap-4 px-5 py-4 sm:px-6 sm:py-5 hover:bg-gray-50 transition-colors group"
+                aria-expanded={isOpen}
+              >
+                <div className={cn("shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-white shadow-brutal-sm border-2 border-black", accent)}>
+                  <Icon className="w-6 h-6 sm:w-7 sm:h-7" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight leading-tight">{label}</h2>
+                  <p className="text-xs sm:text-sm font-bold text-muted-foreground uppercase tracking-wide">{isOpen ? "Tap to collapse" : "Tap to expand"}</p>
+                </div>
+                <ChevronDown className={cn("shrink-0 w-7 h-7 transition-transform duration-300 text-black", isOpen && "rotate-180")} />
+              </button>
+              {isOpen && (
+                <div className="border-t-4 border-black bg-gradient-to-b from-gray-50 to-white">
+                  <div className="p-5 sm:p-7">
+                    {render()}
+                  </div>
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
