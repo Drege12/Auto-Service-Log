@@ -943,6 +943,9 @@ router.patch("/cars/:carId/costs", async (req, res) => {
       qty: z.number().nullable().optional(),
       unitCost: z.number().nullable().optional(),
       hours: z.number().nullable().optional(),
+      installHours: z.number().nullable().optional(),
+      accessNotes: z.string().nullable().optional(),
+      accessHours: z.number().nullable().optional(),
     });
     const costsSchema = z.object({
       repairNotes: z.string().optional().nullable(),
