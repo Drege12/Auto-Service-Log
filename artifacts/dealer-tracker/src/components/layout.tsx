@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
-import { Wrench, LogOut, Users, UserCircle, BarChart2, MessageSquare, Bell, Home, HelpCircle } from "lucide-react";
+import { Wrench, LogOut, Users, UserCircle, BarChart2, MessageSquare, Bell, Home, HelpCircle, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setMechanicId } from "@workspace/api-client-react";
 
@@ -118,6 +118,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 <BarChart2 className="w-5 h-5 shrink-0" />
                 <span className="hidden md:inline text-sm">STATS</span>
+              </Link>
+            )}
+            {!isDriver && (
+              <Link
+                href="/worklist"
+                className={cn(
+                  "font-bold px-2 py-2 border-2 border-transparent hover:border-black transition-all tap-target flex items-center justify-center gap-1.5 rounded-md",
+                  location === "/worklist" ? "bg-orange-600 text-white border-orange-600 shadow-brutal-sm" : ""
+                )}
+              >
+                <ClipboardList className="w-5 h-5 shrink-0" />
+                <span className="hidden md:inline text-sm">WORKLIST</span>
               </Link>
             )}
             <Link

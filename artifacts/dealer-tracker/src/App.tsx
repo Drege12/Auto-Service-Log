@@ -12,6 +12,7 @@ import MessagesPage from "@/pages/messages";
 import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 import HelpPage from "@/pages/help";
+import WorklistPage from "@/pages/worklist";
 import LoginPage from "@/pages/login";
 import AdminLoginPage from "@/pages/admin-login";
 import { setMechanicId, setAuthTokenGetter } from "@workspace/api-client-react";
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/messages" component={MessagesPage} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/help" component={HelpPage} />
+      <Route path="/worklist" component={WorklistPage} />
       <Route component={NotFound} />
     </Switch>
   );
