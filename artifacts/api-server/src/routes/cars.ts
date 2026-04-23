@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request } from "express";
 import { db, carsTable, inspectionItemsTable, maintenanceEntriesTable, mileageEntriesTable, todosTable, insertCarSchema, mechanicsTable, vehicleNotificationsTable, carNotesLogTable, serviceIntervalsTable } from "@workspace/db";
-import { eq, and, max, ne, or, isNull, gt } from "drizzle-orm";
+import { eq, and, max, ne, or, isNull, gt, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const router: IRouter = Router();
@@ -1086,6 +1086,135 @@ router.delete("/cars/:carId/service-intervals/:intervalId", async (req, res) => 
     res.status(204).send();
   } catch {
     res.status(500).json({ error: "Failed to delete service interval" });
+  }
+});
+
+// Aggregated worklist: all pending todos across the mechanic's cars,
+// grouped by car and sorted by priority (high → medium → low).
+router.get("/worklist", async (req, res) => {
+  try {
+    const mechanicId = getMechanicId(req);
+    if (!mechanicId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const [me] = await db
+      .select({ role: mechanicsTable.role, isAdmin: mechanicsTable.isAdmin })
+      .from(mechanicsTable)
+      .where(eq(mechanicsTable.id, mechanicId));
+
+    if (me?.role === "driver") {
+      res.status(403).json({ error: "Worklist not available for drivers" });
+      return;
+    }
+
+    const admin = me?.isAdmin === true;
+
+    // Choose which cars belong to the worklist
+    let visibleCars: Array<typeof carsTable.$inferSelect> = [];
+    if (admin) {
+      visibleCars = await db.select().from(carsTable);
+    } else {
+      const owned = await db.select().from(carsTable).where(eq(carsTable.mechanicId, mechanicId));
+      const linked = await db.select().from(carsTable).where(eq(carsTable.linkedMechanicId, mechanicId));
+      const seen = new Set<number>();
+      for (const c of [...owned, ...linked]) {
+        if (!seen.has(c.id)) { seen.add(c.id); visibleCars.push(c); }
+      }
+    }
+
+    // Skip sold cars
+    const activeCars = visibleCars.filter(c => c.sold !== 1);
+    if (activeCars.length === 0) {
+      res.json({ groups: [], totals: { high: 0, medium: 0, low: 0, all: 0 } });
+      return;
+    }
+
+    const carIds = activeCars.map(c => c.id);
+    const todos = await db.select().from(todosTable).where(inArray(todosTable.carId, carIds));
+    const pending = todos.filter(t => t.completed === 0);
+
+    const PRI_RANK: Record<string, number> = { high: 3, medium: 2, low: 1 };
+    const byCar = new Map<number, typeof pending>();
+    for (const t of pending) {
+      if (!byCar.has(t.carId)) byCar.set(t.carId, []);
+      byCar.get(t.carId)!.push(t);
+    }
+
+    const groups = activeCars
+      .filter(c => byCar.has(c.id))
+      .map(c => {
+        const ts = (byCar.get(c.id) || []).slice().sort((a, b) => {
+          const r = (PRI_RANK[b.priority] ?? 0) - (PRI_RANK[a.priority] ?? 0);
+          if (r !== 0) return r;
+          return (b.id ?? 0) - (a.id ?? 0);
+        });
+        const maxRank = ts.reduce((m, t) => Math.max(m, PRI_RANK[t.priority] ?? 0), 0);
+        const isLinkedCar = c.linkedMechanicId != null;
+        return {
+          carId: c.id,
+          year: c.year,
+          make: c.make,
+          model: c.model,
+          stockNumber: c.stockNumber,
+          color: c.color,
+          vehicleType: c.vehicleType,
+          isLinkedCar,
+          ownerName: null as string | null,
+          maxPriority: maxRank === 3 ? "high" : maxRank === 2 ? "medium" : "low",
+          maxRank,
+          counts: {
+            high: ts.filter(t => t.priority === "high").length,
+            medium: ts.filter(t => t.priority === "medium").length,
+            low: ts.filter(t => t.priority === "low").length,
+            total: ts.length,
+          },
+          todos: ts.map(t => ({
+            id: t.id,
+            description: t.description,
+            priority: t.priority,
+            notes: t.notes,
+          })),
+        };
+      })
+      .sort((a, b) => {
+        if (b.maxRank !== a.maxRank) return b.maxRank - a.maxRank;
+        return (b.year ?? 0) - (a.year ?? 0);
+      });
+
+    // Backfill owner display names if needed
+    const ownerIds = new Set<number>();
+    for (const c of activeCars) {
+      if (byCar.has(c.id) && c.mechanicId) ownerIds.add(c.mechanicId);
+    }
+    if (ownerIds.size > 0) {
+      const owners = await db
+        .select({ id: mechanicsTable.id, name: mechanicsTable.displayName })
+        .from(mechanicsTable)
+        .where(inArray(mechanicsTable.id, Array.from(ownerIds)));
+      const nameById = new Map(owners.map(o => [o.id, o.name as string]));
+      const ownerByCar = new Map(activeCars.map(c => [c.id, c.mechanicId]));
+      for (const g of groups) {
+        const ownerId = ownerByCar.get(g.carId);
+        if (ownerId) g.ownerName = nameById.get(ownerId) ?? null;
+      }
+    }
+
+    const totals = groups.reduce(
+      (acc, g) => {
+        acc.high += g.counts.high;
+        acc.medium += g.counts.medium;
+        acc.low += g.counts.low;
+        acc.all += g.counts.total;
+        return acc;
+      },
+      { high: 0, medium: 0, low: 0, all: 0 }
+    );
+
+    res.json({ groups, totals });
+  } catch {
+    res.status(500).json({ error: "Failed to load worklist" });
   }
 });
 
