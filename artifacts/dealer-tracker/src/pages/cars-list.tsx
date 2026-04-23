@@ -176,11 +176,39 @@ export default function CarsList() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
-  const [carView, setCarView] = useState<"all" | "work" | "personal" | "clients">("all");
-  const [showSold, setShowSold] = useState(false);
-  const [soldCollapsed, setSoldCollapsed] = useState(true);
+  type ViewState = {
+    searchTerm: string;
+    activeFilters: string[];
+    carView: "all" | "work" | "personal" | "clients";
+    showSold: boolean;
+    soldCollapsed: boolean;
+  };
+  const VIEW_KEY = "dt_cars_list_view";
+  const loadViewState = (): Partial<ViewState> => {
+    try {
+      const raw = sessionStorage.getItem(VIEW_KEY);
+      return raw ? JSON.parse(raw) as Partial<ViewState> : {};
+    } catch { return {}; }
+  };
+  const initialView = loadViewState();
+
+  const [searchTerm, setSearchTerm] = useState(initialView.searchTerm ?? "");
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set(initialView.activeFilters ?? []));
+  const [carView, setCarView] = useState<"all" | "work" | "personal" | "clients">(initialView.carView ?? "all");
+  const [showSold, setShowSold] = useState(initialView.showSold ?? false);
+  const [soldCollapsed, setSoldCollapsed] = useState(initialView.soldCollapsed ?? true);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(VIEW_KEY, JSON.stringify({
+        searchTerm,
+        activeFilters: Array.from(activeFilters),
+        carView,
+        showSold,
+        soldCollapsed,
+      }));
+    } catch { /* ignore quota errors */ }
+  }, [searchTerm, activeFilters, carView, showSold, soldCollapsed]);
 
   // VIN decode (NHTSA public API) for the add-car form
   type AddVinDecode = {
