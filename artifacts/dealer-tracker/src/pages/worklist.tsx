@@ -24,6 +24,7 @@ type WorklistGroup = {
   stockNumber: string | null;
   color: string | null;
   vehicleType: string | null;
+  carType: string | null;
   isLinkedCar: boolean;
   ownerName: string | null;
   maxPriority: Priority;
@@ -74,6 +75,17 @@ export default function WorklistPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<Priority | "all">("all");
+  type Category = "all" | "work" | "personal" | "clients";
+  const [category, setCategory] = useState<Category>(() => {
+    try {
+      const raw = sessionStorage.getItem("dt_worklist_category");
+      if (raw === "all" || raw === "work" || raw === "personal" || raw === "clients") return raw;
+    } catch { /* ignore */ }
+    return "all";
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("dt_worklist_category", category); } catch { /* ignore */ }
+  }, [category]);
   const mechanicId = getMechanicId();
 
   const fetchData = async () => {
@@ -100,13 +112,34 @@ export default function WorklistPage() {
 
   useEffect(() => { fetchData(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
+  const inCategory = (g: WorklistGroup, cat: Category) => {
+    if (cat === "all") return true;
+    if (cat === "clients") return g.isLinkedCar === true;
+    if (cat === "personal") return g.carType === "personal" && !g.isLinkedCar;
+    // "work" = dealer (or unset) and not a linked client car
+    return (g.carType === "dealer" || !g.carType) && !g.isLinkedCar;
+  };
+
+  const categoryCounts = useMemo(() => {
+    const empty = { all: 0, work: 0, personal: 0, clients: 0 };
+    if (!data) return empty;
+    return data.groups.reduce((acc, g) => {
+      acc.all += g.counts.total;
+      if (inCategory(g, "work")) acc.work += g.counts.total;
+      if (inCategory(g, "personal")) acc.personal += g.counts.total;
+      if (inCategory(g, "clients")) acc.clients += g.counts.total;
+      return acc;
+    }, { ...empty });
+  }, [data]);
+
   const filteredGroups = useMemo(() => {
     if (!data) return [];
-    if (filter === "all") return data.groups;
-    return data.groups
+    const inCat = data.groups.filter(g => inCategory(g, category));
+    if (filter === "all") return inCat;
+    return inCat
       .map(g => ({ ...g, todos: g.todos.filter(t => t.priority === filter) }))
       .filter(g => g.todos.length > 0);
-  }, [data, filter]);
+  }, [data, filter, category]);
 
   return (
     <Layout>
@@ -126,6 +159,40 @@ export default function WorklistPage() {
           <RefreshCw className={cn("w-5 h-5 mr-2", loading && "animate-spin")} /> REFRESH
         </Button>
       </div>
+
+      {/* Category tabs */}
+      {data && data.totals.all > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {([
+            { key: "all", label: "All" },
+            { key: "work", label: "Work" },
+            { key: "personal", label: "Personal" },
+            { key: "clients", label: "Clients" },
+          ] as const).map(({ key, label }) => {
+            const count = categoryCounts[key];
+            const isActive = category === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setCategory(key)}
+                className={cn(
+                  "shrink-0 px-4 py-2 rounded-lg font-black uppercase text-sm tracking-wide border-4 border-black transition-all flex items-center gap-2",
+                  isActive ? "bg-black text-white shadow-brutal-sm" : "bg-white text-black hover:bg-gray-100"
+                )}
+              >
+                <span>{label}</span>
+                <span className={cn(
+                  "px-2 py-0.5 rounded text-xs font-black",
+                  isActive ? "bg-white text-black" : "bg-gray-200 text-black"
+                )}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Totals + filters */}
       {data && data.totals.all > 0 && (

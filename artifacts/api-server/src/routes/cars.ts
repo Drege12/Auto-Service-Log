@@ -1160,6 +1160,7 @@ router.get("/worklist", async (req, res) => {
           stockNumber: c.stockNumber,
           color: c.color,
           vehicleType: c.vehicleType,
+          carType: c.carType,
           isLinkedCar,
           ownerName: null as string | null,
           maxPriority: maxRank === 3 ? "high" : maxRank === 2 ? "medium" : "low",
