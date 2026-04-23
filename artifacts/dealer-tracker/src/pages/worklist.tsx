@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Link } from "wouter";
 import { ClipboardList, AlertTriangle, ChevronRight, Car, Truck, Anchor, Bike, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Layout } from "@/components/layout";
 import { cn } from "@/lib/utils";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -108,6 +109,7 @@ export default function WorklistPage() {
   }, [data, filter]);
 
   return (
+    <Layout>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gradient-to-r from-orange-50 via-red-50 to-rose-50 px-5 py-5 rounded-xl border-4 border-black shadow-brutal">
@@ -271,5 +273,6 @@ export default function WorklistPage() {
         );
       })}
     </div>
+    </Layout>
   );
 }
