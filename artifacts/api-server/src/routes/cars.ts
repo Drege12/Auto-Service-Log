@@ -1089,6 +1089,86 @@ router.delete("/cars/:carId/service-intervals/:intervalId", async (req, res) => 
   }
 });
 
+// Timeline of completed maintenance work across all visible cars.
+// Returns entries with car info; the client computes day/week/month/year totals.
+router.get("/worklist/timeline", async (req, res) => {
+  try {
+    const mechanicId = getMechanicId(req);
+    if (!mechanicId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const [me] = await db
+      .select({ role: mechanicsTable.role, isAdmin: mechanicsTable.isAdmin })
+      .from(mechanicsTable)
+      .where(eq(mechanicsTable.id, mechanicId));
+
+    if (me?.role === "driver") {
+      res.status(403).json({ error: "Timeline not available for drivers" });
+      return;
+    }
+
+    const admin = me?.isAdmin === true;
+    let visibleCars: Array<typeof carsTable.$inferSelect> = [];
+    if (admin) {
+      visibleCars = await db.select().from(carsTable);
+    } else {
+      const owned = await db.select().from(carsTable).where(eq(carsTable.mechanicId, mechanicId));
+      const linked = await db.select().from(carsTable).where(eq(carsTable.linkedMechanicId, mechanicId));
+      const seen = new Set<number>();
+      for (const c of [...owned, ...linked]) {
+        if (!seen.has(c.id)) { seen.add(c.id); visibleCars.push(c); }
+      }
+    }
+
+    if (visibleCars.length === 0) {
+      res.json({ entries: [] });
+      return;
+    }
+
+    const carIds = visibleCars.map(c => c.id);
+    const carMap = new Map(visibleCars.map(c => [c.id, c]));
+    const entries = await db
+      .select()
+      .from(maintenanceEntriesTable)
+      .where(inArray(maintenanceEntriesTable.carId, carIds));
+
+    const enriched = entries.map(e => {
+      const c = carMap.get(e.carId);
+      return {
+        id: e.id,
+        carId: e.carId,
+        date: e.date,
+        description: e.description,
+        technician: e.technician,
+        hours: e.hours != null ? Number(e.hours) : null,
+        cost: e.cost != null ? Number(e.cost) : null,
+        notes: e.notes,
+        createdAt: e.createdAt,
+        car: c ? {
+          year: c.year,
+          make: c.make,
+          model: c.model,
+          stockNumber: c.stockNumber,
+          carType: c.carType,
+          isLinkedCar: c.linkedMechanicId != null,
+          sold: c.sold === 1,
+        } : null,
+      };
+    });
+
+    enriched.sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+      return (b.id ?? 0) - (a.id ?? 0);
+    });
+
+    res.json({ entries: enriched });
+  } catch {
+    res.status(500).json({ error: "Failed to load timeline" });
+  }
+});
+
 // Aggregated worklist: all pending todos across the mechanic's cars,
 // grouped by car and sorted by priority (high → medium → low).
 router.get("/worklist", async (req, res) => {
